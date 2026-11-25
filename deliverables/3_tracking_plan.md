@@ -91,7 +91,7 @@ Naming rule: `fit_flow:` then the object, then the past-tense action, in snake c
 | `prompt_shown` | The prompt shows | None |
 | `keep_fit_tapped` | "Keep [fit]" | None |
 | `fit_picker_opened` | "Choose fit" or "Choose fit and details" | None |
-| `fit_changed` | The main fit or leg shape changes | `fit_part`: `main_fit`, `leg_shape`. `value`. `reverted_option_count`: 0 to 3. |
+| `fit_changed` | The main fit or leg shape changes, by a tap or by "Continue" restoring a saved fit | `fit_part`: `main_fit`, `leg_shape`. `value`. `reverted_option_count`: 0 to 3. |
 | `details_sheet_opened` | The details sheet opens | `step`: `main_fit`, `leg_shape`, `size_step`, `product_page`. `opened_from`: `details_row`, `photo_thumb`, `edit_link`, `product_page_link`. |
 | `detail_value_tapped` | An option tile | `option`: `waistband`, `hem`, `front`. `value`, `previous_value`, `is_standard_value`. |
 | `details_reset_tapped` | "Reset to standard" | `reset_detail_count`: 1 to 3 |

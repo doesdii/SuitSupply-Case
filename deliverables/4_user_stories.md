@@ -21,7 +21,7 @@ Quotes are exact screen texts. Events, properties, and flags come from `3_tracki
 | US-13 | Accessibility | R1 | Must |
 | US-14 | Values that are not available | R1 | Should |
 | US-19 | Details in the bag panel | R1 | Must |
-| US-20 | A switch per option | R1 | Must |
+| US-20 | Turn off one detail on its own | R1 | Must |
 | US-15 | Size prefill for signed-in customers | R1.1 | Should |
 | US-16 | Reuse the details of the last pair | R1.1 | Should |
 | US-17 | Pick up on this device | R1.1 | Could |
@@ -34,7 +34,7 @@ Every Release 1 to 1.2 criterion is shown in the prototype, unless its story or 
 
 As a customer, I want to know that details can change, so that I can look at them.
 
-- Given the flag is ON, when the prompt opens, then it shows "Want a different fit or details?", "These trousers come in 5 fits. You can also change the waistband, hem and front style.", and "Choose fit and details".
+- Given the flag is ON, when the prompt opens, then it shows "Want a different fit or details?", "These trousers come in 5 fits.", and "Choose fit and details".
 - Given the flag is OFF, when the prompt opens, then it shows the texts of today: "Want a different fit?", "These trousers come in 5 other fits.", and "Choose fit".
 
 ## US-02 Fast path stays the same
@@ -139,7 +139,7 @@ As a customer, I want to see my details in the bag, so that I can check what I o
 - Given a made-to-order pair in the bag, when the line shows, then it has the link "Details" and "Delivery: 1 - 2 weeks".
 - Given the customer taps "Details", when "Custom made details" opens, then it lists Delivery, Size, Fit, Waistband, Hem, and Front style, with "Changed" on each changed row.
 
-## US-20 A switch per option
+## US-20 Turn off one detail on its own
 
 As the Custom Made PM, I want to switch off one option, so that one weak option does not stop the feature.
 
@@ -166,7 +166,7 @@ As a returning customer, I want to reuse my last details, so that I do not choos
 As an identified customer, I want to continue my last selection on this device, so that I do not start again.
 
 - Given a selection saved here in the last 30 days, with consent, when the prompt shows, then a card shows "Pick up where you left off", "Continue", and "Start fresh".
-- Given the card, when the customer taps "Continue", then the selection comes back, with the size outlined, not selected. A size and "Add to bag" make 4 taps.
+- Given the card, when the customer taps "Continue", then the selection comes back, with the size outlined, not selected. A size and "Add to bag" make 4 taps. Events: `suggestion_accepted`, then `fit_changed` if the saved fit differs, then `size_step_shown`.
 - Given no "Continue", when the size step opens, then it outlines the last size with "Last time on this device: 48 Regular".
 
 ## US-18 Consent and fail-open for personalization

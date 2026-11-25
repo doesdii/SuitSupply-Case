@@ -1128,7 +1128,10 @@ function promptText() {
   if (titles.length === 1) list = titles[0];
   else if (titles.length === 2) list = titles.join(' and ');
   else list = titles.slice(0, -1).join(', ') + ' and ' + titles[titles.length - 1];
-  return 'These trousers come in 5 fits. You can also change the ' + list + '.';
+  // Kept short on purpose: the heading and the button already say "details", and the Details row
+  // names the options one tap later. The list stays here for the panel and future copy tests.
+  void list;
+  return 'These trousers come in 5 fits.';
 }
 
 function keepLabel() {
@@ -1941,12 +1944,18 @@ const ACTIONS = {
   'accept-suggestion': () => {
     const s = suggestion();
     if (!s) return;
+    const fitBefore = state.mainFit;
+    const fitMoves = !!s.mainFit && s.mainFit !== fitBefore;
     if (s.mainFit) state.mainFit = s.mainFit;
     OPTIONS.forEach((o) => { if (s.set[o.key] !== undefined) state.set[o.key] = s.set[o.key]; });
+    const reverted = fitMoves ? dropUnavailable() : 0;
     // A restored selection is a guess from this device: its size is a suggestion, never preselected.
     if (s.size !== null && isSize(s.size)) state.prefilled = s.size;
     state.card = false;
     track('fit_flow:suggestion_accepted', { suggestion_type: s.type, suggestion_source: s.source });
+    // "Continue" can restore another fit. That is a fit change like any other, so event 4 fires too,
+    // after event 11 and before event 8. "Use these details" keeps the fit and sends no event 4.
+    if (fitMoves) track('fit_flow:fit_changed', { fit_part: 'main_fit', value: s.mainFit, reverted_option_count: reverted });
     showSize('suggestion');
   },
   // "Start fresh": the card goes, and nothing is sent.
@@ -2513,7 +2522,7 @@ function runSelfTest() {
     tap('open-flow');
     check('Flag ON: the prompt has the new text',
       phone.textContent.includes('Want a different fit or details?') &&
-      phone.textContent.includes('These trousers come in 5 fits. You can also change the waistband, hem and front style.') &&
+      phone.textContent.includes('These trousers come in 5 fits.') && !phone.textContent.includes('You can also change') &&
       find('choose-fit').textContent === 'Choose fit and details' && find('keep-fit').textContent === 'Keep Tapered Leg');
   });
 
@@ -2649,8 +2658,8 @@ function runSelfTest() {
       (state.log[state.log.length - 1] || {}).note === 'Option Front style switched off. The flow started again.', JSON.stringify(state.log[state.log.length - 1]));
     check('Switches: the button shows off', optBtn('front').getAttribute('aria-pressed') === 'false');
     tap('open-flow');
-    check('Switches: the prompt lists only the enabled options',
-      phone.textContent.includes('You can also change the waistband and hem.'), phone.textContent);
+    check('Switches: with one option off, the prompt still offers details',
+      phone.textContent.includes('Want a different fit or details?') && find('choose-fit').textContent === 'Choose fit and details', phone.textContent);
     tap('choose-fit');
     tap('open-sheet');
     check('Switches: two summary rows in the sheet, and no front row',
@@ -2829,6 +2838,9 @@ function runSelfTest() {
       role('suggestion-card').includes('Pick up where you left off') &&
       role('suggestion-card').includes('Straight Fit \u00b7 side adjusters \u00b7 size 48 Regular'), role('suggestion-card'));
     tap('accept-suggestion');
+    check('Identified: Continue sends events 11, 4, then 8, and event 4 names the restored fit',
+      names().endsWith('suggestion_accepted,fit_changed,size_step_shown') &&
+      has(lastEvent('fit_changed').props, { fit_part: 'main_fit', value: 'straight', reverted_option_count: 0 }), names());
     check('Identified: Continue restores fit and details, and only suggests the size',
       state.mainFit === 'straight' && state.set.waistband === 'adjusters' && state.size === null &&
       role('prefill-line') === 'Last time on this device: 48 Regular' &&

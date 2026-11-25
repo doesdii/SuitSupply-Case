@@ -182,7 +182,15 @@
   .s3-sub { margin-top: 2px; }
 
   /* ---------- Slide 4: the solution ---------- */
-  .flow { display: grid; grid-template-columns: 1fr 34px 1fr 34px 1.45fr 34px 1fr 34px 1fr; }
+  .flow { display: grid; grid-template-columns: 0.9fr 34px 1.45fr 34px 1.45fr 34px 0.9fr 34px 0.75fr; }
+  /* Slide 4: a small copy of the real prompt. Underlined words are new in Release 1. */
+  .pmock { display: flex; flex-direction: column; gap: 4px; border: 1px solid var(--line-strong); background: #fff; border-radius: 3px; padding: 8px 9px; text-align: center; }
+  .pmock .pq { font-size: var(--fs-small); font-weight: 500; color: var(--ink); line-height: 1.25; }
+  .pmock .pt { font-size: calc(var(--fs-small) * 0.88); color: var(--text2); line-height: 1.3; }
+  .pmock .pbtn { display: block; border: 1px solid var(--line-strong); border-radius: 2px; padding: 3px 4px; font-size: calc(var(--fs-small) * 0.88); color: var(--ink); background: #fff; }
+  .pmock .pbtn.dark { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .pmock u { text-decoration-thickness: 1.5px; text-underline-offset: 2px; }
+  .fbox .was { font-size: calc(var(--fs-small) * 0.88); color: var(--text2); }
   .pin { grid-row: 1; align-self: end; position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; padding: 0 0 12px; background: none; border: 0; cursor: pointer; text-align: left; font-size: var(--fs-small); line-height: 1.3; color: var(--text2); }
   .pin::after { content: ''; position: absolute; left: 14px; bottom: 0; height: 12px; border-left: 1px solid var(--line-strong); }
   .pin.sel { color: var(--ink); }
@@ -555,7 +563,7 @@
 </section>
 
 <!-- Slide 4: The solution -->
-<section class="slide" id="s4" data-legend="rel" data-notes="The answer in one sentence: three design details behind one row in the fit picker, with no new step. Look at the lower line. The fast path does not touch the fit picker, so a customer who skips it has the same four taps and sees nothing new. The fit picker is the place where the customer already trades delivery time for a more personal pair, so the details make the same trade in the same place. Everything in Release 1 sits behind one flag. Release 1.1 is a layer for customers we know, with its own flag. Release 1.2 is the next test if Adoption is low. I did not add three options. I made three existing differences visible, choosable and measurable. Now let me show it.">
+<section class="slide" id="s4" data-legend="rel" data-notes="The answer in one sentence: three design details behind one row in the fit picker, with no new step. Look at the prompt first: it is the only thing the skippers see change. Two words in the heading, or details, and two in the button, and details. Speed watches exactly that. Look at the lower line. The fast path does not touch the fit picker, so a customer who skips it has the same four taps and sees nothing new. The fit picker is the place where the customer already trades delivery time for a more personal pair, so the details make the same trade in the same place. Everything in Release 1 sits behind one flag. Release 1.1 is a layer for customers we know, with its own flag. Release 1.2 is the next test if Adoption is low. I did not add three options. I made three existing differences visible, choosable and measurable. Now let me show it.">
   <h1>One row in the fit picker. No new step.</h1>
   <p class="sub">I did not add three options. I made three existing differences visible, choosable and measurable.</p>
   <div class="body">
@@ -567,7 +575,7 @@
 
       <div class="fbox" data-touch="1.2" style="grid-column: 1"><b>Product page</b></div>
       <div class="farrow" style="grid-column: 2"></div>
-      <div class="fbox" data-touch="1.1" style="grid-column: 3"><b>Prompt</b></div>
+      <div class="fbox" data-touch="1 1.1" style="grid-column: 3"><b>Prompt</b><span class="pmock" aria-label="The prompt in Release 1"><span class="pq">Want a different fit <u>or details</u>?</span><span class="pt">These trousers come in 5 fits.</span><span class="pbtn dark">Choose fit <u>and details</u></span><span class="pbtn">Keep Tapered Leg</span></span><span class="was">Today: "Want a different fit?" and "Choose fit".</span></div>
       <div class="farrow" style="grid-column: 4"></div>
       <div class="fbox" data-touch="1" style="grid-column: 5"><b>Fit picker</b><span class="fs">Fit and leg</span><span class="drow"><span>Details: waistband · hem · front</span><span class="rel" data-rel="1">R1</span></span></div>
       <div class="farrow" style="grid-column: 6"></div>
@@ -625,7 +633,7 @@
 </section>
 
 <!-- Slide 6: Why these decisions -->
-<section class="slide" id="s6" data-notes="You saw it working. Here is why it is built this way. I will speak to three. <b>One, the placement.</b> The fit picker already changes these details, and it already trades delivery time for a more personal pair. So the options make the same trade in the same place, and the fast path stays four taps. The cost: nine taps to change one detail, and fewer customers find it. I rejected a new step, a row on the size step, and a block after the bag. <b>Two, the front style.</b> Normally I would check the Custom Made data first: which detail has the highest adjustment rate and return rate, and what production says about cost. For this prototype I used what I could see: the fits already differ by front, the product page names it, all six competitor configurators I checked offer it, and production already makes both. The cost: a pleat changes the fit at the hip, so it has its own switch. <b>Five, the prefill rule.</b> Preselect only what can go back into stock. A wrong size on a standard pair is a normal return. A wrong changed pair is a write-off. So its size and its details need an active tap. The other two are on the slide if you want them. Each cost is a bet. Next: how I see if a bet fails.">
+<section class="slide" id="s6" data-notes="You saw it working. Here is why it is built this way. I will speak to three. <b>One, the placement.</b> The fit picker already changes these details, and it already trades delivery time for a more personal pair. So the options make the same trade in the same place, and the fast path stays four taps. The cost: nine taps to change one detail, and fewer customers find it. I rejected a new step, a row on the size step, and a block after the bag. <b>Two, the front style.</b> Normally I would check the Custom Made data first: which detail has the highest adjustment rate and return rate, and what production says about cost. For this prototype I used what I could see: the fits already differ by front, the product page names it, all six competitor configurators I checked offer it, and production already makes both. The cost: a pleat changes the fit at the hip. So the team can turn the pleat off on its own, without stopping the other two details. <b>Five, the prefill rule.</b> Preselect only what can go back into stock. A wrong size on a standard pair is a normal return. A wrong changed pair is a write-off. So its size and its details need an active tap. The other two are on the slide if you want them. Each cost is a bet. Next: how I see if a bet fails.">
   <h1>Every decision buys something and costs something</h1>
   <p class="sub">Each cost is accepted on purpose and written down before launch.</p>
   <div class="body">
@@ -644,7 +652,7 @@
           <dt class="instead">Instead of</dt><dd>A new step before size. A row on the size step. A block after the bag.</dd></dl></div>
         <div class="dec-card" data-key="2"><h3><span class="num">2</span>Front style is the third option</h3><dl>
           <dt class="buys">Buys</dt><dd>It already differs per fit. The page names it. Production makes both.</dd>
-          <dt class="costs">Costs</dt><dd>A pleat changes the hip, so it gets its own switch.</dd>
+          <dt class="costs">Costs</dt><dd>A pleat changes the fit at the hip. So the team can turn the pleat off on its own, and keep the other two details.</dd>
           <dt class="instead">Instead of</dt><dd>Leg length or pockets: new measurements, more return risk.</dd></dl></div>
         <div class="dec-card" data-key="3"><h3><span class="num">3</span>A notice, not a warning</h3><dl>
           <dt class="buys">Buys</dt><dd>The cost and the gain in one glance, at the moment of choice.</dd>
@@ -743,7 +751,7 @@
     <button class="stopbar" data-reveal aria-expanded="false">
       <span class="sb-label">Stop rule</span>
       <span class="sb-text">Flag OFF within one working day. Owner: the Custom Made PM.</span>
-      <span class="sb-rev-wrap"><span class="more">Click for the three triggers</span><span class="sb-rev"><span>1. Speed: add-to-bag or order rate significantly lower.</span><span>2. Keep: more than 5 points above made-to-order fits.</span><span>3. Operations: made wrong above 2%, or late above 10%.</span><span>Each option also has its own switch.</span></span></span>
+      <span class="sb-rev-wrap"><span class="more">Click for the three triggers</span><span class="sb-rev"><span>1. Speed: add-to-bag or order rate significantly lower.</span><span>2. Keep: more than 5 points above made-to-order fits.</span><span>3. Operations: made wrong above 2%, or late above 10%.</span><span>Each detail can also be turned off on its own.</span></span></span>
     </button>
     <div class="sigs">
       <div class="sigrow"><span class="siglab"><span class="mtype" data-m="safety">Safety</span></span><span class="schip">Order rate</span><span class="schip">Made wrong ≤ 2%</span><span class="schip">Late ≤ 10%</span></div>
@@ -850,7 +858,7 @@
         <span class="wk-rev"><span class="lab">Settled by</span><span>The expectation-match question after delivery. If under 90% yes: better images before more markets.</span></span></button>
       <div class="wk-spacer" aria-hidden="true"></div>
     </div>
-    <p class="s11-foot">Also open: the pleat changes the hip (own switch). The return rule is Suitsupply's call (gap L1). Segments 2 and 3 are defined by the outcome, so they describe and do not predict. Not tested with a screen reader.</p>
+    <p class="s11-foot">Also open: the pleat changes the fit at the hip (the team can turn it off on its own). The return rule is Suitsupply's call (gap L1). Segments 2 and 3 are defined by the outcome, so they describe and do not predict. Not tested with a screen reader.</p>
   </div>
 </section>
 
