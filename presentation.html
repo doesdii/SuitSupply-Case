@@ -309,18 +309,23 @@
   .mtile:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
   .mt-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .mt-name { font-size: var(--fs-body); font-weight: 500; }
+  .mt-q { font-size: var(--fs-small); color: var(--text2); margin-top: -4px; }
+  .sigtxt { font-size: var(--fs-small); color: var(--text2); margin-right: 2px; }
   .mt-big { font-size: var(--fs-big); font-weight: 500; line-height: 1.1; letter-spacing: -0.01em; }
   .mt-line { font-size: var(--fs-small); color: var(--text2); line-height: 1.4; min-height: 2.8em; }
   .mt-base { align-self: flex-start; font-size: 12px; font-weight: 500; color: var(--quiet); border: 1px solid var(--quiet); border-radius: 2px; padding: 1px 7px; }
   .mt-rev-wrap { position: relative; border-top: 1px solid var(--line); padding-top: 8px; margin-top: 2px; }
-  .mt-rev { display: block; font-size: var(--fs-small); line-height: 1.45; min-height: 5.8em; visibility: hidden; opacity: 0; transition: opacity .2s; }
+  .mt-rev { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; border-left: 3px solid var(--r1); padding-left: 12px; min-height: 3.4em; visibility: hidden; opacity: 0; transition: opacity .2s; }
+  .mt-rev b { font-size: var(--fs-sub); font-weight: 500; color: var(--ink); }
+  .mt-rev .t { font-size: var(--fs-small); color: var(--text2); line-height: 1.4; }
   .open .mt-rev { visibility: visible; opacity: 1; }
   .mt-rev-wrap .more { top: 8px; }
   .stopbar { width: 100%; text-align: left; background: #fff; border: 1px solid var(--line); border-left: 3px solid var(--stop); border-radius: 0 4px 4px 0; padding: 10px 16px; cursor: pointer; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; align-items: baseline; position: relative; }
   .sb-label { font-size: var(--fs-small); font-weight: 500; color: var(--stop); white-space: nowrap; }
   .sb-text { font-size: var(--fs-body); }
   .sb-rev-wrap { grid-column: 2; position: relative; }
-  .sb-rev { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 18px; font-size: var(--fs-small); color: var(--text2); line-height: 1.45; visibility: hidden; opacity: 0; transition: opacity .2s; }
+  .sb-rev { display: flex; flex-wrap: wrap; gap: 8px; font-size: var(--fs-small); color: var(--ink); line-height: 1.45; visibility: hidden; opacity: 0; transition: opacity .2s; }
+  .sb-rev span { border: 1px solid var(--line-strong); border-radius: 2px; padding: 2px 10px; background: #fff; }
   .open .sb-rev { visibility: visible; opacity: 1; }
   .sb-rev-wrap .more { top: 0; }
   .sigs { display: flex; flex-direction: column; gap: 8px; }
@@ -718,49 +723,52 @@
 </section>
 
 <!-- Slide 8: How we measure -->
-<section class="slide" id="s8" data-legend="seg metric" data-notes="Three numbers, one per constraint from slide three. All three must hold. <b>Adoption</b>: five percent or more of trouser orders in the test group carry a changed detail. It is a funnel guess: a quarter open the fit picker, forty percent of them open the sheet, half of those change something. Each guess can be replaced one by one when you share the baselines. <b>Speed</b>: the add-to-bag rate from the prompt is not more than two percent lower. Two percent is relative, so one point at a fifty percent rate. This is the number that protects segment one. If the test cannot say not worse and cannot say worse, I extend by up to two weeks. I do not roll out on a maybe. <b>Keep</b>: the return rate of changed pairs, not more than five points above made-to-order fits. I compare with made-to-order fits, not with stock pairs, because that is the fair neighbour. Returns take about forty five days to read, so I watch early signals in days: sheet exit and reset rate for segment two, cancellations within twenty four hours, and one question after delivery: did the details match what you expected. <b>The stop rule</b> is written before launch. The flag goes off within one working day, with one owner, if Speed drops, if changed pairs come back too often, or if production makes them wrong or late.">
+<section class="slide" id="s8" data-legend="seg metric" data-notes="Three questions, one per constraint from slide three. All three must hold. <b>One, do customers use it?</b> Five in a hundred orders should have a changed detail. That comes from three guesses: one in four opens the fit picker, four in ten of them open Details, and half of those change something. <b>Two, does the fast path stay fast?</b> At most two percent fewer people may add to bag. If fifty in a hundred do it today, at least forty-nine must still do it. This protects the three in four who skip the fit picker. If the test cannot tell, I do not roll out. <b>Three, do customers keep what they changed?</b> Changed pairs may come back at most five more times per hundred than made-to-order fits. If twenty in a hundred come back today, at most twenty-five. I compare with made-to-order fits because that is the fair neighbour. Returns take about forty-five days, so I watch early warnings that arrive in days. <b>The stop rule</b> is written before launch: one owner, one working day. Detail if asked: the median time to bag may be at most ten percent longer. Returns are split by reason, so a size return is not blamed on a detail. Made wrong means more than two in a hundred, late means more than ten in a hundred. Each detail can be turned off on its own.">
   <h1>Success is three numbers. All three must hold.</h1>
-  <p class="sub">Every threshold is an assumption until Suitsupply shares the baselines.</p>
+  <p class="sub">One question per constraint. Every number is my assumption until Suitsupply shares today's data.</p>
   <div class="body">
     <div class="mtiles">
       <button class="mtile" data-reveal aria-expanded="false">
         <span class="mt-top"><span class="mtype" data-m="success">Success</span><i class="seg-dot" data-seg="3" title="Reads segment 3">3</i></span>
         <span class="mt-name">Adoption</span>
-        <span class="mt-big">5% or more</span>
-        <span class="mt-line">of trouser orders carry a changed detail</span>
-        <span class="mt-base">Baseline: need data</span>
-        <span class="mt-rev-wrap"><span class="more">Click for the derivation</span><span class="mt-rev">25% open the fit picker × 40% open the sheet × 50% change a detail ≈ 5%. All three are assumptions. Baseline: gap D3.</span></span>
+        <span class="mt-q">Do customers use it?</span>
+        <span class="mt-big">5 in 100</span>
+        <span class="mt-line">orders have a changed detail.</span>
+        <span class="mt-base">Today: need data</span>
+        <span class="mt-rev-wrap"><span class="more">Where does 5 come from?</span><span class="mt-rev"><b>1 in 4 × 4 in 10 × 1 in 2</b><span class="t">open the fit picker, open Details, change something</span></span></span>
       </button>
       <button class="mtile" data-reveal aria-expanded="false">
         <span class="mt-top"><span class="mtype" data-m="success">Success</span><i class="seg-dot" data-seg="1" title="Reads segment 1">1</i></span>
         <span class="mt-name">Speed</span>
-        <span class="mt-big">not more than 2% lower</span>
-        <span class="mt-line">add-to-bag rate from the prompt (relative)</span>
-        <span class="mt-base">Baseline: need data</span>
-        <span class="mt-rev-wrap"><span class="more">Click for the detail</span><span class="mt-rev">2% relative is 1 point at a 50% rate. Also: median time to bag not more than 10% longer. Unclear result: extend by up to 2 weeks. Still unclear: no rollout.</span></span>
+        <span class="mt-q">Does the fast path stay fast?</span>
+        <span class="mt-big">At most 2% fewer</span>
+        <span class="mt-line">people add to bag. Example: 50 in 100 today, so at least 49 in 100.</span>
+        <span class="mt-base">Today: need data</span>
+        <span class="mt-rev-wrap"><span class="more">Why 2%?</span><span class="mt-rev"><b>It protects the 3 in 4 who skip</b><span class="t">If the test cannot tell, I do not roll out.</span></span></span>
       </button>
       <button class="mtile" data-reveal aria-expanded="false">
         <span class="mt-top"><span class="mtype" data-m="success">Success</span><i class="seg-dot" data-seg="3" title="Reads segment 3">3</i></span>
         <span class="mt-name">Keep</span>
-        <span class="mt-big">5 points or less</span>
-        <span class="mt-line">return rate of changed pairs, above made-to-order fits</span>
-        <span class="mt-base">Baseline: need data</span>
-        <span class="mt-rev-wrap"><span class="more">Click for the detail</span><span class="mt-rev">Within 30 days of delivery. Read on the first 300 changed orders with a closed window. Split by return reason, so a size return is not blamed on a detail.</span></span>
+        <span class="mt-q">Do customers keep what they changed?</span>
+        <span class="mt-big">At most 5 more</span>
+        <span class="mt-line">returns per 100 than made-to-order fits. Example: 20, so at most 25.</span>
+        <span class="mt-base">Today: need data</span>
+        <span class="mt-rev-wrap"><span class="more">When do we know?</span><span class="mt-rev"><b>About 45 days after the last order</b><span class="t">delivery, then 30 days to return</span></span></span>
       </button>
     </div>
     <button class="stopbar" data-reveal aria-expanded="false">
       <span class="sb-label">Stop rule</span>
-      <span class="sb-text">Flag OFF within one working day. Owner: the Custom Made PM.</span>
-      <span class="sb-rev-wrap"><span class="more">Click for the three triggers</span><span class="sb-rev"><span>1. Speed: add-to-bag or order rate significantly lower.</span><span>2. Keep: more than 5 points above made-to-order fits.</span><span>3. Operations: made wrong above 2%, or late above 10%.</span><span>Each detail can also be turned off on its own.</span></span></span>
+      <span class="sb-text">If one of these happens, the Custom Made PM turns it off within one working day.</span>
+      <span class="sb-rev-wrap"><span class="more">What are they?</span><span class="sb-rev"><span>Fewer people add to bag</span><span>Too many changed pairs come back</span><span>Pairs made wrong or late</span></span></span>
     </button>
     <div class="sigs">
-      <div class="sigrow"><span class="siglab"><span class="mtype" data-m="safety">Safety</span></span><span class="schip">Order rate</span><span class="schip">Made wrong ≤ 2%</span><span class="schip">Late ≤ 10%</span></div>
-      <div class="sigrow"><span class="siglab"><span class="mtype" data-m="early">Early signal</span></span>
-        <span class="schip early" tabindex="0" data-pop="Sheet exit rate|Visits that open the details sheet and end with no bag, divided by visits that open the sheet. Watch: above the exit rate of picker users who never opened the sheet."><i class="seg-dot" data-seg="2">2</i>Sheet exit rate</span>
-        <span class="schip early" tabindex="0" data-pop="Reset rate|Visits that tap Reset to standard, divided by visits that open the sheet. Watch: above 20%."><i class="seg-dot" data-seg="2">2</i>Reset rate &gt; 20%</span>
-        <span class="schip early" tabindex="0" data-pop="24-hour cancellations|Changed orders cancelled or queried within 24 hours. Watch: more than 2 points above standard orders.">24-hour cancellations</span>
-        <span class="schip early" tabindex="0" data-pop="Expectation match|One question after delivery: did the details match what you expected? Watch: under 90% yes, with at least 100 answers.">Expectation match &lt; 90%</span>
-        <span class="schip early" tabindex="0" data-pop="Flip rate|Customers who open the sheet and set the same option three times or more. Watch: rising week over week.">Flip rate</span>
+      <div class="sigrow"><span class="siglab"><span class="mtype" data-m="safety">Safety</span></span><span class="sigtxt">Must not get worse:</span><span class="schip">Orders overall</span><span class="schip">Made wrong: max 2 in 100</span><span class="schip">Late: max 10 in 100</span></div>
+      <div class="sigrow"><span class="siglab"><span class="mtype" data-m="early">Early signal</span></span><span class="sigtxt">Warnings in days:</span>
+        <span class="schip early" tabindex="0" data-pop="Open Details, then leave|They opened Details but put nothing in the bag. Warning: this happens more often than for people who never opened Details."><i class="seg-dot" data-seg="2">2</i>Opened Details, then left</span>
+        <span class="schip early" tabindex="0" data-pop="Back to standard|They opened Details and tapped Reset to standard. Warning: more than 1 in 5."><i class="seg-dot" data-seg="2">2</i>Reset: over 1 in 5</span>
+        <span class="schip early" tabindex="0" data-pop="Cancelled within a day|Changed orders cancelled within 24 hours. Warning: 2 in 100 more than standard orders.">Cancelled in 24 h</span>
+        <span class="schip early" tabindex="0" data-pop="Did it match?|One question after delivery: did the details match what you expected? Warning: fewer than 9 in 10 say yes, from at least 100 answers.">"Did it match?" &lt; 9 in 10</span>
+        <span class="schip early" tabindex="0" data-pop="Changed their mind|They picked a different value for the same detail 3 times or more. Warning: this rises week over week.">Mind changed 3+ times</span>
       </div>
     </div>
   </div>
