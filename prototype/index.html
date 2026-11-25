@@ -1,0 +1,3339 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Trousers design options: prototype</title>
+<style>
+  :root {
+    /* Live-site tokens, from the public stylesheet on 23 November 2026 (02_PROTOTYPE_SPEC, section 3). */
+    --ink: #2d2e2c;
+    --dark: #2d2e2c;
+    --black: #000000;
+    --mid: #454545;      /* text-2. Secondary text. Never a lighter grey for text. */
+    --icon2: #898989;    /* Icons and hairlines only, never text. */
+    --line: #e1e1e1;
+    --line-strong: #c6c6c6;
+    --soft: #f6f6f6;
+    --art: #efefef;
+    --info: #eef7ff;     /* Notices: information, not warning. */
+    --warn: #eef7ff;     /* The old name stays for the v1 checks that read it. */
+    --focus: #1e65ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "GT America", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.45;
+    color: var(--ink);
+    background: #fafafa;
+  }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button[disabled] { cursor: default; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  h1, h2, h3, p { margin: 0; }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Page layout: the phone is at the left, and the panel is at the right. The compact layout is at the end. */
+  .page {
+    display: grid;
+    grid-template-columns: 430px minmax(0, 1fr);
+    gap: 14px 32px;
+    align-items: start;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 14px 24px 48px;
+  }
+  .phone-col { position: sticky; top: 10px; }
+  .topbar, .panel-bar { display: none; }
+
+  /* Phone frame. The content area is 390 by 780 CSS pixels. */
+  .phone-frame {
+    width: 410px;
+    height: 800px;
+    border: 10px solid #111;
+    border-radius: 42px;
+    background: #fff;
+    overflow: hidden;
+  }
+  .phone { position: relative; width: 390px; height: 780px; overflow: hidden; background: #fff; }
+  .screen { position: absolute; inset: 0; display: flex; flex-direction: column; background: #fff; }
+  .scroll { flex: 1; min-height: 0; overflow-y: auto; }
+
+  /* Controls in the phone. */
+  .icon-btn {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 22px;
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .icon-btn svg { width: 20px; height: 20px; }
+  .btn {
+    min-height: 48px;
+    padding: 0 22px;
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    background: #fff;
+  }
+  .btn-dark { background: var(--dark); border-color: var(--dark); color: #fff; }
+  .btn-dark[disabled] { background: #c5c7cb; border-color: #c5c7cb; }
+  .btn[aria-disabled="true"] { border-color: var(--line); color: var(--mid); cursor: default; }
+  .text-btn {
+    min-height: 44px;
+    padding: 0 8px;
+    border: 0;
+    background: none;
+    text-decoration: underline;
+    font-size: 14px;
+  }
+  .text-btn[disabled] { color: #8d9096; text-decoration: none; }
+  .seg { display: grid; gap: 2px; padding: 3px; border-radius: 4px; background: var(--soft); }
+  .seg button { min-height: 44px; border: 0; border-radius: 2px; background: transparent; color: var(--mid); font-size: 14px; }
+  .seg button[aria-pressed="true"] {
+    background: #fff;
+    color: var(--ink);
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
+  }
+  .price { font-weight: 600; }
+  .delivery { font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px; }
+  .info-i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    border: 1px solid var(--mid);
+    border-radius: 50%;
+    font-size: 10px;
+    font-style: normal;
+    color: var(--mid);
+  }
+  .notice { margin-top: 6px; padding: 5px 8px; border-radius: 2px; background: var(--warn); font-size: 12.5px; }
+  .readonly-line { font-size: 13px; color: var(--ink); }
+  .readonly-line b { font-weight: 600; }
+  .tag {
+    display: inline-block;
+    padding: 0 6px;
+    border: 1px solid var(--ink);
+    border-radius: 10px;
+    font-size: 11px;
+    line-height: 16px;
+    font-weight: 600;
+  }
+
+  /* Product page. */
+  .pdp-art { height: 380px; background: var(--art); display: flex; justify-content: center; align-items: center; }
+  .pdp-art svg { height: 94%; }
+  .pdp-body { padding: 16px; }
+  .pdp-name { font-size: 18px; font-weight: 600; }
+  .pdp-sub { margin: 2px 0 8px; color: var(--mid); font-size: 13px; }
+  .pdp-body .btn { width: 100%; margin-top: 14px; }
+  .pdp-free { margin-top: 10px; text-align: center; font-size: 13px; color: var(--mid); }
+  .pdp-sections { margin-top: 18px; }
+  .pdp-sections div { display: flex; justify-content: space-between; padding: 14px 0; border-top: 1px solid var(--line); }
+
+  /* Prompt. */
+  .prompt-top { display: flex; justify-content: flex-end; padding: 6px; }
+  .prompt-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 0 28px 70px;
+    text-align: center;
+  }
+  .prompt-body h2 { font-size: 20px; }
+  .prompt-body p { color: var(--ink); margin-bottom: 12px; }
+  .prompt-body .btn { width: 230px; }
+  .prompt-body .btn-first { background: var(--soft); }
+
+  /* Fit picker. */
+  .fit-art {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--art);
+  }
+  .fit-art svg { height: 94%; max-width: 100%; }
+  .top-left { position: absolute; top: 6px; left: 6px; }
+  .top-right { position: absolute; top: 6px; right: 6px; }
+  .panel { display: flex; flex-direction: column; gap: 10px; padding: 12px 16px 14px; }
+  .foot-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .details-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 60px;
+    padding: 8px 10px 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: #fff;
+    text-align: left;
+  }
+  .details-row .dr-text { flex: 1; min-width: 0; }
+  .details-row .dr-label { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
+  .details-row .dr-line { display: block; font-size: 13px; color: var(--mid); }
+  .details-row svg { width: 18px; height: 18px; flex: none; }
+
+  /* Details sheet and option tiles. */
+  .backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); }
+  .sheet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 94%;
+    display: flex;
+    flex-direction: column;
+    border-radius: 14px 14px 0 0;
+    background: #fff;
+  }
+  .sheet:focus { outline: none; }
+  .sheet-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 8px 4px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .sheet-head h2 { font-size: 17px; }
+  .groups { padding: 8px 16px 2px; }
+  .group { margin: 0 0 8px; padding: 0; border: 0; min-width: 0; }
+  .group legend { padding: 0; margin-bottom: 5px; font-size: 13px; font-weight: 600; }
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tile {
+    position: relative;
+    display: block;
+    min-height: 44px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: #fff;
+    overflow: hidden;
+  }
+  .tile input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+  .tile:has(input:checked) { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+  .tile:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .tile-art { height: 40px; background: var(--art); display: flex; justify-content: center; }
+  .tile-art svg { height: 100%; }
+  .tile-body { display: block; padding: 5px 8px 6px; }
+  .tile-name { display: block; font-size: 13.5px; font-weight: 600; }
+  .tile-benefit { display: block; font-size: 12px; line-height: 1.35; color: var(--mid); }
+  .tile-check { pointer-events: none; }
+  .std-tag {
+    display: table;
+    margin-top: 4px;
+    padding: 0 6px;
+    border: 1px solid var(--mid);
+    border-radius: 10px;
+    font-size: 10.5px;
+    line-height: 15px;
+  }
+  .tile-check {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--ink);
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .tile-check svg { width: 12px; height: 12px; }
+  .tile:has(input:checked) .tile-check { display: flex; }
+  .foot { padding: 10px 16px 14px; border-top: 1px solid var(--line); background: #fff; }
+  .foot .text { flex: 1; min-width: 0; }
+
+  /* Live drawing at the top of the sheet. */
+  .live-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 6px 16px 5px;
+    border-bottom: 1px solid var(--line);
+  }
+  .live-crop { margin: 0; min-width: 0; text-align: center; }
+  .live-art {
+    display: flex;
+    justify-content: center;
+    height: 76px;
+    border-radius: 4px;
+    background: var(--art);
+  }
+  .live-art svg { height: 100%; max-width: 100%; }
+  .live-crop figcaption { margin-top: 3px; font-size: 12.5px; line-height: 1.3; }
+  .live-crop[data-flash="1"] .live-art { animation: flash 0.6s ease-out; }
+  @keyframes flash {
+    from { box-shadow: inset 0 0 0 2px var(--ink); }
+    to { box-shadow: inset 0 0 0 2px rgba(29, 30, 32, 0); }
+  }
+  /* With reduced motion, the border shows with no animation. */
+  @media (prefers-reduced-motion: reduce) {
+    .live-crop[data-flash="1"] .live-art { animation: none; box-shadow: inset 0 0 0 2px var(--ink); }
+  }
+
+  /* Size step. */
+  .size-top { position: relative; padding: 12px 50px 6px; text-align: center; }
+  .size-top h2 { font-size: 18px; line-height: 32px; }
+  .size-grid {
+    display: grid;
+    grid-template-columns: 34px repeat(3, 1fr);
+    gap: 6px;
+    align-items: center;
+    padding: 4px 14px 10px 10px;
+  }
+  .size-head { text-align: center; font-size: 12px; color: var(--ink); padding-bottom: 2px; }
+  .size-head b { display: block; font-size: 14px; }
+  .size-label { font-size: 11px; color: var(--mid); }
+  .size-cell { min-height: 44px; border: 1px solid var(--line); border-radius: 2px; background: #fff; }
+  .size-cell[aria-pressed="true"] { background: var(--dark); border-color: var(--dark); color: #fff; font-weight: 600; }
+  .size-extra { padding: 0 14px 10px; }
+  .size-foot { background: var(--soft); text-align: center; }
+  .size-foot .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+
+  /* Screen after "Add to bag". */
+  .bag-body { padding: 26px 20px 20px; }
+  .bag-body h2 { font-size: 20px; margin-bottom: 14px; }
+  .bag-item { display: flex; gap: 14px; align-items: center; padding: 10px; border: 1px solid var(--line); border-radius: 4px; }
+  .bag-art { flex: none; width: 84px; height: 116px; background: var(--art); display: flex; justify-content: center; }
+  .bag-art svg { height: 100%; }
+  .bag-item p { font-size: 13.5px; }
+  .bag-item .bag-name { font-weight: 600; font-size: 14.5px; }
+  .bag-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+  .bag-note { margin-top: 6px; text-align: center; font-size: 12px; color: var(--mid); }
+  .bag-restart { display: flex; justify-content: center; margin-top: 8px; }
+
+  /* Panel at the right of the phone. */
+  .side { min-width: 0; max-width: 760px; }
+  .block { margin-bottom: 12px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+  .block h1 { font-size: 20px; line-height: 1.3; }
+  .block h2 { margin-bottom: 6px; font-size: 13px; font-weight: 600; color: var(--mid); }
+  .block ul { margin: 0; padding-left: 18px; }
+  .block li { margin: 2px 0; }
+  .live { background: var(--dark); border-color: var(--dark); color: #fff; }
+  .live h2 { color: #c9ccd1; }
+  .live dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 14px; margin: 0 0 10px; }
+  .live dt { color: #c9ccd1; }
+  .live dd { margin: 0; font-weight: 600; }
+  .live .btn { min-height: 44px; color: var(--ink); }
+  .small { margin-top: 6px; font-size: 12.5px; color: var(--mid); }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; background: #fff; }
+  th, td { padding: 6px 8px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+  thead th { background: var(--soft); }
+  .col-active { background: var(--warn); }
+  thead .col-active { background: #ffe9a6; }
+  #selftest-result { margin: 16px 24px; padding: 12px; border: 1px solid var(--line); background: #fff; font-size: 12px; white-space: pre-wrap; }
+
+  /* Feature flag. */
+  .flag-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .flag-btn {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    background: #fff;
+    font-weight: 600;
+  }
+  .flag-btn[aria-pressed="true"] { background: var(--dark); border-color: var(--dark); color: #fff; }
+  .flag-note { display: block; margin-top: 4px; font-size: 13px; }
+
+  /* Event list. The newest entry is at the top. */
+  .tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 10px; }
+  .tool-btn {
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    background: #fff;
+    font-size: 13.5px;
+  }
+  .tool-btn[aria-pressed="true"] { background: var(--dark); border-color: var(--dark); color: #fff; }
+  .event-list { margin: 0; padding: 0; list-style: none; }
+  .entry { padding: 8px 0; border-top: 1px solid var(--line); }
+  .event-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+  .event-n { min-width: 2ch; font-weight: 600; }
+  .entry-time { font-size: 12.5px; color: var(--mid); font-variant-numeric: tabular-nums; }
+  .code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+  .event-name { font-weight: 600; overflow-wrap: anywhere; }
+  .metric-tag { padding: 0 6px; border: 1px solid var(--mid); border-radius: 10px; font-size: 11px; line-height: 16px; }
+  .props { margin: 4px 0 0; padding: 0 0 0 calc(2ch + 10px); list-style: none; overflow-wrap: anywhere; }
+  .props-common { margin-top: 4px; padding-top: 4px; border-top: 1px dashed var(--line); color: var(--mid); }
+  .log-note { font-style: italic; color: var(--mid); }
+  .live :focus-visible { outline-color: #fff; }
+
+  /* ---- Part A: live-site weights and radius, photos, accordion sheet, bag panel ---- */
+  h1, h2, h3 { font-weight: 500; }
+  .seg button[aria-pressed="true"], .price, .dr-label, .group legend, .tile-name, .tag,
+  .size-cell[aria-pressed="true"], .flag-btn, .pdp-name, .bag-name, .event-n, .event-name,
+  .size-head b, .acc-title, .prow b { font-weight: 500; }
+  .btn, .flag-btn, .tool-btn, .size-cell { border-radius: 2px; }
+  .tile, .details-row, .bag-item, .live-art { border-radius: 4px; }
+  .btn-dark { background: var(--ink); border-color: var(--ink); }
+  .btn-dark[disabled] { background: var(--line-strong); border-color: var(--line-strong); }
+  .size-cell[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); }
+  .flag-btn[aria-pressed="true"], .tool-btn[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); }
+  .topbar { background: var(--ink); }
+  .live { background: var(--ink); border-color: var(--ink); }
+
+  /* Photos. The fallback drawing centers in the same boxes. */
+  .fit-photo { position: relative; flex: 1; min-height: 120px; background: var(--art); overflow-y: auto; overflow-x: hidden; }
+  .fit-photo img { width: 100%; height: auto; display: block; }
+  .fit-photo .drawing-fallback { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; }
+  .fit-photo .drawing-fallback svg { height: 94%; }
+  .pdp-photo { position: relative; height: 380px; background: var(--art); overflow-y: auto; overflow-x: hidden; }
+  .pdp-photo img { width: 100%; height: auto; display: block; }
+  .pdp-photo .drawing-fallback { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; }
+  .pdp-photo .drawing-fallback svg { height: 94%; }
+  .photo-caption { padding: 6px 14px 0; font-size: 12px; color: var(--mid); }
+  .bag-art { position: relative; }
+  .bag-art img { width: 100%; height: auto; display: block; }
+  .bag-art .drawing-fallback { position: absolute; inset: 0; display: flex; justify-content: center; }
+  .crop { background-repeat: no-repeat; background-color: var(--art); }
+
+  /* The three close-ups of the changed values, under the fit photo (gallery G3, choice A). */
+  .changed-strip { display: flex; gap: 6px; padding: 6px 14px 0; }
+  .changed-strip .cs { flex: 1; height: 54px; border-radius: 4px; position: relative; display: block; }
+  .changed-strip .cs svg { width: 100%; height: 100%; display: block; }
+  /* The changed close-ups use the same crop and size as the strip in the sheet, with a caption. */
+  .changed-strip .cs-fig { flex: 0 0 112px; margin: 0; }
+  .changed-strip .cs-fig .cs { width: 112px; height: 56px; flex: none; }
+  .changed-strip .cs-fig figcaption { font-size: 11px; color: var(--mid); margin-top: 2px; text-align: center; }
+  /* "More options": the round Custom Made mark of the live site, at the lower left of the fit photo. */
+  .mo-wrap { position: sticky; bottom: 0; height: 0; z-index: 2; }
+  .more-opts { position: absolute; left: 10px; bottom: 10px; display: inline-flex; align-items: center; gap: 6px; min-height: 44px;
+    padding: 0 14px 0 10px; border: 0; border-radius: 22px; background: #fff; color: var(--ink); font: inherit; font-size: 12.5px; cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+  .more-opts .ring { width: 22px; height: 22px; border-radius: 50%; background: conic-gradient(#e94b3c, #f2b632, #5bb85d, #3a87d9, #9b59b6, #e94b3c);
+    -webkit-mask: radial-gradient(circle, transparent 6px, #000 6.5px); mask: radial-gradient(circle, transparent 6px, #000 6.5px); }
+  .more-card { position: absolute; left: 10px; right: 10px; bottom: 62px; padding: 12px 14px; border-radius: 4px; background: #fff;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.16); font-size: 12.5px; line-height: 1.45; color: var(--ink); }
+  .more-card b { font-weight: 500; }
+  .more-card .small { color: var(--mid); margin-top: 4px; display: block; }
+
+  /* The Details row with words and three thumbs (gallery G4, choice B). A thumb opens the sheet with that option expanded. */
+  .details-row { flex-direction: column; align-items: stretch; gap: 0; }
+  .dr-main { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 0; border: 0; background: none; text-align: left; }
+  .dr-main svg { flex: none; }
+  .dr-thumbs { display: flex; gap: 4px; margin-top: 5px; }
+  .dr-thumbs button { padding: 0; border: 1px solid var(--line); border-radius: 2px; background: #fff; width: 44px; height: 44px; overflow: hidden; }
+  .dr-thumbs .th { display: block; width: 100%; height: 100%; }
+  .dr-thumbs .th svg { width: 100%; height: 100%; display: block; }
+
+  /* The sheet strip: three close-ups, one per enabled option. */
+  .live-strip { grid-template-columns: 1fr 1fr 1fr; }
+  .live-art { height: 58px; }
+  .live-crop figcaption { font-size: 11.5px; }
+
+  /* Accordion rows in the sheet (gallery G5, choice C with the changed-only modification). */
+  .acc-row { width: 100%; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; background: #fff; margin: 0 0 8px; min-height: 60px; text-align: left; }
+  .acc-row .acc-thumb { width: 42px; height: 42px; border-radius: 2px; flex: none; display: block; }
+  .acc-row .acc-thumb svg { width: 100%; height: 100%; display: block; }
+  .acc-row .acc-text { flex: 1; min-width: 0; }
+  .acc-row .acc-title { display: block; font-size: 13.5px; }
+  .acc-row .acc-value { display: block; font-size: 12.5px; color: var(--mid); }
+  .acc-row > svg { flex: none; width: 18px; height: 18px; }
+  .acc-group { margin: 0 0 10px; padding: 0; border: 0; min-width: 0; }
+  .acc-group legend { display: flex; align-items: center; gap: 8px; }
+  .tile-art-photo { height: 88px; background-position: 50% 15%; }
+  .tile.is-unavailable { opacity: 0.55; }
+
+  /* The details panel in the bag, after the live pattern (rule R12). */
+  .bag-panel { position: absolute; left: 0; right: 0; bottom: 0; max-height: 82%; display: flex; flex-direction: column; border-radius: 14px 14px 0 0; background: #fff; }
+  .bag-panel:focus { outline: none; }
+  .prow { display: flex; justify-content: space-between; gap: 12px; padding: 9px 16px; border-top: 1px solid var(--line); font-size: 13px; margin: 0; }
+  .prow b { font-weight: 500; text-align: right; }
+  .panel-rows { overflow-y: auto; padding-bottom: 8px; }
+
+  /* The suggestion card on the prompt (part B). */
+  .prompt-body .sugg-card { width: 280px; border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; text-align: left; background: #fff; }
+  .sugg-card .eyebrow { font-size: 10.5px; letter-spacing: .08em; color: var(--icon2); text-transform: uppercase; }
+  .sugg-card .line { margin: 4px 0 8px; font-size: 14px; }
+  .sugg-card .src { margin: 6px 0 0; font-size: 11.5px; color: var(--mid); }
+  .sugg-card .fresh { display: block; margin: 6px 0 0; padding: 6px 0 0; border: 0; background: none; text-decoration: underline; font-size: 12px; color: var(--mid); }
+
+  /* The size step: prefill line and hinted cell (part B). */
+  .prefill-line { margin: 0; padding: 6px 14px 0; font-size: 12.5px; color: var(--mid); }
+  .size-cell.hint { outline: 2px solid var(--ink); outline-offset: 1px; }
+  .size-extra .text-btn { min-height: 44px; min-width: 44px; padding: 0 12px; }
+
+
+  /* The product page: expandable Size & Fit section (part C) */
+  .pdp-sections .sect { width: 100%; border: 0; background: none; padding: 14px 0; border-top: 1px solid var(--line); font-size: 14px; font-weight: 500; display: flex; justify-content: space-between; cursor: pointer; text-align: left; }
+  .pdp-sections .sect .chev { color: var(--text2); font-weight: 400; }
+  .sectrows { padding: 4px 0 12px; font-size: 13px; color: var(--text2); border-top: 1px solid var(--line); }
+  .sectrows .sr { display: flex; gap: 8px; padding: 3px 0; }
+  .sectrows .sr span:first-child { width: 100px; color: var(--icon2); }
+  /* The ".pdp-sections div" rule is for the closed section rows. The Size & Fit wrapper and its rows stack. */
+  .pdp-sections #sf-rows { display: block; padding: 0; border-top: 0; }
+  .pdp-sections .sectrows { display: block; padding: 4px 0 12px; }
+  .pdp-sections .sectrows .sr { display: flex; justify-content: flex-start; gap: 8px; padding: 3px 0; border-top: 0; }
+  .pdp-sections .sectrows .sr span:first-child { flex: 0 0 100px; }
+  /* Release 1.2: the boxed "Change these details" control inside Size & Fit. */
+  .pdp-details { display: block; width: 100%; margin: 12px 0 2px; padding: 12px 14px; border: 1px solid var(--ink); border-radius: 4px;
+    background: #fff; color: var(--ink); font: inherit; text-align: left; cursor: pointer; min-height: 44px; }
+  .pdp-details .pd-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 13.5px; }
+  .pdp-details .pd-top b { font-weight: 600; }
+  .pdp-details .pd-cta { font-size: 12.5px; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+  .pdp-details .pd-line { display: block; margin-top: 3px; font-size: 13px; color: var(--mid); }
+  .pdp-details .pd-note { display: block; margin-top: 6px; font-size: 11.5px; color: var(--mid); }
+  .sectrows .chg { display: block; padding: 8px 0 2px; color: var(--ink); text-decoration: underline; font-size: 13px; background: none; border: 0; cursor: pointer; min-height: 44px; }
+  .sectrows .note { display: block; color: var(--text2); font-size: 11.5px; padding-bottom: 6px; }
+
+
+  /* Live event ticker: always visible, shows the latest events */
+  .event-ticker {
+    border-top: 1px solid var(--line);
+    background: #fff;
+    padding: 6px 12px;
+    max-height: 84px;
+    overflow-y: auto;
+  }
+  /* Older entries are secondary text, the latest is ink. No opacity and no light grey, so the contrast stays 4.5 to 1 or more. */
+  .ticker-entry {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 11px;
+    padding: 1px 0;
+    color: var(--mid);
+  }
+  .ticker-entry .t-n { color: var(--mid); min-width: 2ch; }
+  .ticker-entry .t-name { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--mid); }
+  .ticker-entry.latest .t-name { color: var(--ink); font-weight: 600; }
+  .ticker-entry .t-tag { color: var(--mid); font-size: 10px; border: 1px solid var(--line); border-radius: 6px; padding: 0 5px; line-height: 14px; }
+  .ticker-entry .t-time { color: var(--mid); margin-left: auto; font-size: 10px; }
+  .ticker-empty { font-size: 11px; color: var(--mid); padding: 4px 0; }
+
+  /* Compact layout, below 900 pixels: the flow fills the screen. A button opens the panel as an overlay. */
+  @media (max-width: 899.98px) {
+    body { background: #fff; }
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 48px;
+      padding: 0 4px 0 12px;
+      background: var(--dark);
+      color: #fff;
+    }
+    .topbar :focus-visible { outline-color: #fff; }
+    .topbar-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+    .topbar-flag { display: flex; align-items: center; gap: 4px; font-size: 13px; }
+    .topbar .flag-btn { width: 48px; border-color: #fff; background: transparent; color: #fff; }
+    .topbar .flag-btn[aria-pressed="true"] { background: #fff; color: var(--ink); }
+    .topbar .tool-btn { border-color: #fff; background: transparent; color: #fff; }
+    .page { display: block; max-width: none; padding: 0; }
+    .phone-col { position: static; }
+    .phone-frame {
+      width: 100%;
+      height: calc(100vh - 48px);
+      height: calc(100dvh - 48px);
+      border: 0;
+      border-radius: 0;
+    }
+    /* The phone takes the free height, and the live event ticker stays in view below it. */
+    .phone-frame { display: flex; flex-direction: column; }
+    .phone { width: 100%; height: auto; flex: 1; min-height: 0; }
+    .event-ticker { flex: 0 0 auto; height: 76px; max-height: 76px; }
+    .side { display: none; max-width: none; }
+    .side.is-open {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      overflow-y: auto;
+      padding: 0 12px 24px;
+      background: #fafafa;
+    }
+    .panel-bar {
+      display: flex;
+      justify-content: flex-end;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      margin: 0 -12px 12px;
+      padding: 2px 4px;
+      border-bottom: 1px solid var(--line);
+      background: #fafafa;
+    }
+    #selftest-result { margin: 12px; }
+  }
+
+  /* The segment of this visit in the panel: a small dot in the segment colour of the deck, then the name. */
+  .vseg-dot { display: inline-block; width: 10px; height: 10px; margin-right: 7px; border-radius: 50%; box-shadow: 0 0 0 1px #fff; }
+  .vseg-dot[data-seg="1"] { background: #51606e; }
+  .vseg-dot[data-seg="2"] { background: #9a5b00; }
+  .vseg-dot[data-seg="3"] { background: #0f766e; }
+
+  /* Mini embed mode (#mini=1, for the small frames of the deck): only the phone, and it fills the frame.
+     Outside any media query, so it does not depend on the window width. */
+  html.mini, html.mini body { overflow: hidden; }
+  html.mini body { background: #fff; }
+  html.mini #topbar, html.mini #panel, html.mini #event-ticker, html.mini #selftest-result { display: none !important; }
+  html.mini .page { display: block; max-width: none; margin: 0; padding: 0; }
+  html.mini .phone-col { position: static; }
+  html.mini #phone-frame {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    zoom: 1 !important;
+    transform: none !important;
+  }
+  html.mini #phone { width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<header class="topbar" id="topbar" data-zone="topbar">
+  <span class="topbar-label">Prototype</span>
+  <div class="topbar-flag" role="group" aria-label="Feature flag">
+    <span aria-hidden="true">Flag</span>
+    <button class="flag-btn" data-action="set-flag" data-value="on" aria-pressed="true">ON</button>
+    <button class="flag-btn" data-action="set-flag" data-value="off" aria-pressed="false">OFF</button>
+  </div>
+  <button class="tool-btn" id="events-button" data-action="open-panel" aria-controls="panel" aria-expanded="false">Events (0)</button>
+</header>
+<div class="page">
+  <main class="phone-col" id="flow" aria-label="Flow in the phone">
+    <div class="phone-frame" id="phone-frame">
+      <div class="phone" id="phone" data-zone="phone"></div>
+      <div class="event-ticker" id="event-ticker" aria-label="Live event log">
+        <div class="ticker-empty">Events will appear here as you click through the flow.</div>
+      </div>
+    </div>
+  </main>
+  <aside class="side" id="panel" data-zone="panel" aria-label="Prototype panel">
+    <div class="panel-bar"><button class="tool-btn" id="panel-close" data-action="close-panel">Close</button></div>
+    <section class="block">
+      <h1>Trousers design options: prototype</h1>
+      <p class="small">A prototype for a case assignment. Photos from the local assets folder. It is not a real shop.</p>
+    </section>
+    <section class="block" aria-labelledby="flag-title">
+      <h2 id="flag-title">Feature flag</h2>
+      <div class="flag-grid" role="group" aria-labelledby="flag-title">
+        <div><button class="flag-btn" data-action="set-flag" data-value="on" aria-pressed="true">ON</button><span class="flag-note">New flow. Test group.</span></div>
+        <div><button class="flag-btn" data-action="set-flag" data-value="off" aria-pressed="false">OFF</button><span class="flag-note">Flow of today. Control group.</span></div>
+      </div>
+      <p class="small">Flag key: trousers-design-options. OFF is the stop rule: each user gets the flow of today.</p>
+    </section>
+    <section class="block" aria-labelledby="options-title">
+      <h2 id="options-title">Options</h2>
+      <div class="flag-grid" role="group" aria-labelledby="options-title">
+        <div><button class="flag-btn" data-action="toggle-option" data-value="waistband" aria-pressed="true">Waistband</button></div>
+        <div><button class="flag-btn" data-action="toggle-option" data-value="hem" aria-pressed="true">Hem</button></div>
+        <div><button class="flag-btn" data-action="toggle-option" data-value="front" aria-pressed="true">Front style</button></div>
+        <div><button class="flag-btn" data-action="set-pdp-entry" aria-pressed="false">Product page entry</button></div>
+      </div>
+      <p class="small">Each option has its own switch. Off means the standard of the fit. The product page entry is the next test (release 1.2).</p>
+    </section>
+    <section class="block" aria-labelledby="scen-title">
+      <h2 id="scen-title">Demo scenarios</h2>
+      <p class="small" id="scen-lead">The three segments, the known-customer layer, the next test</p>
+      <div class="tools" id="scenario-buttons"></div>
+      <p class="small">Each button restarts the flow. Buttons 1 to 3 keep the flag, because the three segments exist in both groups. Buttons 4 to 7 set the flag ON.</p>
+    </section>
+    <section class="block" aria-labelledby="cust-title">
+      <h2 id="cust-title">Customer</h2>
+      <div class="tools" id="customer-buttons"></div>
+      <p class="small">Stands in for a real sign-in and for the flag trousers-details-shortcuts.</p>
+    </section>
+    <section class="block live" aria-labelledby="visit-title">
+      <h2 id="visit-title">This visit</h2>
+      <dl>
+        <dt>Taps</dt><dd id="live-taps">0</dd>
+        <dt>Segment</dt><dd id="live-segment">Not yet</dd>
+        <dt>Fit</dt><dd id="live-fit"></dd>
+        <dt id="live-details-label">Details</dt><dd id="live-details"></dd>
+        <dt>Delivery text</dt><dd id="live-delivery"></dd>
+        <dt>Order route</dt><dd id="live-route"></dd>
+        <dt>If it is returned</dt><dd id="live-resell"></dd>
+      </dl>
+      <button class="btn" data-action="restart">Start again</button>
+    </section>
+    <section class="block" aria-labelledby="know-title">
+      <h2 id="know-title">What we know about this customer</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th scope="col">Signal</th><th scope="col">Source</th><th scope="col">What the flow does</th></tr></thead>
+        <tbody id="know-rows"></tbody>
+      </table></div>
+      <p class="small">Preselect what can go back into stock. Suggest what cannot.</p>
+    </section>
+    <section class="block" aria-labelledby="taps-title">
+      <h2 id="taps-title">Taps to the bag</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th scope="col">Path</th><th scope="col" data-col="off">Today</th><th scope="col" data-col="on">R1</th><th scope="col" data-col="r11">R1.1 signed in</th><th scope="col">R1.2</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Keep the fit</th><td data-col="off">4</td><td data-col="on">4</td><td data-col="r11">3</td><td></td></tr>
+          <tr><th scope="row">Choose Straight Fit</th><td data-col="off">6</td><td data-col="on">6</td><td data-col="r11">5</td><td></td></tr>
+          <tr><th scope="row">Keep the fit, change one detail, through the fit picker</th><td data-col="off">Not possible</td><td data-col="on">9</td><td data-col="r11">9</td><td></td></tr>
+          <tr><th scope="row">Same details as the last pair</th><td data-col="off">Not possible</td><td data-col="on"></td><td data-col="r11">4</td><td></td></tr>
+          <tr><th scope="row">Pick up where you left off</th><td data-col="off">Not possible</td><td data-col="on"></td><td data-col="r11">4</td><td></td></tr>
+          <tr><th scope="row">Change one detail from the product page</th><td data-col="off">Not possible</td><td data-col="on"></td><td></td><td>7</td></tr>
+        </tbody>
+      </table></div>
+      <p class="small">A count starts on the product page. It ends when the trousers with the correct details are in the bag. A changed pair cannot go back into stock, so its size always needs one tap to confirm.</p>
+    </section>
+    <section class="block" aria-labelledby="events-title">
+      <h2 id="events-title">Tracking events (0)</h2>
+      <p class="small">Each event also has the 17 super properties: product_id, flag_variant, customer_state, fit, is_fit_in_stock, waistband, hem, front, changed_detail_count, delivery_estimate, size_prefill, identity_tier, consent_state, market, locale, device_type, session_id.</p>
+      <div class="tools">
+        <button class="tool-btn" data-action="toggle-props" aria-pressed="false">Show all properties</button>
+        <button class="tool-btn" id="copy-button" data-action="copy-log">Copy log</button>
+        <button class="tool-btn" data-action="clear-log">Clear log</button>
+      </div>
+      <p id="event-empty">No events yet. Tap "Select size and fit" in the phone.</p>
+      <ol class="event-list" id="event-list"></ol>
+      <p class="small">The Adoption and Keep metrics come from order data. This prototype cannot show them.</p>
+    </section>
+    <section class="block" aria-labelledby="real-title">
+      <h2 id="real-title">Real and assumed</h2>
+      <ul>
+        <li>From the live site on 23 November 2026: the steps of today's flow, the five fits, the delivery texts, the price, the button texts, the "Size &amp; Fit" rows, and the bag pattern with its "Details" panel.</li>
+        <li>Assumption: the standard details of each fit, and which values production can make.</li>
+        <li>Assumption: a changed detail means 1-2 weeks at the same price.</li>
+                <li>Invented: every customer, their sizes and their order history. The customer switch arrives in part B.</li>
+        <li>From the public product pages: the photos, and the standard details of the four black fits. The photo of Slim Fit, Straight Leg is in another cloth.</li>
+        <li>Not real: the stock and the sizes. No photo exists for a changed combination, so a changed detail shows as a close-up.</li>
+      </ul>
+    </section>
+    <p class="small">Add #selftest to the address to run the self-test of this page.</p>
+  </aside>
+</div>
+<div id="live-status" class="visually-hidden" aria-live="polite"></div>
+<pre id="selftest-result" hidden></pre>
+<script>
+'use strict';
+
+// ---------- Data ----------
+
+const PRODUCT = {
+  id: 'B2248',
+  name: 'Wide Leg Tapered Suit Trousers',
+  sub: 'Black · Wrinkle-Free 4-Ply Wool',
+  price: '€179',
+  amount: 179,
+  currency: 'EUR',
+  baseFit: 'wide',
+  baseLeg: 'tapered',
+};
+
+// The standard details of each fit. inStock sets the delivery text. name: the product name of this fit, for the made-to-order bag line.
+const FITS = {
+  'slim-tapered':  { label: 'Slim Fit, Tapered Leg',  name: 'Slim Leg Tapered',  inStock: true,  standard: { waistband: 'adjusters', hem: 'turnup', front: 'pleated' } },
+  'slim-straight': { label: 'Slim Fit, Straight Leg', name: 'Slim Leg Straight', inStock: false, standard: { waistband: 'loops',     hem: 'plain',  front: 'flat'    } },
+  'straight':      { label: 'Straight Fit',           name: 'Straight Leg',      inStock: true,  standard: { waistband: 'loops',     hem: 'plain',  front: 'flat'    } },
+  'wide-tapered':  { label: 'Wide Fit, Tapered Leg',  name: 'Wide Leg Tapered',  inStock: true,  standard: { waistband: 'adjusters', hem: 'plain',  front: 'pleated' } },
+  'wide-straight': { label: 'Wide Fit, Straight Leg', name: 'Wide Leg Straight', inStock: false, standard: { waistband: 'loops',     hem: 'plain',  front: 'pleated' } },
+};
+
+// Full Custom Made for this cloth on the live site, 24 November 2026: the step above this flow.
+const FULL_CM = { price: '\u20ac229', delivery: '2-3 weeks' };
+
+const OPTIONS = [
+  { key: 'waistband', title: 'Waistband', values: [
+    { id: 'loops',     name: 'Belt loops',     short: 'belt loops',     benefit: 'Wear them with or without a belt.' },
+    { id: 'adjusters', name: 'Side adjusters', short: 'side adjusters', benefit: 'A buckle at each hip adjusts the waist. Worn without a belt.' } ] },
+  { key: 'hem', title: 'Hem', values: [
+    { id: 'plain',  name: 'Plain hem', short: 'plain hem',   benefit: 'A clean finish at the bottom.' },
+    { id: 'turnup', name: 'Turn-up',   short: 'turn-up hem', benefit: 'A 4 cm folded cuff. Its weight helps the leg hang straight.' } ] },
+  { key: 'front', title: 'Front style', values: [
+    { id: 'flat',    name: 'Flat front',    short: 'flat front',    benefit: 'Lies flat for a neat, close line.' },
+    { id: 'pleated', name: 'Pleated front', short: 'pleated front', benefit: 'One fold at the front. More room at the hip and thigh.' } ] },
+];
+
+const MAIN_FITS = [['slim', 'Slim Fit'], ['straight', 'Straight Fit'], ['wide', 'Wide Fit']];
+const LEGS = [['tapered', 'Tapered Leg'], ['straight', 'Straight Leg']];
+
+const SIZE_COLUMNS = [
+  { name: 'Regular', range: '168 - 186 cm' },
+  { name: 'Long', range: '> 186 cm' },
+  { name: 'Short', range: '< 168 cm' },
+];
+// One row: the letter size, then the number in each column. null means that the size does not exist.
+const SIZE_ROWS = [
+  ['XXS', 42, null, null],
+  ['XS', 44, null, 22],
+  ['S', 46, 90, 23],
+  ['M', 48, 94, 24],
+  ['M/L', 50, 98, 25],
+  ['L', 52, 102, 26],
+  ['XL', 54, 106, 27],
+  ['XXL', 56, 110, 28],
+  ['3XL', 58, 114, 29],
+  ['4XL', 60, 118, 30],
+];
+
+// ---------- Photos (decision D4) ----------
+
+const ASSETS = 'assets/';
+// Close-up crops, tuned by eye on 24 November against the checked photos (_local/assets-source/README.md).
+const PHOTO_CROPS = {
+  loops:     { src: ASSETS + 'waist-straight.jpg',     pos: '50% 8%',  size: '200% auto' }, // belt loops at the waistband, B2149 close-up
+  adjusters: { src: ASSETS + 'waist-slim-tapered.jpg', pos: '64% 16%', size: '280% auto' }, // the buckle at the right hip, B2148 close-up
+  pleated:   { src: ASSETS + 'fit-wide-tapered.jpg',   pos: '50% 26%', size: '280% auto' }, // the pleat below the waistband, B2248
+  flat:      { src: ASSETS + 'fit-straight.jpg',       pos: '50% 35%', size: '240% auto' }, // the smooth front, B2149
+  turnup:    { src: ASSETS + 'fit-slim-tapered.jpg',   pos: '50% 94%', size: '280% auto' }, // the cuff at the hem, B2148
+  plain:     { src: ASSETS + 'fit-straight.jpg',       pos: '50% 94%', size: '280% auto' }, // the plain hem, B2149
+};
+
+// Demo assumption: production cannot make this value for this fit. The real rules are gap P1.
+const UNAVAILABLE = { 'slim-straight': { front: ['pleated'] } };
+
+// What we know about the customer (part B). All values are invented for the demo.
+// sizeMode: 'none', 'preselected' (signed in) or 'suggested' (this device only).
+// knows: the rows of the "What we know" box in the panel.
+const CUSTOMERS = {
+  anonymous: {
+    label: 'New visitor', sizeMode: 'none', size: null, suggestion: null,
+    knows: [['Nothing', '', 'The baseline. A visitor who declined cookies gets the same, and so does everyone if the customer lookup fails.']],
+  },
+  identified: {
+    label: 'Returning visitor, not signed in', sizeMode: 'suggested', size: 48,
+    suggestion: { type: 'resume_selection', source: 'device_storage', mainFit: 'straight', set: { waistband: 'adjusters' }, size: 48 },
+    knows: [['A selection saved 3 days ago: Straight Fit, side adjusters, size 48 Regular', 'This device, with consent', 'Offers to continue. Highlights the size. Shows no personal data.']],
+  },
+  signed_in_size: {
+    label: 'Signed in, size on file', sizeMode: 'preselected', size: 50, suggestion: null,
+    knows: [
+      ['Size 50 Regular', 'Size Passport on the account', 'Preselects the size. One tap changes it.'],
+      ['Two kept trouser orders with standard details', 'Order history', 'No details suggestion: nothing differs from the standard.'],
+    ],
+  },
+  signed_in_details: {
+    label: 'Signed in, detail history', sizeMode: 'preselected', size: 50,
+    suggestion: { type: 'last_details', source: 'order_history', set: { waistband: 'adjusters', hem: 'turnup', front: 'pleated' } },
+    knows: [
+      ['Size 50 Regular', 'Size Passport on the account', 'Preselects the size on a standard pair. Only suggests it on a changed pair.'],
+      ['Last kept pair: side adjusters, turn-up hem, pleated front', 'Order history', 'Offers "Use these details". Never preselects them.'],
+    ],
+  },
+};
+
+// The demo scenarios of the panel (PRESENTATION_V3_SPEC, section 6.5): the three segments, the
+// known-customer layer (R1.1), and the next test (R1.2). The flag is a switch, not a scenario.
+// Scenarios 1 to 3 keep the current flag, because the three segments exist in both groups.
+// Scenarios 4 to 7 set the flag ON. Each path names the real controls in the phone, one per tap.
+function SCENARIOS() {
+  return [
+    { n: 1, label: 'Skipped the fit picker', flag: 'on', customer: 'anonymous', path: 'Select size and fit, Keep Tapered Leg, a size, Add to bag.' },
+    { n: 2, label: 'Opened the fit picker, not in the bag', flag: 'on', customer: 'anonymous', path: 'Select size and fit, Choose fit and details, Details, Hem, Turn-up. Then stop.' },
+    { n: 3, label: 'Opened the fit picker, in the bag', flag: 'on', customer: 'anonymous', path: 'Select size and fit, Choose fit and details, the hem thumb, Turn-up, Done, Next, Next, a size, Add to bag.' },
+    { n: 4, label: 'Known customer: size on file (R1.1)', flag: 'on', customer: 'signed_in_size', path: 'Select size and fit, Keep Tapered Leg, Add to bag.' },
+    { n: 5, label: 'Known customer: last details (R1.1)', flag: 'on', customer: 'signed_in_details', path: 'Select size and fit, Use these details, a size, Add to bag.' },
+    { n: 6, label: 'Known customer: this device (R1.1)', flag: 'on', customer: 'identified', path: 'Select size and fit, Continue, a size, Add to bag.' },
+    { n: 7, label: 'Next test: product page entry (R1.2)', flag: 'on', customer: 'anonymous', pdpEntry: true, path: 'Size & Fit, Change these details, Hem, Turn-up, Done, a size, Add to bag.' },
+  ];
+}
+
+// The segment names of the panel row (PRESENTATION_V3_SPEC, section 6.4). 0: no segment yet.
+const SEGMENT_TEXT = ['Not yet', '1 · Skipped the fit picker', '2 · Opened the fit picker, not in the bag (so far)', '3 · Opened the fit picker, in the bag'];
+
+// Mini embed mode for the small frames of the deck: only the phone, no top bar, no panel, no ticker,
+// and no prototype-event or prototype-state message. Read once at the start.
+const MINI = new URLSearchParams(location.hash.slice(1)).get('mini') === '1' && !location.hash.includes('selftest');
+
+// The visit (super property session_id): a random id made once per page load. It holds no personal data.
+// "Start again", a flag change, and a customer change keep it.
+const SESSION_ID = (() => {
+  let s = '';
+  while (s.length < 6) s += Math.random().toString(36).slice(2);
+  return 'demo-' + s.slice(0, 6);
+})();
+
+// The identity tier and the consent of each customer state (super properties identity_tier and consent_state).
+// Any tier above anonymous needs personalisation consent. With no analytics consent, no event is sent at all.
+const IDENTITY_TIER = { anonymous: 'anonymous', identified: 'identified', signed_in_size: 'signed_in', signed_in_details: 'signed_in' };
+
+// When the photo folder is missing, the page falls back to the v1 drawings, so the file also works alone.
+let PHOTOS_OK = true;
+(() => {
+  const probe = new Image();
+  probe.onerror = () => { PHOTOS_OK = false; render(); };
+  probe.src = ASSETS + 'fit-wide-tapered.jpg';
+})();
+
+function cropStyle(id) {
+  const c = PHOTO_CROPS[id];
+  return 'background-image:url(' + c.src + ');background-position:' + c.pos + ';background-size:' + c.size;
+}
+
+// A close-up of one value: a background crop, or the v1 drawing when there are no photos.
+function cropHtml(key, id, cls) {
+  const name = valueOf(key, id).name;
+  if (!PHOTOS_OK) return '<span class="' + cls + '" role="img" aria-label="Drawing: ' + name + '">' + detailSvg(key, id) + '</span>';
+  return '<span class="' + cls + ' crop" style="' + cropStyle(id) + '" role="img" aria-label="Close-up: ' + name + '"></span>';
+}
+
+// The photo of a fit. The onerror handler swaps in the drawing of the same fit and the same details.
+function fitPhotoImg(key, details) {
+  const d = details || effective();
+  return '<img src="' + ASSETS + 'fit-' + key + '.jpg" alt="Photo: ' + FITS[key].label + ', the standard details of this fit"' +
+    ' data-fit="' + key + '" data-d=\'' + JSON.stringify(d) + '\' onerror="this.outerHTML=window.__fitDrawing(this)">';
+}
+window.__fitDrawing = (img) => {
+  const key = img.dataset.fit;
+  let d = FITS[key].standard;
+  try { d = JSON.parse(img.dataset.d); } catch (error) { /* keep the standard */ }
+  return '<span class="drawing-fallback">' + trousersSvg(key, d) + '</span>';
+};
+
+// ---------- State ----------
+
+// The session fields and the panel fields. resetFlow() does not change them.
+const state = {
+  flag: 'on',        // 'on': the new flow (test group). 'off': the flow of today (control group).
+  customer: 'anonymous',  // What we know about the customer (part B). Stands in for the flag trousers-details-shortcuts.
+  enabled: { waistband: true, hem: true, front: true },  // The switch of each option (decision D10).
+  log: [],           // The entries of the event list
+  count: 0,          // The number of events in the log. Notes do not count.
+  showAll: false,    // The event list shows all properties
+  panelOpen: false,  // The panel overlay is open in the compact layout
+  copied: false,     // The "Copied" feedback shows
+  pdpEntry: false,   // The product page entry of release 1.2 (part C)
+};
+
+// "Start again" and a flag change use this function. It also sets the tap counter to zero.
+function resetFlow() {
+  Object.assign(state, {
+    screen: 'pdp',
+    mainFit: PRODUCT.baseFit,
+    leg: PRODUCT.baseLeg,
+    set: { waistband: null, hem: null, front: null }, // null: the option follows the standard of the fit
+    sheet: false,
+    sheetOpen: null,  // The option that is expanded in the sheet. null: all rows collapsed.
+    notice: null,     // The "value went back to standard" notice, or null
+    bagPanel: false,  // The details panel in the bag is open
+    sizeFitOpen: false, // "Size & Fit" on the product page is expanded (part C)
+    revealSizeFit: false, // One render scrolls the opened "Size & Fit" rows into view
+    card: true,       // The suggestion card is still on the prompt, until "Start fresh" (part B)
+    prefilled: null,  // The size the flow preselected or restored, or null (part B)
+    size: null,
+    sizeAuto: false,  // true while the size on screen is one the flow chose, not the customer
+    moreOpen: false,  // The "More options" card is open (full Custom Made is outside this prototype)
+    taps: 0,
+    flash: null,     // The option of the strip that changed in the last action
+    entry: null,     // The way to the size step: 'keep_fit', 'fit_picker' or 'suggestion'
+    pickerOpened: false, // fit_picker_opened fired in this flow (segments 2 and 3, has_opened_fit_picker)
+    keptFit: false,      // keep_fit_tapped fired in this flow (segment 1)
+  });
+}
+
+// The segment of this visit, from what the customer did (PRESENTATION_V3_SPEC, section 4).
+// 3: opened the fit picker, in the bag. 2: opened the fit picker, not in the bag (so far).
+// 1: skipped the fit picker. 0: no segment yet.
+function visitSegment() {
+  if (state.pickerOpened && state.screen === 'bag') return 3;
+  if (state.pickerOpened) return 2;
+  if (state.keptFit) return 1;
+  return 0;
+}
+
+// ---------- Rules ----------
+
+function fitKey() {
+  return state.mainFit === 'straight' ? 'straight' : state.mainFit + '-' + state.leg;
+}
+
+function standard() {
+  return FITS[fitKey()].standard;
+}
+
+// Everything new is behind this: the flag is on, and at least one option is enabled.
+function featureOn() {
+  return state.flag === 'on' && OPTIONS.some((o) => state.enabled[o.key]);
+}
+
+// Rule R8: production cannot make some values for some fits.
+function isAvailable(fit, key, id) {
+  return !(UNAVAILABLE[fit] && UNAVAILABLE[fit][key] && UNAVAILABLE[fit][key].includes(id));
+}
+
+// An option that the customer did not set follows the standard of the selected fit.
+// An option that the customer set stays when the fit changes.
+// A switched-off option always follows the standard (rule R9).
+function effective() {
+  const std = standard();
+  const out = {};
+  OPTIONS.forEach((o) => { out[o.key] = (state.enabled[o.key] && state.set[o.key]) || std[o.key]; });
+  return out;
+}
+
+// The trousers are "changed" when one value or more differs from the standard of the selected fit.
+function isChanged() {
+  const std = standard();
+  const eff = effective();
+  return OPTIONS.some((o) => state.enabled[o.key] && eff[o.key] !== std[o.key]);
+}
+
+function anySet() {
+  return OPTIONS.some((o) => state.enabled[o.key] && state.set[o.key] !== null);
+}
+
+// Standard and in stock: from stock. Anything else: made to order.
+function isMadeToOrder() {
+  return !FITS[fitKey()].inStock || isChanged();
+}
+
+
+
+// Rule R8: after a fit change, every set value that the new fit cannot make goes back to the standard.
+// Returns the count and sets the notice text of 01_CONCEPT.md, section 9.
+function dropUnavailable() {
+  const fit = fitKey();
+  const std = standard();
+  let count = 0;
+  OPTIONS.forEach((o) => {
+    const set = state.set[o.key];
+    if (state.enabled[o.key] && set !== null && !isAvailable(fit, o.key, set)) {
+      state.set[o.key] = null;
+      count += 1;
+      state.notice = valueOf(o.key, set).name + ' is not available for this fit. ' + o.title + ' is back to ' + valueOf(o.key, std[o.key]).short + '.';
+    }
+  });
+  return count;
+}
+
+// ---------- What we know about the customer (part B) ----------
+
+function customer() {
+  return CUSTOMERS[state.customer];
+}
+
+// 'none' when the feature is off, else the customer's sizeMode.
+// The rule: preselect only what can go back into stock. A pair with a changed detail cannot,
+// so its size is only suggested, also for a signed-in customer.
+function sizePrefill() {
+  if (!featureOn()) return 'none';
+  const mode = customer().sizeMode;
+  return mode === 'preselected' && isChanged() ? 'suggested' : mode;
+}
+
+// The flow keeps a size that it chose itself (state.sizeAuto) in line with the rule. A detail change
+// clears it and shows it as a suggestion. A reset to standard preselects it again.
+// A size that the customer tapped never changes.
+function syncSizePrefill() {
+  if (!state.sizeAuto) return;
+  if (sizePrefill() === 'suggested' && state.size !== null) state.size = null;
+  else if (sizePrefill() === 'preselected' && state.size === null && isSize(customer().size)) state.size = customer().size;
+}
+
+// The suggestion card on the prompt, or null. Rules P7 and P8: switched-off and unavailable
+// values never appear, and a "last details" card that equals the standard of the base fit
+// is nothing to offer.
+function suggestion() {
+  if (!featureOn() || !state.card) return null;
+  const s = customer().suggestion;
+  if (!s) return null;
+  const base = PRODUCT.baseFit + '-' + PRODUCT.baseLeg;
+  const set = {};
+  let differs = false;
+  OPTIONS.forEach((o) => {
+    const v = s.set[o.key];
+    if (v === undefined || !state.enabled[o.key] || !isAvailable(base, o.key, v)) return;
+    set[o.key] = v;
+    if (v !== FITS[base].standard[o.key]) differs = true;
+  });
+  if (s.type === 'last_details' && !differs) return null;
+  const shorts = OPTIONS.filter((o) => set[o.key] !== undefined).map((o) => valueOf(o.key, set[o.key]).short);
+  const line = s.type === 'resume_selection'
+    ? MAIN_FITS.find((f) => f[0] === s.mainFit)[1] + ' \u00b7 ' + shorts.join(' \u00b7 ') + ' \u00b7 size ' + s.size + ' Regular'
+    : 'Your last pair: ' + shorts.join(', ') + '.';
+  const sourceLine = s.type === 'resume_selection'
+    ? 'Saved on this device 3 days ago.'
+    : 'From your order history. You can edit them before you add to bag.';
+  return { type: s.type, source: s.source, set: set, mainFit: s.mainFit || null, size: s.size || null, line: line, sourceLine: sourceLine };
+}
+
+// The prefill of the size step: preselect for a signed-in customer, remember the hint otherwise.
+function applySizePrefill() {
+  if (sizePrefill() === 'none') return;
+  // For a signed-in customer the flow owns the size until the customer taps one.
+  // syncSizePrefill() then preselects it on a standard pair and only suggests it on a changed pair.
+  if (customer().sizeMode === 'preselected' && state.size === null && isSize(customer().size)) state.sizeAuto = true;
+  syncSizePrefill();
+  if (state.prefilled === null) state.prefilled = customer().size;
+}
+
+// The line above the size grid, or ''.
+function prefillLine() {
+  if (sizePrefill() === 'preselected' && state.size !== null && state.size === customer().size) {
+    return 'Size ' + state.size + ' ' + sizeLength().charAt(0).toUpperCase() + sizeLength().slice(1) + ' is selected, from your Size Passport.';
+  }
+  if (sizePrefill() === 'suggested' && state.size === null) {
+    if (customer().sizeMode === 'preselected') {
+      return 'Your Size Passport says ' + customer().size + ' Regular. Changed trousers are made for you, so tap to confirm.';
+    }
+    return 'Last time on this device: ' + customer().size + ' Regular';
+  }
+  return '';
+}
+
+// Only a fit in stock with standard details has the short delivery time.
+function deliveryText() {
+  return FITS[fitKey()].inStock && !isChanged() ? 'Delivery 1-2 days' : 'Delivery 1-2 weeks';
+}
+
+function noticeLine() {
+  if (!isChanged()) return '';
+  return FITS[fitKey()].inStock
+    ? 'Delivery changes to 1-2 weeks. We make these trousers for you.'
+    : 'Delivery stays 1-2 weeks.';
+}
+
+function valueOf(key, id) {
+  return OPTIONS.find((o) => o.key === key).values.find((v) => v.id === id);
+}
+
+// Example: "Side adjusters, plain hem, pleated front". Switched-off options are left out (rule R9).
+function detailsLine(lowerCase) {
+  const eff = effective();
+  const line = OPTIONS.filter((o) => state.enabled[o.key]).map((o) => valueOf(o.key, eff[o.key]).short).join(', ');
+  return lowerCase ? line : line.charAt(0).toUpperCase() + line.slice(1);
+}
+
+// The prompt text lists the enabled options.
+function promptText() {
+  const titles = OPTIONS.filter((o) => state.enabled[o.key]).map((o) => o.title.toLowerCase());
+  let list = '';
+  if (titles.length === 1) list = titles[0];
+  else if (titles.length === 2) list = titles.join(' and ');
+  else list = titles.slice(0, -1).join(', ') + ' and ' + titles[titles.length - 1];
+  return 'These trousers come in 5 fits. You can also change the ' + list + '.';
+}
+
+function keepLabel() {
+  if (state.mainFit === 'straight') return 'Keep Straight Fit';
+  return state.leg === 'tapered' ? 'Keep Tapered Leg' : 'Keep Straight Leg';
+}
+
+function sizeText() {
+  for (const row of SIZE_ROWS) {
+    const col = row.indexOf(state.size, 1);
+    if (col > 0) return 'Size ' + state.size + ' ' + SIZE_COLUMNS[col - 1].name;
+  }
+  return '';
+}
+
+function isSize(n) {
+  return SIZE_ROWS.some((row) => row.indexOf(n, 1) > 0);
+}
+
+// ---------- Drawings ----------
+
+const INK = '#26282b';
+const CUFF = '#34373b';
+const DETAIL = '#d3d6da';
+
+// Leg width at the thigh and at the hem, in drawing units.
+const LEG_SHAPE = {
+  'slim-tapered':  { thigh: 44, hem: 26 },
+  'slim-straight': { thigh: 44, hem: 34 },
+  'straight':      { thigh: 50, hem: 40 },
+  'wide-tapered':  { thigh: 60, hem: 32 },
+  'wide-straight': { thigh: 60, hem: 50 },
+};
+
+// Two parts of the same drawing, for the live drawing in the sheet. A crop changes only the visible area and the name.
+const CROPS = {
+  top: { box: '32 10 136 86', name: (d) => 'Drawing of the top: ' + valueOf('waistband', d.waistband).short + ', ' + valueOf('front', d.front).short },
+  hem: { box: '32 232 136 58', name: (d) => 'Drawing of the hem: ' + valueOf('hem', d.hem).short },
+};
+
+// The trousers from the front. The drawing shows the fit and the three details.
+// With crop ('top' or 'hem'), the function returns one part of the same drawing.
+function trousersSvg(key, d, crop) {
+  const t = LEG_SHAPE[key].thigh;
+  const h = LEG_SHAPE[key].hem;
+  const cx = 100, top = 18, band = 31, crotch = 104, bottom = 282;
+  const waist = t * 0.6 + 12;        // half of the waist width
+  const mid = t / 2 + 2;              // from the center to the middle of one leg at the hem
+  const inner = mid - h / 2;
+  const outer = mid + h / 2;
+  const pleat = waist * 0.5;
+  const parts = [];
+
+  parts.push('<path fill="' + INK + '" d="M' + (cx - waist) + ',' + band + ' L' + (cx + waist) + ',' + band +
+    ' Q' + (cx + t) + ',' + (band + 30) + ' ' + (cx + t) + ',' + crotch +
+    ' L' + (cx + outer) + ',' + bottom + ' L' + (cx + inner) + ',' + bottom +
+    ' L' + cx + ',' + (crotch + 8) +
+    ' L' + (cx - inner) + ',' + bottom + ' L' + (cx - outer) + ',' + bottom +
+    ' L' + (cx - t) + ',' + crotch +
+    ' Q' + (cx - t) + ',' + (band + 30) + ' ' + (cx - waist) + ',' + band + ' Z"/>');
+  parts.push('<rect fill="' + INK + '" x="' + (cx - waist) + '" y="' + top + '" width="' + (2 * waist) + '" height="' + (band - top) + '"/>');
+  parts.push('<line stroke="' + DETAIL + '" stroke-width="1.2" x1="' + (cx - waist) + '" x2="' + (cx + waist) + '" y1="' + band + '" y2="' + band + '"/>');
+  parts.push('<line stroke="' + DETAIL + '" stroke-width="1" opacity="0.45" x1="' + cx + '" x2="' + cx + '" y1="' + band + '" y2="86"/>');
+  parts.push('<circle fill="' + DETAIL + '" cx="' + cx + '" cy="24.5" r="1.8"/>');
+
+  [1, -1].forEach((side) => {
+    // A faint center crease on each leg, for both front styles.
+    const creaseTop = d.front === 'pleated' ? 84 : 48;
+    parts.push('<line stroke="' + DETAIL + '" stroke-width="1" opacity="0.3" x1="' + (cx + side * (pleat + 2)) + '" y1="' + creaseTop +
+      '" x2="' + (cx + side * mid) + '" y2="' + bottom + '"/>');
+
+    if (d.front === 'pleated') {
+      const tip = (cx + side * (pleat + 2)) + ',82';
+      parts.push('<path fill="none" stroke="' + DETAIL + '" stroke-width="1.6" stroke-linejoin="round" d="M' + (cx + side * (pleat - 1)) + ',' + band +
+        ' L' + tip + ' L' + (cx + side * (pleat + 6)) + ',' + band + '"/>');
+    }
+
+    if (d.waistband === 'loops') {
+      [0.36, 0.84].forEach((f) => {
+        parts.push('<rect fill="' + DETAIL + '" rx="0.8" x="' + (cx + side * waist * f - 2.25) + '" y="' + (top - 1.5) +
+          '" width="4.5" height="' + (band - top + 3) + '"/>');
+      });
+    } else {
+      const strapStart = side === 1 ? cx + waist - 19 : cx - waist + 2;
+      const buckle = side === 1 ? cx + waist - 24 : cx - waist + 18;
+      parts.push('<rect fill="' + DETAIL + '" x="' + strapStart + '" y="22" width="17" height="5"/>');
+      parts.push('<rect fill="none" stroke="#fff" stroke-width="1.5" x="' + buckle + '" y="20.5" width="6" height="8"/>');
+    }
+
+    if (d.hem === 'turnup') {
+      const left = side === 1 ? cx + inner - 2 : cx - outer - 2;
+      parts.push('<rect fill="' + CUFF + '" stroke="' + DETAIL + '" stroke-width="1.5" x="' + left + '" y="' + (bottom - 17) +
+        '" width="' + (h + 4) + '" height="18"/>');
+    }
+  });
+
+  const title = crop ? CROPS[crop].name(d) : 'Drawing: ' + FITS[key].label + ', ' + OPTIONS.map((o) => valueOf(o.key, d[o.key]).short).join(', ');
+  const box = crop ? CROPS[crop].box : '0 0 200 300';
+  return '<svg viewBox="' + box + '" role="img" aria-label="' + title + '"><title>' + title + '</title>' + parts.join('') + '</svg>';
+}
+
+// A small drawing of one detail value, for the option tiles.
+function detailSvg(key, id) {
+  let art = '';
+  if (key === 'waistband') {
+    art = '<rect fill="' + INK + '" x="8" y="12" width="104" height="38"/>' +
+      '<line stroke="' + DETAIL + '" stroke-width="1.5" x1="8" x2="112" y1="30" y2="30"/>';
+    art += id === 'loops'
+      ? '<rect fill="' + DETAIL + '" rx="1" x="34" y="9" width="7" height="24"/><rect fill="' + DETAIL + '" rx="1" x="79" y="9" width="7" height="24"/>'
+      : '<rect fill="' + DETAIL + '" x="66" y="18" width="38" height="6"/><rect fill="none" stroke="#fff" stroke-width="2" x="56" y="15" width="10" height="12"/>';
+  } else if (key === 'hem') {
+    art = '<path fill="' + INK + '" d="M40,0 L80,0 L77,44 L43,44 Z"/>';
+    if (id === 'turnup') art += '<rect fill="' + CUFF + '" stroke="' + DETAIL + '" stroke-width="1.8" x="40" y="24" width="40" height="21"/>';
+  } else {
+    art = '<path fill="' + INK + '" d="M28,6 L92,6 L92,14 Q101,30 102,50 L18,50 Q19,30 28,14 Z"/>' +
+      '<line stroke="' + DETAIL + '" stroke-width="1.2" x1="28" x2="92" y1="14" y2="14"/>' +
+      '<line stroke="' + DETAIL + '" stroke-width="1" opacity="0.45" x1="60" x2="60" y1="14" y2="44"/>';
+    if (id === 'pleated') {
+      art += '<path fill="none" stroke="' + DETAIL + '" stroke-width="1.8" stroke-linejoin="round" d="M41,14 L44,42 L48,14 M79,14 L76,42 L72,14"/>';
+    }
+  }
+  return '<svg viewBox="0 0 120 50" aria-hidden="true">' + art + '</svg>';
+}
+
+// ---------- Parts of the screens ----------
+
+const ICON = {
+  close: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4,4 L16,16 M16,4 L4,16" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>',
+  back: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12,4 L6,10 L12,16" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>',
+  chevron: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8,4 L14,10 L8,16" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>',
+  check: '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5,6.2 L5,8.6 L9.5,3.6" stroke="#fff" stroke-width="1.6" fill="none"/></svg>',
+};
+
+function esc(text) {
+  return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function closeButton() {
+  return '<button class="icon-btn" data-action="close" aria-label="Close">' + ICON.close + '</button>';
+}
+
+function backButton() {
+  return '<button class="icon-btn" data-action="back" aria-label="Back">' + ICON.back + '</button>';
+}
+
+// The (i) icon is not clickable in this mock-up.
+function deliveryHtml() {
+  return '<span class="delivery" data-role="delivery">' + deliveryText() + ' <i class="info-i" aria-hidden="true">i</i></span>';
+}
+
+function noticeHtml() {
+  const text = noticeLine();
+  return text ? '<p class="notice" data-role="notice">' + text + '</p>' : '';
+}
+
+function priceAndDelivery() {
+  return '<div><div class="price">' + PRODUCT.price + '</div>' + deliveryHtml() + '</div>';
+}
+
+function segmented(action, items, selected, label) {
+  return '<div class="seg" role="group" aria-label="' + label + '" style="grid-template-columns: repeat(' + items.length + ', 1fr)">' +
+    items.map((item) => '<button data-action="' + action + '" data-value="' + item[0] + '" aria-pressed="' + (item[0] === selected) + '">' + item[1] + '</button>').join('') +
+    '</div>';
+}
+
+// The row on the two fit screens (gallery G4, choice B): the words, and a thumb per enabled option.
+// The row opens the sheet with all rows collapsed. A thumb opens the sheet with that option already
+// expanded, so one changed detail still costs 3 taps in the sheet and 9 in total (03, section 11).
+function detailsRow() {
+  const eff = effective();
+  const thumbs = OPTIONS.filter((o) => state.enabled[o.key]).map((o) =>
+    '<button data-action="open-sheet" data-value="' + o.key + '" aria-label="Change the ' + o.title.toLowerCase() + ': ' + valueOf(o.key, eff[o.key]).name + '">' +
+    cropHtml(o.key, eff[o.key], 'th') + '</button>').join('');
+  return '<div class="details-row" data-role="details-row">' +
+    '<button class="dr-main" data-action="open-sheet" aria-haspopup="dialog">' +
+    '<span class="dr-text"><span class="dr-label">Details' +
+    (isChanged() ? ' <span class="tag" data-role="changed-tag">Changed</span>' : '') + '</span>' +
+    '<span class="dr-line" data-role="details-line">' + detailsLine() + '</span></span>' + ICON.chevron + '</button>' +
+    '<span class="dr-thumbs">' + thumbs + '</span></div>';
+}
+
+// The "value went back to standard" notice shows once, under the Details row (rule R8).
+function fitNoticeHtml() {
+  return state.notice ? '<p class="notice" data-role="fit-notice">' + state.notice + '</p>' : '';
+}
+
+// Later steps show the details only when the customer changed them.
+function readOnlyLine() {
+  return isChanged() ? '<p class="readonly-line" data-role="your-details"><b>Your details:</b> ' + detailsLine(true) + '</p>' : '';
+}
+
+function resetButton() {
+  return '<button class="text-btn" data-action="reset-options"' + (anySet() ? '' : ' disabled') + '>Reset to standard</button>';
+}
+
+// The accordion (gallery G5, choice C with the changed-only modification): each option is a summary row.
+// Only the option being changed is expanded, into its two photo tiles.
+function optionGroups() {
+  const std = standard();
+  const eff = effective();
+  const fit = fitKey();
+  const opts = OPTIONS.filter((o) => state.enabled[o.key]);
+  if (opts.length && !opts.some((o) => o.key === state.sheetOpen)) state.sheetOpen = null;
+  return '<div class="groups">' + opts.map((o) => {
+    const changed = eff[o.key] !== std[o.key];
+    if (state.sheetOpen !== o.key) {
+      const v = valueOf(o.key, eff[o.key]);
+      return '<button class="acc-row" data-action="expand-option" data-value="' + o.key + '" aria-expanded="false">' +
+        cropHtml(o.key, eff[o.key], 'acc-thumb') +
+        '<span class="acc-text"><span class="acc-title">' + o.title + (changed ? ' <span class="tag">Changed</span>' : '') + '</span>' +
+        '<span class="acc-value">' + v.name + (changed ? '' : ' \u00b7 Standard for this fit') + '</span></span>' + ICON.chevron + '</button>';
+    }
+    return '<fieldset class="acc-group"><legend>' + o.title + (changed ? ' <span class="tag">Changed</span>' : '') + '</legend><div class="tiles">' +
+      o.values.map((v) => {
+        const ok = isAvailable(fit, o.key, v.id);
+        return '<label class="tile' + (ok ? '' : ' is-unavailable') + '">' +
+          '<input type="radio" name="opt-' + o.key + '" data-action="set-option" data-value="' + o.key + ':' + v.id + '"' +
+          (eff[o.key] === v.id ? ' checked' : '') + (ok ? '' : ' disabled') + '>' +
+          (PHOTOS_OK
+            ? '<span class="tile-art-photo crop" style="' + cropStyle(v.id) + '" role="img" aria-label="Close-up: ' + v.name + '"></span>'
+            : '<span class="tile-art">' + detailSvg(o.key, v.id) + '</span>') +
+          '<span class="tile-check">' + ICON.check + '</span>' +
+          '<span class="tile-body"><span class="tile-name">' + v.name + '</span><span class="tile-benefit">' + v.benefit + '</span>' +
+          (!ok ? '<span class="std-tag" data-role="unavailable-tag">Not available for this fit</span>'
+               : (std[o.key] === v.id ? '<span class="std-tag">Standard for this fit</span>' : '')) + '</span></label>';
+      }).join('') + '</div></fieldset>';
+  }).join('') + '</div>';
+}
+
+// The strip at the top of the sheet: one close-up per enabled option, each showing the effective value.
+// The close-up of the last change gets the short highlight.
+function liveStrip() {
+  const eff = effective();
+  const cap = (text) => text.charAt(0).toUpperCase() + text.slice(1);
+  return '<div class="live-strip">' + OPTIONS.filter((o) => state.enabled[o.key]).map((o) => {
+    const flash = state.flash === o.key || state.flash === 'both' ? ' data-flash="1"' : '';
+    return '<figure class="live-crop" data-role="live-' + o.key + '"' + flash + '>' + cropHtml(o.key, eff[o.key], 'live-art') +
+      '<figcaption data-role="live-' + o.key + '-caption">' + cap(valueOf(o.key, eff[o.key]).short) + '</figcaption></figure>';
+  }).join('') + '</div>';
+}
+
+// The live strip is outside the scroll area, so it stays in view. The foot shows the delivery
+// notice and then the turn-up note, one short line each (02_PROTOTYPE_SPEC, section 7.4).
+function sheetHtml() {
+  return '<div class="backdrop" data-action="close-sheet" data-value="backdrop"></div>' +
+    '<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" tabindex="-1">' +
+    '<div class="sheet-head"><h2 id="sheet-title">Details</h2>' + resetButton() + '</div>' + liveStrip() +
+    '<div class="scroll" data-scroll="sheet">' + optionGroups() + '</div>' +
+    '<div class="foot"><div class="foot-row"><div class="text">' + deliveryHtml() + '</div>' +
+    '<button class="btn btn-dark" data-action="close-sheet" data-value="done">Done</button></div>' +
+    noticeHtml() + '</div></div>';
+}
+
+// ---------- Screens ----------
+
+function pdpScreen() {
+  const base = PRODUCT.baseFit + '-' + PRODUCT.baseLeg;
+  const std = FITS[base].standard;
+  const eff = effective();
+  const entry = featureOn() && state.pdpEntry;
+  const rows = [
+    ['Fit', FITS[base].label],
+    ['Rise', 'High-rise'],
+    ['Waistband', valueOf('waistband', entry ? eff.waistband : std.waistband).name],
+  ];
+  if (entry) rows.push(['Hem', valueOf('hem', eff.hem).name]);
+  rows.push(['Front style', valueOf('front', entry ? eff.front : std.front).name]);
+  const sfRows = rows.map((r) => '<div class="sr"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>').join('');
+  // Release 1.2: the details become changeable right where the customer reads them. A boxed control,
+  // not a quiet text link, because this test exists to make the options easier to find.
+  const link = entry
+    ? '<button class="pdp-details" data-action="open-sheet" data-value="pdp" data-role="change-details">' +
+      '<span class="pd-top"><b>Waistband, hem and front style</b><span class="pd-cta">Change these details</span></span>' +
+      '<span class="pd-line">' + detailsLine(false) + '</span>' +
+      '<span class="pd-note">Made for you in 1-2 weeks. Same price.</span></button>'
+    : '';
+  const sfHtml = state.sizeFitOpen
+    ? '<div class="sectrows" data-role="size-fit-rows">' + sfRows + link + '</div>'
+    : '';
+  const chev = state.sizeFitOpen ? '˄' : '˅';
+  return '<div class="scroll" data-scroll="pdp">' +
+    '<div class="pdp-photo">' + fitPhotoImg(base, FITS[base].standard) + '</div>' +
+    '<div class="pdp-body"><h2 class="pdp-name">' + PRODUCT.name + '</h2>' +
+    '<p class="pdp-sub">' + PRODUCT.sub + '</p><p class="price">' + PRODUCT.price + '</p>' +
+    '<button class="btn btn-dark" data-action="open-flow">Select size and fit</button>' +
+    '<p class="pdp-free">Free delivery in 1 - 2 business days</p>' +
+    '<div class="pdp-sections">' +
+    '<button class="sect" data-action="toggle-size-fit" aria-expanded="' + state.sizeFitOpen + '" aria-controls="sf-rows">Size &amp; Fit<span class="chev">' + chev + '</span></button>' +
+    '<div id="sf-rows">' + sfHtml + '</div>' +
+    '<div class="sect"><span>Details &amp; Care</span><span class="chev">˅</span></div>' +
+    '<div class="sect"><span>Delivery &amp; Returns</span><span class="chev">˅</span></div>' +
+    '</div></div></div>';
+}
+
+// The flag selects the text. OFF shows the text of today.
+// A suggestion card sits above the two buttons when we know something useful (part B).
+function promptScreen() {
+  const withDetails = featureOn();
+  const s = suggestion();
+  const card = s
+    ? '<section class="sugg-card" aria-label="Suggestion" data-role="suggestion-card">' +
+      '<p class="eyebrow">' + (s.type === 'resume_selection' ? 'Pick up where you left off' : 'Welcome back') + '</p>' +
+      '<p class="line">' + s.line + '</p>' +
+      '<button class="btn btn-dark" data-action="accept-suggestion">' + (s.type === 'resume_selection' ? 'Continue' : 'Use these details') + '</button>' +
+      (s.type === 'resume_selection' ? '<button class="fresh" data-action="dismiss-suggestion">Start fresh</button>' : '') +
+      '<p class="src">' + s.sourceLine + '</p></section>'
+    : '';
+  return '<div class="prompt-top">' + closeButton() + '</div><div class="prompt-body">' +
+    '<h2>' + (withDetails ? 'Want a different fit or details?' : 'Want a different fit?') + '</h2>' +
+    '<p>' + (withDetails ? promptText() : 'These trousers come in 5 other fits.') + '</p>' + card +
+    '<button class="btn btn-first" data-action="choose-fit">' + (withDetails ? 'Choose fit and details' : 'Choose fit') + '</button>' +
+    '<button class="btn" data-action="keep-fit">' + keepLabel() + '</button></div>';
+}
+
+// Fit screen 1 sets the main fit. Fit screen 2 sets the leg shape. Only the feature shows the details row.
+// Rule R14: the photo shows the standard details of the fit and says so when it cannot show the choice.
+// The changed values appear as close-ups under the photo (gallery G3, choice A).
+function fitScreen(step) {
+  const row = featureOn() ? detailsRow() : '';
+  const control = step === 1
+    ? segmented('set-fit', MAIN_FITS, state.mainFit, 'Fit')
+    : segmented('set-leg', LEGS, state.leg, 'Leg shape');
+  const fit = fitKey();
+  const std = standard();
+  const eff = effective();
+  const changedOpts = OPTIONS.filter((o) => state.enabled[o.key] && eff[o.key] !== std[o.key]);
+  let captions = '';
+  if (changedOpts.length) captions += 'The photo shows the standard details of this fit.';
+  if (fit === 'slim-straight') captions += (captions ? ' ' : '') + 'Shown in another colour.';
+  const strip = changedOpts.length
+    ? '<div class="changed-strip">' + changedOpts.map((o) => '<figure class="cs-fig">' + cropHtml(o.key, eff[o.key], 'cs') +
+      '<figcaption>' + valueOf(o.key, eff[o.key]).name + '</figcaption></figure>').join('') + '</div>'
+    : '';
+  // "More options" is on the live site today, with the flag on and off. It leaves for full Custom Made.
+  const more = '<div class="mo-wrap">' +
+    (state.moreOpen ? '<div class="more-card" data-role="more-card"><b>Full Custom Made</b>: every detail, ' +
+      FULL_CM.price + ' in this cloth, ' + FULL_CM.delivery + '.<span class="small">Not part of this prototype.</span></div>' : '') +
+    '<button class="more-opts" data-action="more-options" aria-expanded="' + !!state.moreOpen + '"><span class="ring" aria-hidden="true"></span>More options</button></div>';
+  return '<div class="fit-photo">' + fitPhotoImg(fit) + more +
+    (step === 2 ? '<span class="top-left">' + backButton() + '</span>' : '') +
+    '<span class="top-right">' + closeButton() + '</span></div>' +
+    (captions ? '<p class="photo-caption">' + captions + '</p>' : '') + strip +
+    '<div class="panel">' + control + row + fitNoticeHtml() +
+    '<div class="foot-row">' + priceAndDelivery() + '<button class="btn btn-dark" data-action="next">Next</button></div></div>';
+}
+
+function sizeScreen() {
+  let cells = '<span></span>' + SIZE_COLUMNS.map((c) => '<span class="size-head"><b>' + c.name + '</b>' + esc(c.range) + '</span>').join('');
+  SIZE_ROWS.forEach((row) => {
+    cells += '<span class="size-label">' + row[0] + '</span>';
+    for (let i = 1; i <= 3; i++) {
+      const hinted = sizePrefill() === 'suggested' && row[i] === customer().size && state.size !== row[i];
+      cells += row[i] === null ? '<span></span>'
+        : '<button class="size-cell' + (hinted ? ' hint' : '') + '" data-action="set-size" data-value="' + row[i] + '" aria-pressed="' + (state.size === row[i]) +
+          '" aria-label="Size ' + row[i] + ', ' + SIZE_COLUMNS[i - 1].name + '">' + row[i] + '</button>';
+    }
+  });
+  // The summary line shows only for changed trousers, followed by "Edit" (part B).
+  const extra = readOnlyLine() + (featureOn() && isChanged()
+    ? '<button class="text-btn" data-action="open-sheet" data-role="edit-link">Edit</button>' : '');
+  const pre = prefillLine();
+  return '<div class="size-top"><h2>Select your size</h2><span class="top-right">' + closeButton() + '</span></div>' +
+    (pre ? '<p class="prefill-line" data-role="prefill-line">' + pre + '</p>' : '') +
+    '<div class="scroll" data-scroll="size"><div class="size-grid">' + cells + '</div></div>' +
+    (extra ? '<div class="size-extra">' + extra + '</div>' : '') +
+    '<div class="foot size-foot">' + deliveryHtml() +
+    '<div class="buttons"><button class="btn" aria-disabled="true">Size chart</button>' +
+    '<button class="btn btn-dark" data-action="add-to-bag"' + (state.size === null ? ' disabled' : '') + '>Add to bag</button></div></div>';
+}
+
+// The bag follows the live pattern (rule R12, facts F5 and F6). A made-to-order line is a Custom Made
+// line: its own product name, a "Details" link, no size line. A stock line has the size and no link.
+function bagScreen() {
+  const mto = isMadeToOrder();
+  const fit = fitKey();
+  const name = mto ? 'Black ' + FITS[fit].name + ' Suit Trousers' : PRODUCT.name;
+  const art = mto ? fitPhotoImg(fit) : fitPhotoImg(PRODUCT.baseFit + '-' + PRODUCT.baseLeg, FITS[PRODUCT.baseFit + '-' + PRODUCT.baseLeg].standard);
+  return '<div class="scroll" data-scroll="bag"><div class="bag-body"><h2>Your bag</h2>' +
+    '<div class="bag-item"><div class="bag-art">' + art + '</div><div>' +
+    '<p class="bag-name" data-role="bag-line-name">' + name + '</p>' +
+    (mto
+      ? '<p><button class="text-btn" data-action="open-bag-details">Details</button></p>'
+      : '<p data-role="bag-size">' + sizeText() + '</p>') +
+    '<p data-role="bag-delivery">' + (mto ? 'Delivery: 1 - 2 weeks' : 'Delivery: 1 - 2 business days') + '</p>' +
+    '<p class="price">' + PRODUCT.price + '</p></div></div>' +
+    '<div class="bag-buttons"><button class="btn" aria-disabled="true">View Bag</button>' +
+    '<button class="btn" aria-disabled="true">Checkout</button></div>' +
+    '<p class="bag-note">Not in this prototype</p>' +
+    '<div class="bag-restart"><button class="text-btn" data-action="restart">Start again</button></div></div></div>' +
+    (state.bagPanel ? bagPanelHtml() : '');
+}
+
+// The panel a made-to-order line already has on the live site, with the three details as new rows.
+// A row whose value differs from the standard of the fit carries the "Changed" tag. It sends no event.
+function bagPanelHtml() {
+  const std = standard();
+  const eff = effective();
+  const mto = isMadeToOrder();
+  const rows = [
+    ['Delivery', mto ? '1 - 2 weeks' : '1 - 2 business days'],
+    ['Size', sizeText().replace(/^Size /, '')],
+    ['Fit', FITS[fitKey()].label],
+  ].concat(OPTIONS.filter((o) => state.enabled[o.key]).map((o) => {
+    const changed = eff[o.key] !== std[o.key];
+    return [o.title, valueOf(o.key, eff[o.key]).name + (changed ? ' <span class="tag">Changed</span>' : '')];
+  }));
+  return '<div class="backdrop" data-action="close-bag-details" data-value="backdrop"></div>' +
+    '<div class="bag-panel" id="bag-panel" role="dialog" aria-modal="true" aria-labelledby="bag-panel-title" tabindex="-1">' +
+    '<div class="sheet-head"><h2 id="bag-panel-title">Custom made details</h2>' +
+    '<button class="icon-btn" data-action="close-bag-details" aria-label="Close">' + ICON.close + '</button></div>' +
+    '<div class="panel-rows">' + rows.map((r) => '<p class="prow"><span>' + r[0] + '</span><b>' + r[1] + '</b></p>').join('') + '</div></div>';
+}
+
+const SCREENS = {
+  pdp: pdpScreen,
+  prompt: promptScreen,
+  fit1: () => fitScreen(1),
+  fit2: () => fitScreen(2),
+  size: sizeScreen,
+  bag: bagScreen,
+};
+
+// The screen behind an open sheet or bag panel is inert, so the focus stays in the dialog.
+function phoneHtml() {
+  return '<div class="screen" data-screen="' + state.screen + '"' + (state.sheet || state.bagPanel ? ' inert' : '') + '>' + SCREENS[state.screen]() + '</div>' +
+    (state.sheet ? sheetHtml() : '');
+}
+
+// ---------- Tracking events ----------
+
+// The metric tag of each event. "Exposure" puts a user in the test. "Flow" is the event of the Flow metric.
+const EVENT_TAGS = {
+  'fit_flow:prompt_shown': 'Exposure',
+  'fit_flow:keep_fit_tapped': 'Diagnostic',
+  'fit_flow:fit_picker_opened': 'Diagnostic',
+  'fit_flow:fit_changed': 'Diagnostic',
+  'fit_flow:details_sheet_opened': 'Diagnostic',
+  'fit_flow:detail_value_tapped': 'Diagnostic',
+  'fit_flow:details_reset_tapped': 'Diagnostic',
+  'fit_flow:size_step_shown': 'Diagnostic',
+  'fit_flow:added_to_bag': 'Speed',
+  'fit_flow:suggestion_shown': 'Diagnostic',
+  'fit_flow:suggestion_accepted': 'Diagnostic',
+  'fit_flow:size_and_fit_expanded': 'Exposure',
+};
+
+// The property values of the details. The other values stay the same.
+const PROP_VALUES = { loops: 'belt_loops', adjusters: 'side_adjusters', turnup: 'turn_up' };
+
+function propValue(id) {
+  return PROP_VALUES[id] || id;
+}
+
+// The 17 super properties: each event has them (tracking plan, section 5.2). The values show the state after the action.
+// Context (set once per visit in the analytics tool): product_id, flag_variant, customer_state, identity_tier,
+// consent_state, market, locale, device_type, session_id. Flow state (read at each event): the others.
+function commonProps() {
+  const std = standard();
+  const eff = effective();
+  return {
+    product_id: PRODUCT.id,
+    flag_variant: state.flag === 'on' ? 'test' : 'control',
+    customer_state: state.customer,
+    fit: fitKey().replace('-', '_'),
+    is_fit_in_stock: FITS[fitKey()].inStock,
+    waistband: propValue(eff.waistband),
+    hem: propValue(eff.hem),
+    front: propValue(eff.front),
+    changed_detail_count: OPTIONS.filter((o) => state.enabled[o.key] && eff[o.key] !== std[o.key]).length,
+    delivery_estimate: deliveryText() === 'Delivery 1-2 days' ? '1_2_days' : '1_2_weeks',
+    size_prefill: sizePrefill(),
+    identity_tier: IDENTITY_TIER[state.customer],
+    consent_state: state.customer === 'anonymous' ? 'analytics_only' : 'analytics_and_personalisation',
+    market: 'nl',
+    locale: 'en-nl',
+    device_type: 'mobile',
+    session_id: SESSION_ID,
+  };
+}
+
+// Messages to the deck (section 6.6). Only inside a frame, and never in mini mode. Target origin '*'.
+// The deck sends no message to this page: it reloads the frame with a new address.
+function deckMessage(msg) {
+  if (window.parent !== window && !MINI) window.parent.postMessage(msg, '*');
+}
+
+// After every tracked event: the event with its own properties and the 17 super properties.
+function eventMessage(entry) {
+  return {
+    type: 'prototype-event',
+    n: entry.n,
+    name: entry.name.replace('fit_flow:', ''),
+    tag: EVENT_TAGS[entry.name] || '',
+    props: entry.props,
+    common: entry.common,
+  };
+}
+
+// After every render(): the live tap count, the screen, the flag, the customer, and the segment of the visit.
+function stateMessage() {
+  return {
+    type: 'prototype-state',
+    taps: state.taps,
+    events: state.count,
+    screen: state.screen,
+    flag: state.flag,
+    customer: state.customer,
+    segment: visitSegment(),
+  };
+}
+
+// To send the events to an analytics tool, call the tool here.
+function track(name, props) {
+  state.count += 1;
+  const entry = { n: state.count, timestamp: new Date().toISOString(), name: name, props: props || {}, common: commonProps() };
+  state.log.push(entry);
+  updateTicker();
+  deckMessage(eventMessage(entry));
+}
+
+
+// The live event ticker: a compact, always-visible log of the latest events.
+function updateTicker() {
+  const ticker = document.getElementById('event-ticker');
+  if (!ticker) return;
+  const events = state.log.filter(e => e.name).slice(-5);
+  if (!events.length) {
+    ticker.innerHTML = '<div class="ticker-empty">Events will appear here as you click through the flow.</div>';
+    return;
+  }
+  ticker.innerHTML = events.map((e, i) => {
+    const isLatest = i === events.length - 1;
+    const tag = EVENT_TAGS[e.name] || '';
+    const time = new Date(e.timestamp).toTimeString().slice(3, 8);
+    return '<div class="ticker-entry' + (isLatest ? ' latest' : '') + '">' +
+      '<span class="t-n">' + e.n + '</span>' +
+      '<span class="t-name">' + e.name.replace('fit_flow:', '') + '</span>' +
+      '<span class="t-tag">' + tag + '</span>' +
+      '<span class="t-time">' + time + '</span>' +
+      '</div>';
+  }).reverse().join('');
+}
+
+// A note is not an event. It has no number.
+function addNote(text) {
+  state.log.push({ note: text, timestamp: new Date().toISOString() });
+}
+
+// ---------- Panel ----------
+
+// The time of an entry: hours, minutes, and seconds.
+function clock(timestamp) {
+  return new Date(timestamp).toTimeString().slice(0, 8);
+}
+
+function propsHtml(props, extraClass) {
+  const keys = Object.keys(props);
+  if (!keys.length) return '';
+  return '<ul class="props code' + (extraClass || '') + '">' + keys.map((k) => '<li>' + k + ': ' + esc(props[k]) + '</li>').join('') + '</ul>';
+}
+
+function entryHtml(entry) {
+  if (entry.note) {
+    return '<li class="entry log-note">' + esc(entry.note) + ' <span class="entry-time">' + clock(entry.timestamp) + '</span></li>';
+  }
+  return '<li class="entry" data-event="' + entry.name + '"><div class="event-head">' +
+    '<span class="event-n">' + entry.n + '</span><span class="entry-time">' + clock(entry.timestamp) + '</span>' +
+    '<span class="event-name code">' + entry.name + '</span><span class="metric-tag">' + EVENT_TAGS[entry.name] + '</span></div>' +
+    propsHtml(entry.props) + (state.showAll ? propsHtml(entry.common, ' props-common') : '') + '</li>';
+}
+
+// The panel has fixed controls. render() changes only their state and the texts, so the focus stays.
+function renderPanel() {
+  document.querySelectorAll('[data-action="set-flag"]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.value === state.flag)));
+  document.querySelectorAll('[data-action="toggle-option"]').forEach((b) => b.setAttribute('aria-pressed', String(!!state.enabled[b.dataset.value])));
+  const pdpBtn = document.querySelector('[data-action="set-pdp-entry"]');
+  if (pdpBtn) pdpBtn.setAttribute('aria-pressed', String(state.pdpEntry));
+  // The demo scenario buttons and the customer switch are built once, then only their state changes.
+  const scenBox = document.getElementById('scenario-buttons');
+  if (!scenBox.children.length) {
+    scenBox.innerHTML = SCENARIOS().map((sc) =>
+      '<button class="tool-btn" data-action="scenario" data-value="' + sc.n + '">' + sc.n + ' ' + sc.label + '</button>').join('');
+  }
+  const custBox = document.getElementById('customer-buttons');
+  if (!custBox.children.length) {
+    custBox.innerHTML = Object.keys(CUSTOMERS).map((key) =>
+      '<button class="tool-btn" data-action="set-customer" data-value="' + key + '">' + CUSTOMERS[key].label + '</button>').join('');
+  }
+  custBox.querySelectorAll('[data-action="set-customer"]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.value === state.customer)));
+  document.getElementById('know-rows').innerHTML = customer().knows.map((r) =>
+    '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td></tr>').join('');
+  document.getElementById('live-taps').textContent = state.taps;
+  const seg = visitSegment();
+  document.getElementById('live-segment').innerHTML = (seg ? '<span class="vseg-dot" data-seg="' + seg + '" aria-hidden="true"></span>' : '') + SEGMENT_TEXT[seg];
+  document.getElementById('live-fit').textContent = FITS[fitKey()].label;
+  document.getElementById('live-details-label').textContent = featureOn() ? 'Details' : 'Details in the picture';
+  document.getElementById('live-details').textContent = detailsLine() + (isChanged() ? ' (changed)' : '');
+  document.getElementById('live-delivery').textContent = deliveryText();
+  document.getElementById('live-route').textContent = isMadeToOrder() ? 'Made to order' : 'From stock';
+  // Returns are allowed. A changed pair cannot go back into stock, so a returned changed pair is a write-off.
+  document.getElementById('live-resell').textContent = isChanged() ? 'A write-off: it cannot go back into stock' : 'It goes back into stock';
+  // The column that matches the current switches: today, R1, or R1.1 for a known customer.
+  const col = state.flag === 'off' ? 'off' : (sizePrefill() === 'none' ? 'on' : 'r11');
+  document.querySelectorAll('[data-col]').forEach((cell) => cell.classList.toggle('col-active', cell.dataset.col === col));
+  document.getElementById('events-title').textContent = 'Tracking events (' + state.count + ')';
+  document.getElementById('events-button').textContent = 'Events (' + state.count + ')';
+  document.getElementById('event-empty').hidden = state.count > 0;
+  document.getElementById('event-list').innerHTML = state.log.slice().reverse().map(entryHtml).join('');
+  document.querySelector('[data-action="toggle-props"]').setAttribute('aria-pressed', String(state.showAll));
+  document.getElementById('copy-button').textContent = state.copied ? 'Copied' : 'Copy log';
+}
+
+// ---------- Actions ----------
+
+// Three actions open the size step: "Keep [fit]", "Next" at the end of the fit picker,
+// and the suggestion button. The size prefill applies before the event (part B).
+function showSize(entry) {
+  state.screen = 'size';
+  state.entry = entry;
+  state.card = false;
+  applySizePrefill();
+  syncSizePrefill();
+  const pre = prefillLine();
+  if (pre) document.getElementById('live-status').textContent = pre;
+  track('fit_flow:size_step_shown', { entry: entry });
+}
+
+// A screen reader reads the new details. Example: "Details: side adjusters, turn-up hem, pleated front. Delivery 1-2 weeks."
+function announce() {
+  document.getElementById('live-status').textContent = 'Details: ' + detailsLine(true) + '. ' + deliveryText() + '.';
+}
+
+// The notice of a value that went back to standard is announced as well.
+function announceNotice() {
+  document.getElementById('live-status').textContent = (state.notice ? state.notice + ' ' : '') + detailsLine(true) + '. ' + deliveryText() + '.';
+}
+
+// 'regular', 'long', or 'short': the column of the selected size.
+function sizeLength() {
+  const row = SIZE_ROWS.find((r) => r.indexOf(state.size, 1) > 0);
+  return SIZE_COLUMNS[row.indexOf(state.size, 1) - 1].name.toLowerCase();
+}
+
+let lastCopy = '';     // The text of the last "Copy log". The self-test reads it.
+let copyTimer = null;
+
+// "Copied" shows for 2 seconds.
+function showCopied() {
+  state.copied = true;
+  clearTimeout(copyTimer);
+  copyTimer = setTimeout(() => {
+    state.copied = false;
+    render();
+  }, 2000);
+}
+
+// For a browser with no clipboard API: copy from a hidden text area.
+function copyFallback(text) {
+  const before = document.activeElement;
+  const area = document.createElement('textarea');
+  area.value = text;
+  area.setAttribute('readonly', '');
+  area.style.position = 'fixed';
+  area.style.top = '0';
+  area.style.opacity = '0';
+  document.body.appendChild(area);
+  area.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (error) { ok = false; }
+  area.remove();
+  if (before && before.focus) before.focus({ preventScroll: true });
+  return ok;
+}
+
+// The log as JSON text. The self-test does not change the clipboard.
+function copyLog() {
+  lastCopy = JSON.stringify(state.log, null, 2);
+  if (testing) {
+    showCopied();
+  } else if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(lastCopy).then(() => {
+      showCopied();
+      render();
+    }, () => {
+      if (copyFallback(lastCopy)) {
+        showCopied();
+        render();
+      }
+    });
+  } else if (copyFallback(lastCopy)) {
+    showCopied();
+  }
+}
+
+// One function for each control. The name is the data-action value of the control.
+// An action that sends an event changes the state first. Then the common properties show the new state.
+const ACTIONS = {
+  // A tap on the flag value that is already selected does nothing.
+  'set-flag': (value) => {
+    if (value === state.flag) return;
+    state.flag = value;
+    resetFlow();
+    addNote('Feature flag set to ' + value.toUpperCase() + '. The flow started again.');
+  },
+  'restart': () => resetFlow(),
+  'open-flow': () => {
+    state.screen = 'prompt';
+    track('fit_flow:prompt_shown');
+    // Event 10 fires directly after event 1 when the prompt shows a card.
+    const s = suggestion();
+    if (s) track('fit_flow:suggestion_shown', { suggestion_type: s.type, suggestion_source: s.source });
+  },
+  'close': () => { state.screen = 'pdp'; },
+  'choose-fit': () => {
+    state.screen = 'fit1';
+    state.pickerOpened = true;
+    track('fit_flow:fit_picker_opened');
+  },
+  'keep-fit': () => {
+    state.keptFit = true;
+    track('fit_flow:keep_fit_tapped');
+    showSize('keep_fit');
+  },
+  // A tap on the selected fit or leg shape sends no event. A value that the new fit cannot
+  // make goes back to the standard, with a notice (rule R8).
+  'set-fit': (value) => {
+    if (value === state.mainFit) return;
+    state.mainFit = value;
+    const reverted = dropUnavailable();
+    track('fit_flow:fit_changed', { fit_part: 'main_fit', value: value, reverted_option_count: reverted });
+    if (reverted) announceNotice();
+  },
+  'set-leg': (value) => {
+    if (value === state.leg) return;
+    state.leg = value;
+    const reverted = dropUnavailable();
+    track('fit_flow:fit_changed', { fit_part: 'leg_shape', value: value, reverted_option_count: reverted });
+    if (reverted) announceNotice();
+  },
+  'next': () => {
+    // Straight Fit has no leg step.
+    if (state.screen === 'fit1' && state.mainFit !== 'straight') state.screen = 'fit2';
+    else if (state.screen === 'fit1' || state.screen === 'fit2') showSize('fit_picker');
+  },
+  'back': () => {
+    if (state.screen === 'fit2') state.screen = 'fit1';
+  },
+  'open-sheet': (value) => {
+    state.sheet = true;
+    // A thumb on the Details row opens the sheet with that option already expanded.
+    // From the product page, "Done" goes to the size step.
+    state.sheetOpen = value && value !== 'pdp' ? value : null;
+    // opened_from: the control that opened the sheet. A thumb on the Details row, the row itself,
+    // "Edit" on the size step, or "Change these details" on the product page.
+    let openedFrom = 'details_row';
+    if (value === 'pdp') openedFrom = 'product_page_link';
+    else if (OPTIONS.some((o) => o.key === value)) openedFrom = 'photo_thumb';
+    else if (state.screen === 'size') openedFrom = 'edit_link';
+    track('fit_flow:details_sheet_opened', {
+      step: { fit1: 'main_fit', fit2: 'leg_shape', size: 'size_step', pdp: 'product_page' }[state.screen] || 'main_fit',
+      opened_from: openedFrom,
+    });
+  },
+  'expand-option': (value) => { state.sheetOpen = value; },
+  'close-sheet': (value) => {
+    state.sheet = false;
+    // From the product page with "Done", go to the size step.
+    if (value === 'done' && state.screen === 'pdp') showSize('product_page');
+  },
+  // The bag panel of a made-to-order line. It sends no event.
+  'open-bag-details': () => { state.bagPanel = true; },
+  'close-bag-details': () => { state.bagPanel = false; },
+  // The switch of one option (decision D10). Off means the standard of the fit (rule R9).
+  'toggle-option': (value) => {
+    state.enabled[value] = !state.enabled[value];
+    resetFlow();
+    addNote('Option ' + OPTIONS.find((o) => o.key === value).title + ' switched ' + (state.enabled[value] ? 'on' : 'off') + '. The flow started again.');
+  },
+  // A tap on a tile always sets the option, also when the tile shows the standard.
+  // Only a new value gives a highlight in the strip.
+  'set-option': (value) => {
+    const pair = value.split(':');
+    const before = effective()[pair[0]];
+    state.set[pair[0]] = pair[1];
+    state.sheetOpen = pair[0];
+    if (pair[1] !== before) state.flash = pair[0];
+    track('fit_flow:detail_value_tapped', {
+      option: pair[0],
+      value: propValue(pair[1]),
+      previous_value: propValue(before),
+      is_standard_value: pair[1] === standard()[pair[0]],
+    });
+    announce();
+  },
+  'reset-options': () => {
+    const count = OPTIONS.filter((o) => state.set[o.key] !== null).length;
+    state.set = { waistband: null, hem: null, front: null };
+    state.flash = 'both';
+    track('fit_flow:details_reset_tapped', { reset_detail_count: count });
+    announce();
+  },
+  'set-size': (value) => { state.size = Number(value); state.sizeAuto = false; },
+  // "More options" leaves the flow for full Custom Made on the live site. The prototype shows a card and a log note.
+  'more-options': () => {
+    state.moreOpen = !state.moreOpen;
+    if (state.moreOpen) addNote('More options: the live site opens full Custom Made here (' + FULL_CM.price + ', ' + FULL_CM.delivery + '). It starts from generic details, not from this product (gap).');
+  },
+  // The suggestion button of the card (part B). Event 11 is followed directly by event 8
+  // with entry 'suggestion'.
+  'accept-suggestion': () => {
+    const s = suggestion();
+    if (!s) return;
+    if (s.mainFit) state.mainFit = s.mainFit;
+    OPTIONS.forEach((o) => { if (s.set[o.key] !== undefined) state.set[o.key] = s.set[o.key]; });
+    // A restored selection is a guess from this device: its size is a suggestion, never preselected.
+    if (s.size !== null && isSize(s.size)) state.prefilled = s.size;
+    state.card = false;
+    track('fit_flow:suggestion_accepted', { suggestion_type: s.type, suggestion_source: s.source });
+    showSize('suggestion');
+  },
+  // "Start fresh": the card goes, and nothing is sent.
+  'dismiss-suggestion': () => { state.card = false; },
+  // The product page entry switch of the panel (part C).
+  'set-pdp-entry': () => {
+    state.pdpEntry = !state.pdpEntry;
+    resetFlow();
+    addNote('Product page entry switched ' + (state.pdpEntry ? 'on' : 'off') + '. The flow started again.');
+  },
+  // Opening or closing "Size & Fit" on the product page. Event 12 fires on open.
+  'toggle-size-fit': () => {
+    state.sizeFitOpen = !state.sizeFitOpen;
+    state.revealSizeFit = state.sizeFitOpen;  // render() scrolls the opened rows into view
+    if (state.sizeFitOpen) {
+      track('fit_flow:size_and_fit_expanded', { has_details_link: featureOn() && state.pdpEntry });
+    }
+  },
+  // The customer switch of the panel (part B). It stands in for the flag trousers-details-shortcuts.
+  'set-customer': (value) => {
+    if (value === state.customer) return;
+    state.customer = value;
+    resetFlow();
+    addNote('Customer set to ' + CUSTOMERS[value].label + '. The flow started again.');
+  },
+  // A demo scenario button of the panel: it sets the switches and restarts (section 6.5).
+  // Scenarios 1 to 3 (the three segments) keep the current flag. Scenarios 4 to 7 set the flag ON.
+  'scenario': (value) => {
+    const sc = SCENARIOS().find((x) => String(x.n) === value);
+    if (!sc) return;
+    if (sc.n > 3) state.flag = sc.flag;
+    state.customer = sc.customer;
+    state.pdpEntry = !!sc.pdpEntry;
+    resetFlow();
+    addNote('Scenario ' + sc.n + ': ' + sc.label + '. Path: ' + sc.path);
+  },
+  'add-to-bag': () => {
+    if (state.size === null) return;
+    state.screen = 'bag';
+    track('fit_flow:added_to_bag', {
+      size: state.size,
+      size_length: sizeLength(),
+      has_changed_detail: isChanged(),
+      is_made_to_order: !FITS[fitKey()].inStock || isChanged(),
+      price: PRODUCT.amount,
+      currency: PRODUCT.currency,
+      size_prefill_outcome: sizePrefill() === 'none' ? 'none' : (state.size === state.prefilled ? 'kept' : 'changed'),
+      // Splits segment 1 from segment 3 on one event, and travels to the order line.
+      has_opened_fit_picker: state.pickerOpened,
+      // The taps in the flow up to and including "Add to bag". The counter rises after the action, so add 1.
+      tap_count: state.taps + 1,
+    });
+  },
+  'toggle-props': () => { state.showAll = !state.showAll; },
+  'copy-log': () => copyLog(),
+  'clear-log': () => {
+    state.log = [];
+    state.count = 0;
+  },
+  // The panel overlay of the compact layout.
+  'open-panel': () => { state.panelOpen = true; },
+  'close-panel': () => { state.panelOpen = false; },
+};
+
+// ---------- Render ----------
+
+const phone = document.getElementById('phone');
+const COMPACT = window.matchMedia('(max-width: 899.98px)');  // The compact layout, below 900 pixels
+let testing = false;       // The self-test does not write the address.
+let sheetWasOpen = false;
+let sheetOpener = null;    // The control that opened the sheet. The focus goes back to it.
+let bagPanelWasOpen = false;
+let bagPanelOpener = null; // The control that opened the bag panel. The focus goes back to it.
+let overlayWasOpen = false;
+let lastHash = '';
+
+// The zone is the phone, the panel, or the top bar. Two zones can have the same control, so the focus goes back to the same zone.
+function controlKey(el) {
+  return el && el.dataset && el.dataset.action
+    ? { action: el.dataset.action, value: el.dataset.value, zone: el.closest('[data-zone]') }
+    : null;
+}
+
+function findControl(key) {
+  if (!key) return null;
+  return (key.zone || document).querySelector('[data-action="' + key.action + '"]' + (key.value === undefined ? '' : '[data-value="' + key.value + '"]'));
+}
+
+// render() builds the phone from the state and updates the panel. It keeps the scroll position and the focus.
+function render() {
+  const active = controlKey(document.activeElement);
+  const activeInPhone = phone.contains(document.activeElement);
+  const lastScreen = phone.firstElementChild ? phone.firstElementChild.dataset.screen : null;
+  const scroll = {};
+  phone.querySelectorAll('[data-scroll]').forEach((el) => { scroll[el.dataset.scroll] = el.scrollTop; });
+
+  syncSizePrefill();
+  phone.innerHTML = phoneHtml();
+  renderPanel();
+  // Inside the deck, the slide shows the live tap count, the flag, and the segment of the visit. A mini frame sends nothing.
+  deckMessage(stateMessage());
+
+  phone.querySelectorAll('[data-scroll]').forEach((el) => {
+    if (scroll[el.dataset.scroll]) el.scrollTop = scroll[el.dataset.scroll];
+  });
+  // An opened "Size & Fit" sits low on the product page. Scroll its rows into view, so the
+  // release 1.2 control is never hidden below the fold.
+  if (state.revealSizeFit) {
+    state.revealSizeFit = false;
+    const box = phone.querySelector('[data-scroll="pdp"]');
+    const rows = phone.querySelector('[data-role="size-fit-rows"]');
+    if (box && rows) {
+      const delta = rows.getBoundingClientRect().bottom - box.getBoundingClientRect().bottom + 16;
+      if (delta > 0) {
+        const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches || testing;
+        box.scrollTo({ top: box.scrollTop + delta, behavior: still ? 'auto' : 'smooth' });
+      }
+    }
+  }
+
+  const same = findControl(active);
+  if (state.sheet && !sheetWasOpen) {
+    sheetOpener = active;
+    document.getElementById('sheet').focus();
+  } else if (!state.sheet && sheetWasOpen) {
+    const opener = findControl(sheetOpener);
+    if (opener) opener.focus();
+  } else if (state.bagPanel && !bagPanelWasOpen) {
+    bagPanelOpener = active;
+    const panelEl = document.getElementById('bag-panel');
+    if (panelEl) panelEl.focus();
+  } else if (!state.bagPanel && bagPanelWasOpen) {
+    const opener = findControl(bagPanelOpener);
+    if (opener) opener.focus();
+  } else if (same && !same.disabled) {
+    same.focus({ preventScroll: true });
+  } else if (activeInPhone && lastScreen !== state.screen) {
+    // The control is gone. The focus goes to the new screen, so the keyboard continues there.
+    const screen = phone.firstElementChild;
+    screen.tabIndex = -1;
+    screen.style.outline = 'none';
+    screen.focus({ preventScroll: true });
+  }
+  sheetWasOpen = state.sheet;
+  bagPanelWasOpen = state.bagPanel;
+
+  // The panel overlay of the compact layout. The flow and the top bar behind it are inert.
+  const overlay = COMPACT.matches && state.panelOpen;
+  document.getElementById('panel').classList.toggle('is-open', overlay);
+  document.getElementById('flow').inert = overlay;
+  document.getElementById('topbar').inert = overlay;
+  document.getElementById('events-button').setAttribute('aria-expanded', String(overlay));
+  if (overlay && !overlayWasOpen) document.getElementById('panel-close').focus();
+  else if (!overlay && overlayWasOpen) document.getElementById('events-button').focus();
+  overlayWasOpen = overlay;
+
+  if (!testing) writeHash();
+}
+
+// ---------- State in the address ----------
+
+const HASH_KEYS = { waistband: 'wb', hem: 'hem', front: 'fr' };
+const HASH_CUSTOMERS = { anonymous: 'a', identified: 'd', signed_in_size: 's', signed_in_details: 'h' };
+const HASH_CUSTOMER_KEYS = { a: 'anonymous', d: 'identified', s: 'signed_in_size', h: 'signed_in_details' };
+
+// Example: #f=on&c=h&s=fit1&fit=slim&leg=tapered&hem=turnup&sheet=1&size=48
+function buildHash() {
+  const parts = ['f=' + state.flag];
+  if (state.customer !== 'anonymous') parts.push('c=' + HASH_CUSTOMERS[state.customer]);
+  if (state.pdpEntry) parts.push('pe=1');
+  if (window.location.hash.includes('embed=1')) parts.push('embed=1');
+  if (MINI) parts.push('mini=1');
+  parts.push('s=' + state.screen, 'fit=' + state.mainFit, 'leg=' + state.leg);
+  OPTIONS.forEach((o) => { if (state.set[o.key]) parts.push(HASH_KEYS[o.key] + '=' + state.set[o.key]); });
+  if (state.sheet) parts.push('sheet=1');
+  if (state.size !== null) parts.push('size=' + state.size);
+  return parts.join('&');
+}
+
+function writeHash() {
+  lastHash = '#' + buildHash();
+  if (location.hash === lastHash) return;
+  try {
+    history.replaceState(null, '', lastHash);
+  } catch (error) {
+    location.hash = lastHash;
+  }
+}
+
+// All parameters are optional. A value that is not correct gets the start value.
+// A page load from an address sends no event and does not change the log.
+function applyHash(text) {
+  const q = new URLSearchParams(text);
+  const pick = (name, allowed, fallback) => (allowed.includes(q.get(name)) ? q.get(name) : fallback);
+
+  state.flag = pick('f', ['on', 'off'], 'on');
+  state.customer = HASH_CUSTOMER_KEYS[pick('c', Object.keys(HASH_CUSTOMER_KEYS), 'a')];
+  state.pdpEntry = q.get('pe') === '1';
+  resetFlow();
+  state.mainFit = pick('fit', MAIN_FITS.map((f) => f[0]), PRODUCT.baseFit);
+  state.leg = pick('leg', LEGS.map((l) => l[0]), PRODUCT.baseLeg);
+  const size = Number(q.get('size'));
+  state.size = isSize(size) ? size : null;
+
+  let screen = pick('s', Object.keys(SCREENS), 'pdp');
+  if (screen === 'fit2' && state.mainFit === 'straight') screen = 'fit1';
+  if (screen === 'bag' && state.size === null) screen = 'size';
+  state.screen = screen;
+
+  // With the flag OFF, the flow has no options and no sheet.
+  if (state.flag === 'on') {
+    OPTIONS.forEach((o) => { state.set[o.key] = pick(HASH_KEYS[o.key], o.values.map((v) => v.id), null); });
+    state.sheet = q.get('sheet') === '1' && (screen === 'fit1' || screen === 'fit2');
+  }
+  if (screen === 'size' || screen === 'bag') {
+    // Another fit, or a changed detail, means the way went through the fit picker.
+    state.entry = fitKey() === PRODUCT.baseFit + '-' + PRODUCT.baseLeg && !anySet() ? 'keep_fit' : 'fit_picker';
+  }
+  // The segment fields follow the screen of the address (section 6.3). No event fires.
+  state.pickerOpened = screen === 'fit1' || screen === 'fit2' || ((screen === 'size' || screen === 'bag') && state.entry === 'fit_picker');
+  state.keptFit = (screen === 'size' || screen === 'bag') && state.entry === 'keep_fit';
+  // Apply size prefill based on customer state, regardless of screen
+  applySizePrefill();
+}
+
+// ---------- Input ----------
+
+document.addEventListener('click', (event) => {
+  const el = event.target.closest('[data-action]');
+  if (!el || el.disabled) return;
+  const action = el.dataset.action;
+  const inPhone = phone.contains(el);
+  // The highlight of the strip and the fit-screen notice show after one action only.
+  state.flash = null;
+  state.notice = null;
+  if (action !== 'more-options') state.moreOpen = false;
+  ACTIONS[action](el.dataset.value);
+  // Each tap on a control in the phone counts. "Start again" sets the counter to zero.
+  if (inPhone && action !== 'restart') state.taps += 1;
+  render();
+});
+
+// Escape closes the panel overlay first, then the bag panel, then the sheet. Tab stays in the open dialog.
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && COMPACT.matches && state.panelOpen) {
+    state.panelOpen = false;
+    render();
+    return;
+  }
+  if (event.key === 'Escape' && state.bagPanel) {
+    state.bagPanel = false;
+    render();
+    return;
+  }
+  if (!state.sheet && !state.bagPanel) return;
+  if (event.key === 'Escape') {
+    state.sheet = false;
+    render();
+    return;
+  }
+  if (event.key !== 'Tab') return;
+  const dialog = document.getElementById(state.sheet ? 'sheet' : 'bag-panel');
+  if (!dialog) return;
+  const stops = Array.from(dialog.querySelectorAll('button:not([disabled]), input:not([disabled])'));
+  const first = stops[0];
+  const last = stops[stops.length - 1];
+  if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+});
+
+window.addEventListener('hashchange', () => {
+  if (location.hash === lastHash || location.hash.includes('selftest')) return;
+  applyHash(location.hash.slice(1));
+  render();
+});
+
+// Deck embedding (part C): when this page runs inside a frame, the deck keys go to the parent deck,
+// so the presenter can leave the demo slide after a click in the phone.
+// Page Down and Page Up (a clicker) always go. The arrows, N, and T go unless a form control has
+// the focus, because the fit and leg controls use the arrows.
+document.addEventListener('keydown', (event) => {
+  if (window.parent === window) return;
+  const el = document.activeElement;
+  const inControl = !!el && (/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName) || /^(radio|tab|slider)$/.test(el.getAttribute('role') || ''));
+  const always = event.key === 'PageDown' || event.key === 'PageUp';
+  const unlessControl = ['ArrowRight', 'ArrowLeft', 'n', 'N', 't', 'T'].includes(event.key);
+  if (always || (unlessControl && !inControl)) {
+    event.preventDefault();
+    window.parent.postMessage({ type: 'deck-key', key: event.key }, '*');
+  }
+});
+
+// A small window gets a smaller phone, so the full phone stays in view. The compact layout has no zoom.
+function fitPhone() {
+  if (MINI) return;
+  const frame = document.getElementById('phone-frame');
+  if (COMPACT.matches) {
+    frame.style.zoom = 1;
+    return;
+  }
+  const byHeight = (window.innerHeight - 24) / 800;
+  const byWidth = (window.innerWidth - 24) / 410;
+  frame.style.zoom = Math.max(0.6, Math.min(1, byHeight, byWidth));
+}
+window.addEventListener('resize', fitPhone);
+
+// Mini embed mode (section 6.1): the class "mini" on the html element hides everything but the phone,
+// and the phone fills the frame. The CSS is outside any media query.
+function applyMini(on) {
+  document.documentElement.classList.toggle('mini', !!on);
+  if (!on) fitPhone();
+}
+
+// A change of the layout closes the panel overlay.
+COMPACT.addEventListener('change', () => {
+  state.panelOpen = false;
+  fitPhone();
+  render();
+});
+
+// ---------- Self-test ----------
+
+// Add "#selftest" to the address to run it. It clicks the real controls and reads the real screen.
+function runSelfTest() {
+  testing = true;
+  const lines = [];
+  let passed = 0;
+  let failed = 0;
+  const panel = document.getElementById('panel');
+
+  const check = (name, ok, detail) => {
+    if (ok) passed += 1; else failed += 1;
+    lines.push((ok ? 'PASS  ' : 'FAIL  ') + name + (ok || !detail ? '' : '  [' + detail + ']'));
+  };
+  const find = (action, value, root) => {
+    const selector = '[data-action="' + action + '"]' + (value === undefined ? '' : '[data-value="' + value + '"]');
+    const el = (root || phone).querySelector(selector);
+    if (!el) throw new Error('missing control ' + selector);
+    if (el.disabled) throw new Error('disabled control ' + selector);
+    return el;
+  };
+  const tap = (action, value) => find(action, value).click();
+  const panelTap = (action) => find(action, undefined, panel).click();
+  // The flag has one control in the panel and one in the top bar. The test uses the visible control.
+  const setFlag = (value) => {
+    const el = Array.from(document.querySelectorAll('[data-action="set-flag"][data-value="' + value + '"]'))
+      .find((b) => b.getClientRects().length > 0);
+    if (!el) throw new Error('no visible flag control ' + value);
+    el.click();
+  };
+  // Each scenario starts with the given flag, a new flow, and an empty log.
+  const fresh = (flag) => {
+    setFlag(flag);
+    panelTap('restart');
+    panelTap('clear-log');
+  };
+  // The event names in the log, with no category. Notes have no name.
+  const names = () => state.log.filter((e) => e.name).map((e) => e.name.replace('fit_flow:', '')).join(',');
+  const lastEvent = (name) => state.log.filter((e) => e.name === 'fit_flow:' + name).pop() || { props: {}, common: {} };
+  const has = (obj, want) => Object.keys(want).every((k) => obj[k] === want[k]);
+  const show = (obj) => JSON.stringify(obj);
+  const COMMON_KEYS = 'product_id,flag_variant,customer_state,fit,is_fit_in_stock,waistband,hem,front,changed_detail_count,delivery_estimate,size_prefill,identity_tier,consent_state,market,locale,device_type,session_id';
+  const role = (name) => {
+    const el = phone.querySelector('[data-role="' + name + '"]');
+    return el ? el.textContent.trim() : '';
+  };
+  const scenario = (name, run) => {
+    try { run(); } catch (error) { check(name, false, error.message); }
+  };
+  const SIZE = ['set-size', '48'];
+  const HEM = ['set-option', 'hem:turnup'];
+  const DONE = ['close-sheet', 'done'];
+  // The places of the options in the phone. The flag OFF shows none of them.
+  const OPTION_PLACES = '[data-action="open-sheet"], [role="dialog"], [data-role="details-line"], [data-role="your-details"], ' +
+    '[data-role="changed-tag"], [data-action="set-option"]';
+
+  // The three reference paths, with the controls in the order of the taps and the events in the order of the tracking plan.
+  const PATHS = [
+    { id: 'keep', label: 'Keep the fit', taps: 4, flags: ['on', 'off'],
+      steps: [['open-flow'], ['keep-fit'], SIZE, ['add-to-bag']],
+      events: 'prompt_shown,keep_fit_tapped,size_step_shown,added_to_bag' },
+    { id: 'straight', label: 'Choose Straight Fit', taps: 6, flags: ['on', 'off'],
+      steps: [['open-flow'], ['choose-fit'], ['set-fit', 'straight'], ['next'], SIZE, ['add-to-bag']],
+      events: 'prompt_shown,fit_picker_opened,fit_changed,size_step_shown,added_to_bag' },
+    { id: 'detail', label: 'Keep the fit and change the hem', taps: 9, flags: ['on'],
+      steps: [['open-flow'], ['choose-fit'], ['open-sheet', 'hem'], HEM, DONE, ['next'], ['next'], SIZE, ['add-to-bag']],
+      events: 'prompt_shown,fit_picker_opened,details_sheet_opened,detail_value_tapped,size_step_shown,added_to_bag' },
+  ];
+
+  // Checks 1 and 2: each path needs the taps of the table and ends correctly. The flag OFF shows no option.
+  ['on', 'off'].forEach((flag) => {
+    PATHS.filter((path) => path.flags.includes(flag)).forEach((path) => {
+      const name = 'Flag ' + flag.toUpperCase() + ' / ' + path.label;
+      scenario(name, () => {
+        fresh(flag);
+        let clean = !phone.querySelector(OPTION_PLACES);
+        path.steps.forEach((step) => {
+          tap(step[0], step[1]);
+          clean = clean && !phone.querySelector(OPTION_PLACES);
+        });
+        const shown = Number(document.getElementById('live-taps').textContent);
+        check(name + ': ' + path.taps + ' taps', state.taps === path.taps && shown === path.taps, 'counted ' + state.taps + ', shown ' + shown);
+        check(name + ': ends after "Add to bag"', state.screen === 'bag' && !state.sheet && phone.textContent.includes('Your bag'), state.screen);
+        if (path.id === 'detail') {
+          check(name + ': made-to-order line in the bag', role('bag-line-name') === 'Black Wide Leg Tapered Suit Trousers' &&
+            role('bag-delivery') === 'Delivery: 1 - 2 weeks' && !!phone.querySelector('[data-action="open-bag-details"]') && role('bag-size') === '',
+            role('bag-line-name') + ' / ' + role('bag-delivery'));
+          tap('open-bag-details');
+          check(name + ': the bag panel repeats the choice with the Changed tag',
+            phone.querySelector('#bag-panel .prow .tag') && phone.querySelector('#bag-panel .prow .tag').textContent === 'Changed' &&
+            phone.textContent.includes('Turn-up'), 'panel');
+          tap('close-bag-details', 'backdrop');
+        } else {
+          check(name + ': stock line in the bag', role('bag-line-name') === 'Wide Leg Tapered Suit Trousers' &&
+            role('bag-delivery') === 'Delivery: 1 - 2 business days' && role('bag-size') !== '' && !phone.querySelector('[data-action="open-bag-details"]'),
+            role('bag-line-name') + ' / ' + role('bag-delivery') + ' / ' + role('bag-size'));
+        }
+        if (flag === 'off') check(name + ': no details row, sheet, details line, or tile', clean);
+
+        // Check 5: the events of the path, in order, with the correct properties.
+        const events = state.log.filter((e) => e.name);
+        const variant = flag === 'on' ? 'test' : 'control';
+        const changed = path.id === 'detail';
+        check(name + ': events in order', names() === path.events, names());
+        check(name + ': each event has the numbers from 1, a timestamp, and the common properties with flag_variant ' + variant,
+          events.every((e, i) => e.n === i + 1 && !isNaN(Date.parse(e.timestamp)) && Object.keys(e.common).join(',') === COMMON_KEYS && e.common.flag_variant === variant),
+          show(events[0]));
+        const exposure = lastEvent('prompt_shown');
+        check(name + ': prompt_shown has the start state and no specific property',
+          has(exposure.common, { product_id: 'B2248', fit: 'wide_tapered', is_fit_in_stock: true, changed_detail_count: 0, delivery_estimate: '1_2_days' }) &&
+          Object.keys(exposure.props).length === 0, show(exposure));
+        check(name + ': size_step_shown has the entry', lastEvent('size_step_shown').props.entry === (path.id === 'keep' ? 'keep_fit' : 'fit_picker'), show(lastEvent('size_step_shown')));
+        const bag = lastEvent('added_to_bag');
+        check(name + ': added_to_bag has the properties',
+          has(bag.props, { size: 48, size_length: 'regular', has_changed_detail: changed, is_made_to_order: changed, price: 179, currency: 'EUR' }) &&
+          has(bag.common, { changed_detail_count: changed ? 1 : 0, delivery_estimate: changed ? '1_2_weeks' : '1_2_days', hem: changed ? 'turn_up' : 'plain' }), show(bag));
+        // Section 6.3: the two new properties come last, and tap_count equals the taps of the path (4, 6, 9).
+        check(name + ': added_to_bag ends with has_opened_fit_picker ' + (path.id !== 'keep') + ' and tap_count ' + path.taps,
+          Object.keys(bag.props).slice(-2).join(',') === 'has_opened_fit_picker,tap_count' &&
+          bag.props.has_opened_fit_picker === (path.id !== 'keep') && bag.props.tap_count === path.taps, show(bag.props));
+        check(name + ': each event has the same session_id', events.every((e) => e.common.session_id === SESSION_ID), show(events.map((e) => e.common.session_id)));
+        if (path.id === 'straight') {
+          const fitEvent = lastEvent('fit_changed');
+          check(name + ': fit_changed has the new fit', has(fitEvent.props, { fit_part: 'main_fit', value: 'straight' }) &&
+            has(fitEvent.common, { fit: 'straight', waistband: 'belt_loops', front: 'flat' }), show(fitEvent));
+        }
+        if (changed) {
+          const option = lastEvent('detail_value_tapped');
+          check(name + ': details_sheet_opened has the step main_fit', lastEvent('details_sheet_opened').props.step === 'main_fit', show(lastEvent('details_sheet_opened')));
+          check(name + ': details_sheet_opened from the hem thumb has opened_from photo_thumb, after step',
+            Object.keys(lastEvent('details_sheet_opened').props).join(',') === 'step,opened_from' &&
+            lastEvent('details_sheet_opened').props.opened_from === 'photo_thumb', show(lastEvent('details_sheet_opened')));
+          check(name + ': detail_value_tapped has the previous value', has(option.props, { option: 'hem', value: 'turn_up', previous_value: 'plain', is_standard_value: false }) &&
+            has(option.common, { changed_detail_count: 1, delivery_estimate: '1_2_weeks' }), show(option));
+        }
+      });
+    });
+  });
+
+  // Check 6: more cases of the events.
+  scenario('Events, more cases', () => {
+    fresh('on');
+    tap('open-flow');
+    tap('choose-fit');
+    tap('set-fit', 'wide');
+    check('Events: a tap on the selected fit sends no event 4', names() === 'prompt_shown,fit_picker_opened', names());
+    tap('set-fit', 'slim');
+    check('Events: a new main fit sends event 4', has(lastEvent('fit_changed').props, { fit_part: 'main_fit', value: 'slim' }) &&
+      lastEvent('fit_changed').common.fit === 'slim_tapered', show(lastEvent('fit_changed')));
+    tap('next');
+    tap('set-leg', 'tapered');
+    tap('set-leg', 'straight');
+    check('Events: a new leg shape sends event 4, and the selected one sends none', names() === 'prompt_shown,fit_picker_opened,fit_changed,fit_changed' &&
+      has(lastEvent('fit_changed').props, { fit_part: 'leg_shape', value: 'straight' }) &&
+      has(lastEvent('fit_changed').common, { fit: 'slim_straight', is_fit_in_stock: false, delivery_estimate: '1_2_weeks' }), names());
+    tap('open-sheet');
+    check('Events: the sheet on fit screen 2 has the step leg_shape', lastEvent('details_sheet_opened').props.step === 'leg_shape', show(lastEvent('details_sheet_opened')));
+    tap('expand-option', 'waistband');
+    tap('set-option', 'waistband:adjusters');
+    check('Events: event 6 has the previous value and the new count', has(lastEvent('detail_value_tapped').props,
+      { option: 'waistband', value: 'side_adjusters', previous_value: 'belt_loops', is_standard_value: false }) &&
+      lastEvent('detail_value_tapped').common.changed_detail_count === 1, show(lastEvent('detail_value_tapped')));
+    tap('set-option', 'waistband:adjusters');
+    check('Events: a tap on the selected tile also sends event 6', names().endsWith('detail_value_tapped,detail_value_tapped') &&
+      has(lastEvent('detail_value_tapped').props, { value: 'side_adjusters', previous_value: 'side_adjusters' }), names());
+    tap('expand-option', 'front');
+    tap('set-option', 'front:flat');
+    check('Events: a tap on the standard value has is_standard_value true', has(lastEvent('detail_value_tapped').props,
+      { option: 'front', value: 'flat', previous_value: 'flat', is_standard_value: true }), show(lastEvent('detail_value_tapped')));
+    tap('reset-options');
+    check('Events: "Reset to standard" sends event 7 with the number of set options', lastEvent('details_reset_tapped').props.reset_detail_count === 2 &&
+      lastEvent('details_reset_tapped').common.changed_detail_count === 0, show(lastEvent('details_reset_tapped')));
+    tap('close-sheet', 'done');
+    tap('next');
+    tap('set-size', '94');
+    tap('add-to-bag');
+    check('Events: a fit with no stock is made to order, also with standard details', has(lastEvent('added_to_bag').props,
+      { size: 94, size_length: 'long', has_changed_detail: false, is_made_to_order: true }), show(lastEvent('added_to_bag')));
+
+    fresh('on');
+    tap('open-flow');
+    tap('choose-fit');
+    tap('next');
+    tap('back');
+    tap('open-sheet');
+    tap('close-sheet', 'done');
+    tap('open-sheet');
+    tap('close-sheet', 'backdrop');
+    tap('close');
+    check('Events: "Next" to fit screen 2, the back icon, "Done", the backdrop, and the close icon send no event',
+      names() === 'prompt_shown,fit_picker_opened,details_sheet_opened,details_sheet_opened', names());
+    tap('open-flow');
+    tap('keep-fit');
+    tap('set-size', '22');
+    panelTap('restart');
+    check('Events: a size tap and "Start again" send no event', names().endsWith('prompt_shown,keep_fit_tapped,size_step_shown'), names());
+
+    fresh('off');
+    PATHS.forEach((path) => {
+      if (!path.flags.includes('off')) return;
+      panelTap('restart');
+      path.steps.forEach((step) => tap(step[0], step[1]));
+    });
+    panelTap('restart');
+    tap('open-flow');
+    tap('choose-fit');
+    tap('next');
+    tap('set-leg', 'straight');
+    tap('next');
+    check('Events: the flag OFF sends no event 5, 6, or 7', !/details_sheet_opened|detail_value_tapped|details_reset_tapped/.test(names()) &&
+      state.log.filter((e) => e.name).every((e) => e.common.flag_variant === 'control' && e.common.changed_detail_count === 0), names());
+  });
+
+  // Check 2: the flag OFF shows the prompt of today and no option on each screen.
+  scenario('Flag OFF / each screen', () => {
+    fresh('off');
+    const seen = [];
+    const look = () => { seen.push(state.screen); return !phone.querySelector(OPTION_PLACES); };
+    let clean = look();
+    tap('open-flow');
+    clean = look() && clean;
+    check('Flag OFF: the prompt has the text of today',
+      phone.textContent.includes('Want a different fit?') && phone.textContent.includes('These trousers come in 5 other fits.') &&
+      find('choose-fit').textContent === 'Choose fit' && find('keep-fit').textContent === 'Keep Tapered Leg');
+    tap('choose-fit');
+    clean = look() && clean;
+    tap('next');
+    clean = look() && clean;
+    tap('next');
+    clean = look() && clean;
+    tap('set-size', '48');
+    tap('add-to-bag');
+    clean = look() && clean;
+    check('Flag OFF: no details row, sheet, details line, or tile on each screen', clean && seen.join(',') === 'pdp,prompt,fit1,fit2,size,bag', seen.join(','));
+  });
+
+  scenario('Flag ON / prompt', () => {
+    fresh('on');
+    tap('open-flow');
+    check('Flag ON: the prompt has the new text',
+      phone.textContent.includes('Want a different fit or details?') &&
+      phone.textContent.includes('These trousers come in 5 fits. You can also change the waistband, hem and front style.') &&
+      find('choose-fit').textContent === 'Choose fit and details' && find('keep-fit').textContent === 'Keep Tapered Leg');
+  });
+
+  // Check 3: the rules, with the flag ON.
+  scenario('Rules', () => {
+    fresh('on');
+    tap('open-flow');
+    tap('choose-fit');
+    check('Rules: the start fit shows its standard', role('details-line') === 'Side adjusters, plain hem, pleated front', role('details-line'));
+    tap('set-fit', 'slim');
+    check('Rules: Slim Fit shows its standard', role('details-line') === 'Side adjusters, turn-up hem, pleated front', role('details-line'));
+    check('Rules: Slim Fit, Tapered Leg has delivery 1-2 days', role('delivery').includes('Delivery 1-2 days'), role('delivery'));
+    tap('next');
+    tap('set-leg', 'straight');
+    check('Rules: Slim Fit, Straight Leg shows its standard', role('details-line') === 'Belt loops, plain hem, flat front', role('details-line'));
+    check('Rules: Slim Fit, Straight Leg has delivery 1-2 weeks', role('delivery').includes('Delivery 1-2 weeks'), role('delivery'));
+    check('Rules: no "Changed" tag on a standard fit', role('changed-tag') === '', role('changed-tag'));
+    tap('open-sheet', 'hem');
+    check('Rules: "Reset to standard" is disabled when no option is set', phone.querySelector('[data-action="reset-options"]').disabled);
+    tap('set-option', 'hem:turnup');
+    check('Rules: notice on a fit that is not in stock', role('notice') === 'Delivery stays 1-2 weeks.', role('notice'));
+    tap('close-sheet', 'done');
+    check('Rules: the row shows the set hem', role('details-line') === 'Belt loops, turn-up hem, flat front', role('details-line'));
+    check('Rules: the row shows the "Changed" tag', role('changed-tag') === 'Changed', role('changed-tag'));
+    tap('set-leg', 'tapered');
+    check('Rules: the set hem stays after a fit change', role('details-line') === 'Side adjusters, turn-up hem, pleated front' && state.set.hem === 'turnup', role('details-line'));
+    tap('back');
+    tap('set-fit', 'wide');
+    check('Rules: the set hem stays on Wide Fit', role('details-line') === 'Side adjusters, turn-up hem, pleated front', role('details-line'));
+    check('Rules: a changed fit in stock has delivery 1-2 weeks', role('delivery').includes('Delivery 1-2 weeks'), role('delivery'));
+    tap('open-sheet');
+    check('Rules: notice on a fit in stock', role('notice') === 'Delivery changes to 1-2 weeks. We make these trousers for you.', role('notice'));
+    tap('reset-options');
+    check('Rules: after the reset, the line is the standard', role('details-line') === 'Side adjusters, plain hem, pleated front', role('details-line'));
+    check('Rules: after the reset, delivery is 1-2 days', role('delivery').includes('Delivery 1-2 days'), role('delivery'));
+    check('Rules: after the reset, the reset button is disabled', phone.querySelector('[data-action="reset-options"]').disabled);
+    tap('close-sheet', 'backdrop');
+    check('Rules: a tap on the backdrop closes the sheet', !phone.querySelector('[role="dialog"]'));
+    tap('next');
+    tap('next');
+    check('Rules: "Add to bag" is disabled before a size is selected', state.screen === 'size' && phone.querySelector('[data-action="add-to-bag"]').disabled, state.screen);
+    tap('set-size', '48');
+    check('Rules: "Add to bag" is enabled after a size is selected', !phone.querySelector('[data-action="add-to-bag"]').disabled);
+  });
+
+  // Check 4: the strip of close-ups at the top of the sheet.
+  scenario('Sheet strip', () => {
+    fresh('on');
+    tap('open-flow');
+    tap('choose-fit');
+    tap('open-sheet', 'hem');
+    const label = (name) => {
+      const el = phone.querySelector('[data-role="' + name + '"] [role="img"]');
+      return el ? el.getAttribute('aria-label') : '';
+    };
+    const flashed = () => Array.from(phone.querySelectorAll('[data-flash="1"]')).map((el) => el.dataset.role).join(',');
+    const status = () => document.getElementById('live-status').textContent;
+    check('Sheet strip: one close-up per option, outside the scroll area',
+      !!phone.querySelector('#sheet [data-role="live-waistband"]') && !!phone.querySelector('#sheet [data-role="live-hem"]') &&
+      !!phone.querySelector('#sheet [data-role="live-front"]') && !phone.querySelector('[data-scroll="sheet"] [data-role="live-hem"]'));
+    check('Sheet strip: the captions show the standard',
+      role('live-waistband-caption') === 'Side adjusters' && role('live-hem-caption') === 'Plain hem' && role('live-front-caption') === 'Pleated front',
+      role('live-waistband-caption') + ' / ' + role('live-hem-caption') + ' / ' + role('live-front-caption'));
+    check('Sheet strip: the close-ups have names',
+      label('live-waistband') === 'Close-up: Side adjusters' && label('live-hem') === 'Close-up: Plain hem' && label('live-front') === 'Close-up: Pleated front',
+      label('live-waistband') + ' / ' + label('live-hem') + ' / ' + label('live-front'));
+    check('Sheet strip: no highlight when the sheet opens', flashed() === '', flashed());
+    tap('set-option', 'hem:turnup');
+    check('Sheet strip: the hem caption and name change',
+      role('live-hem-caption') === 'Turn-up hem' && label('live-hem') === 'Close-up: Turn-up', role('live-hem-caption') + ' / ' + label('live-hem'));
+    check('Sheet strip: the hem close-up has the highlight', flashed() === 'live-hem', flashed());
+    check('Sheet strip: the screen reader text changes', status() === 'Details: side adjusters, turn-up hem, pleated front. Delivery 1-2 weeks.', status());
+    tap('set-option', 'hem:turnup');
+    check('Sheet strip: a tap on the selected value gives no highlight', flashed() === '', flashed());
+    tap('expand-option', 'front');
+    tap('set-option', 'front:flat');
+    check('Sheet strip: a new front changes the front close-up',
+      role('live-front-caption') === 'Flat front' && label('live-front') === 'Close-up: Flat front' && flashed() === 'live-front',
+      role('live-front-caption') + ' / ' + flashed());
+    tap('expand-option', 'waistband');
+    tap('set-option', 'waistband:loops');
+    check('Sheet strip: a new waistband changes the waistband close-up',
+      role('live-waistband-caption') === 'Belt loops' && flashed() === 'live-waistband', role('live-waistband-caption') + ' / ' + flashed());
+    tap('reset-options');
+    check('Sheet strip: "Reset to standard" highlights all close-ups and shows the standard', flashed() === 'live-waistband,live-hem,live-front' &&
+      role('live-waistband-caption') === 'Side adjusters' && role('live-hem-caption') === 'Plain hem' && role('live-front-caption') === 'Pleated front', flashed());
+    check('Sheet strip: the screen reader text after the reset', status() === 'Details: side adjusters, plain hem, pleated front. Delivery 1-2 days.', status());
+    tap('close-sheet', 'done');
+    tap('open-sheet');
+    check('Sheet strip: the highlight shows one time only', flashed() === '', flashed());
+  });
+
+  // Part A: photos on every screen, with the drawing fallback.
+  scenario('Photos', () => {
+    fresh('on');
+    const img = () => phone.querySelector('.fit-photo img');
+    check('Photos: the product page shows the photo of the base fit',
+      state.screen === 'pdp' && !!phone.querySelector('.pdp-photo img') &&
+      phone.querySelector('.pdp-photo img').getAttribute('src') === 'assets/fit-wide-tapered.jpg', state.screen);
+    tap('open-flow');
+    tap('choose-fit');
+    check('Photos: the fit screen shows the photo of the selected fit',
+      img() && img().getAttribute('src') === 'assets/fit-wide-tapered.jpg' &&
+      img().alt === 'Photo: Wide Fit, Tapered Leg, the standard details of this fit', img() ? img().getAttribute('src') : 'none');
+    tap('open-sheet', 'hem');
+    tap('set-option', 'hem:turnup');
+    tap('close-sheet', 'done');
+    check('Photos: the changed state shows the caption and the close-up strip',
+      phone.textContent.includes('The photo shows the standard details of this fit.') &&
+      phone.querySelectorAll('.changed-strip .cs').length === 1 &&
+      phone.querySelector('.changed-strip .cs').getAttribute('aria-label') === 'Close-up: Turn-up', phone.querySelectorAll('.changed-strip .cs').length);
+    tap('set-fit', 'slim');
+    check('Photos: Slim Fit shows its own photo', img().getAttribute('src') === 'assets/fit-slim-tapered.jpg', img().getAttribute('src'));
+    tap('next');
+    tap('set-leg', 'straight');
+    check('Photos: Slim Fit, Straight Leg says that it is shown in another colour',
+      phone.textContent.includes('Shown in another colour.') && img().getAttribute('src') === 'assets/fit-slim-straight.jpg', img().getAttribute('src'));
+    // The fallback: the error handler swaps in the drawing of the same fit and details.
+    // A synthetic error event does not fire onerror on an img in Chrome, so the test calls the
+    // handler directly. The real wiring is covered by the external run with the assets folder renamed.
+    const broken = img();
+    broken.onerror.call(broken, new Event('error'));
+    check('Photos: a broken image source shows the drawing', !!phone.querySelector('.fit-photo .drawing-fallback svg'));
+  });
+
+  // Part A: the switch of each option.
+  scenario('Option switches', () => {
+    const optBtn = (key) => panel.querySelector('[data-action="toggle-option"][data-value="' + key + '"]');
+    fresh('on');
+    optBtn('front').click();
+    check('Switches: switching an option off restarts the flow and writes a note',
+      state.screen === 'pdp' && state.taps === 0 &&
+      (state.log[state.log.length - 1] || {}).note === 'Option Front style switched off. The flow started again.', JSON.stringify(state.log[state.log.length - 1]));
+    check('Switches: the button shows off', optBtn('front').getAttribute('aria-pressed') === 'false');
+    tap('open-flow');
+    check('Switches: the prompt lists only the enabled options',
+      phone.textContent.includes('You can also change the waistband and hem.'), phone.textContent);
+    tap('choose-fit');
+    tap('open-sheet');
+    check('Switches: two summary rows in the sheet, and no front row',
+      phone.querySelectorAll('.acc-row').length === 2 && !phone.textContent.includes('Front style'), phone.querySelectorAll('.acc-row').length);
+    check('Switches: the details line has two parts', role('details-line') === 'Side adjusters, plain hem', role('details-line'));
+    tap('expand-option', 'hem');
+    tap('set-option', 'hem:turnup');
+    check('Switches: the common properties hold the standard front for a switched-off option',
+      lastEvent('detail_value_tapped').common.front === 'pleated' && lastEvent('detail_value_tapped').common.changed_detail_count === 1,
+      show(lastEvent('detail_value_tapped')));
+    optBtn('waistband').click();
+    optBtn('hem').click();
+    tap('open-flow');
+    check('Switches: all three off, the prompt equals the flow of today',
+      phone.textContent.includes('Want a different fit?') && phone.textContent.includes('These trousers come in 5 other fits.') &&
+      !phone.querySelector('[data-action="open-sheet"]'), phone.textContent);
+    check('Switches: all three off, no details row on the fit screen',
+      (tap('choose-fit'), !phone.querySelector(OPTION_PLACES)), 'details row found');
+    // Back to the start state, so the later scenarios find all options on.
+    optBtn('waistband').click();
+    optBtn('hem').click();
+    optBtn('front').click();
+    check('Switches: restored, the feature is on again',
+      state.enabled.waistband && state.enabled.hem && state.enabled.front && featureOn(), JSON.stringify(state.enabled));
+  });
+
+  // Part A: a value that production cannot make (rule R8).
+  scenario('Unavailable values', () => {
+    fresh('on');
+    tap('open-flow');
+    tap('choose-fit');
+    tap('open-sheet', 'front');
+    tap('set-option', 'front:pleated');
+    check('Unavailable: setting the standard value of the base fit is possible',
+      lastEvent('detail_value_tapped').props.is_standard_value === true, show(lastEvent('detail_value_tapped')));
+    tap('close-sheet', 'done');
+    tap('set-fit', 'slim');
+    tap('next');
+    tap('set-leg', 'straight');
+    check('Unavailable: the pleated front goes back with a notice on the fit screen',
+      role('fit-notice') === 'Pleated front is not available for this fit. Front style is back to flat front.' &&
+      role('details-line') === 'Belt loops, plain hem, flat front', role('fit-notice'));
+    check('Unavailable: event 4 carries reverted_option_count 1',
+      lastEvent('fit_changed').props.reverted_option_count === 1 && state.set.front === null, show(lastEvent('fit_changed')));
+    tap('open-sheet', 'front');
+    const pleated = phone.querySelector('[data-action="set-option"][data-value="front:pleated"]');
+    check('Unavailable: the pleated tile is disabled and tagged',
+      pleated.disabled && phone.querySelector('[data-role="unavailable-tag"]').textContent === 'Not available for this fit', String(pleated.disabled));
+    tap('close-sheet', 'backdrop');
+    tap('set-leg', 'tapered');
+    check('Unavailable: the next action clears the notice', role('fit-notice') === '', role('fit-notice'));
+  });
+
+  // Part B: the customer switch.
+  scenario('Customer switch', () => {
+    const custBtn = (key) => panel.querySelector('[data-action="set-customer"][data-value="' + key + '"]');
+    fresh('on');
+    custBtn('signed_in_details').click();
+    check('Customer: the switch restarts the flow and writes a note',
+      state.customer === 'signed_in_details' && state.screen === 'pdp' && state.taps === 0 &&
+      (state.log[state.log.length - 1] || {}).note === 'Customer set to Signed in, detail history. The flow started again.', JSON.stringify(state.log[state.log.length - 1]));
+    tap('open-flow');
+    check('Customer: the common properties carry customer_state and size_prefill',
+      lastEvent('prompt_shown').common.customer_state === 'signed_in_details' && lastEvent('prompt_shown').common.size_prefill === 'preselected', show(lastEvent('prompt_shown')));
+    check('Customer: the "What we know" box shows the rows of this customer',
+      panel.querySelectorAll('#know-rows tr').length === 2 && panel.querySelector('#know-rows tr td').textContent.includes('Size 50 Regular'),
+      panel.querySelectorAll('#know-rows tr').length);
+    check('Customer: signed_in_details gives identity_tier signed_in and consent_state analytics_and_personalisation',
+      has(lastEvent('prompt_shown').common, { identity_tier: 'signed_in', consent_state: 'analytics_and_personalisation' }), show(lastEvent('prompt_shown').common));
+    custBtn('identified').click();
+    tap('open-flow');
+    check('Customer: identified gives identity_tier identified and consent_state analytics_and_personalisation',
+      has(lastEvent('prompt_shown').common, { customer_state: 'identified', identity_tier: 'identified', consent_state: 'analytics_and_personalisation' }), show(lastEvent('prompt_shown').common));
+    custBtn('signed_in_size').click();
+    tap('open-flow');
+    check('Customer: signed_in_size gives identity_tier signed_in',
+      has(lastEvent('prompt_shown').common, { customer_state: 'signed_in_size', identity_tier: 'signed_in', consent_state: 'analytics_and_personalisation' }), show(lastEvent('prompt_shown').common));
+    custBtn('anonymous').click();
+    check('Customer: back to anonymous, size_prefill is none',
+      state.customer === 'anonymous' && sizePrefill() === 'none', state.customer);
+    tap('open-flow');
+    check('Customer: back to anonymous, identity_tier anonymous and consent_state analytics_only',
+      has(lastEvent('prompt_shown').common, { customer_state: 'anonymous', identity_tier: 'anonymous', consent_state: 'analytics_only' }), show(lastEvent('prompt_shown').common));
+  });
+
+  // Part B: a signed-in customer with a size on file.
+  scenario('Signed in, size', () => {
+    const custBtn = (key) => panel.querySelector('[data-action="set-customer"][data-value="' + key + '"]');
+    fresh('on');
+    custBtn('signed_in_size').click();
+    tap('open-flow');
+    tap('keep-fit');
+    check('Signed in size: the size is selected on entry with its source',
+      state.size === 50 && role('prefill-line') === 'Size 50 Regular is selected, from your Size Passport.', role('prefill-line'));
+    check('Signed in size: "Add to bag" is enabled at once', !phone.querySelector('[data-action="add-to-bag"]').disabled);
+    tap('add-to-bag');
+    check('Signed in size: the Keep path is 3 taps',
+      state.taps === 3 && state.screen === 'bag', String(state.taps));
+    check('Signed in size: event 9 has size_prefill_outcome kept',
+      lastEvent('added_to_bag').props.size_prefill_outcome === 'kept', show(lastEvent('added_to_bag')));
+    panelTap('restart');
+    tap('open-flow');
+    tap('keep-fit');
+    tap('set-size', '48');
+    check('Signed in size: another size removes the line',
+      role('prefill-line') === '' && state.size === 48, role('prefill-line'));
+    tap('add-to-bag');
+    check('Signed in size: another size gives changed',
+      lastEvent('added_to_bag').props.size_prefill_outcome === 'changed', show(lastEvent('added_to_bag')));
+    // The rule: a detail change turns the preselected size into a suggestion.
+    panelTap('restart');
+    tap('open-flow');
+    tap('choose-fit');
+    tap('open-sheet', 'hem');
+    tap('set-option', 'hem:turnup');
+    tap('close-sheet', 'done');
+    tap('next');
+    tap('next');
+    check('Signed in size: a changed pair gets the size as a suggestion with its reason',
+      state.screen === 'size' && state.size === null && sizePrefill() === 'suggested' && role('prefill-line').includes('tap to confirm'),
+      state.screen + ' / ' + String(state.size) + ' / ' + role('prefill-line'));
+    tap('open-sheet');
+    tap('reset-options');
+    check('Signed in size: a reset to standard preselects the size again',
+      state.size === 50 && sizePrefill() === 'preselected', String(state.size));
+    tap('expand-option', 'hem');
+    tap('set-option', 'hem:turnup');
+    check('Signed in size: a new change clears the preselected size again', state.size === null, String(state.size));
+    tap('close-sheet', 'done');
+    tap('set-size', '48');
+    tap('open-sheet');
+    tap('reset-options');
+    check('Signed in size: a size the customer tapped stays after a reset',
+      state.size === 48, String(state.size));
+  });
+
+  // Part B: a signed-in customer with a detail history.
+  scenario('Signed in, details', () => {
+    const custBtn = (key) => panel.querySelector('[data-action="set-customer"][data-value="' + key + '"]');
+    fresh('on');
+    custBtn('signed_in_details').click();
+    tap('open-flow');
+    check('Signed in details: events 1 then 10', names() === 'prompt_shown,suggestion_shown', names());
+    check('Signed in details: the card shows the last pair with its source',
+      role('suggestion-card').includes('Your last pair: side adjusters, turn-up hem, pleated front.') &&
+      role('suggestion-card').includes('From your order history. You can edit them before you add to bag.'), role('suggestion-card'));
+    check('Signed in details: nothing is applied yet', !anySet() && !isChanged());
+    tap('accept-suggestion');
+    check('Signed in details: accept applies the details and opens the size step',
+      state.screen === 'size' && isChanged() &&
+      role('your-details') === 'Your details: side adjusters, turn-up hem, pleated front' &&
+      role('delivery').includes('Delivery 1-2 weeks'), state.screen);
+    check('Signed in details: events 11 then 8 with entry suggestion',
+      names().endsWith('suggestion_accepted,size_step_shown') && lastEvent('size_step_shown').props.entry === 'suggestion', names());
+    check('Signed in details: a changed pair gets the size as a suggestion, not preselected',
+      state.size === null && sizePrefill() === 'suggested' &&
+      phone.querySelector('[data-action="set-size"][data-value="50"]').classList.contains('hint') &&
+      role('prefill-line').includes('Size Passport says 50 Regular'), role('prefill-line'));
+    check('Signed in details: "Add to bag" waits for the size tap', phone.querySelector('[data-action="add-to-bag"]').disabled);
+    tap('set-size', '50');
+    tap('add-to-bag');
+    check('Signed in details: 4 taps to the bag',
+      state.taps === 4 && state.screen === 'bag' && lastEvent('added_to_bag').common.changed_detail_count === 1, String(state.taps));
+    check('Signed in details: event 9 has size_prefill suggested and outcome kept',
+      lastEvent('added_to_bag').common.size_prefill === 'suggested' && lastEvent('added_to_bag').props.size_prefill_outcome === 'kept',
+      show(lastEvent('added_to_bag')));
+  });
+
+  // Part B: a returning visitor who is not signed in.
+  scenario('Identified device', () => {
+    const custBtn = (key) => panel.querySelector('[data-action="set-customer"][data-value="' + key + '"]');
+    fresh('on');
+    custBtn('identified').click();
+    tap('open-flow');
+    check('Identified: the resume card shows',
+      role('suggestion-card').includes('Pick up where you left off') &&
+      role('suggestion-card').includes('Straight Fit \u00b7 side adjusters \u00b7 size 48 Regular'), role('suggestion-card'));
+    tap('accept-suggestion');
+    check('Identified: Continue restores fit and details, and only suggests the size',
+      state.mainFit === 'straight' && state.set.waistband === 'adjusters' && state.size === null &&
+      role('prefill-line') === 'Last time on this device: 48 Regular' &&
+      role('your-details') === 'Your details: side adjusters, plain hem, flat front', role('your-details') + ' / ' + role('prefill-line'));
+    panelTap('restart');
+    tap('open-flow');
+    const beforeFresh = state.count;
+    tap('dismiss-suggestion');
+    check('Identified: "Start fresh" removes the card with no event',
+      role('suggestion-card') === '' && state.count === beforeFresh, names() + ' / ' + role('suggestion-card'));
+    panelTap('restart');
+    tap('open-flow');
+    tap('keep-fit');
+    check('Identified: the last size is outlined and not selected',
+      state.size === null && phone.querySelector('[data-action="set-size"][data-value="48"]').classList.contains('hint') &&
+      role('prefill-line') === 'Last time on this device: 48 Regular', role('prefill-line'));
+  });
+
+  // Part B: nothing leaks into the baseline.
+  scenario('No leak', () => {
+    const custBtn = (key) => panel.querySelector('[data-action="set-customer"][data-value="' + key + '"]');
+    fresh('on');
+    custBtn('signed_in_details').click();
+    setFlag('off');
+    tap('open-flow');
+    check('No leak: flag OFF shows no card and reports customer_state anyway',
+      role('suggestion-card') === '' && lastEvent('prompt_shown').common.customer_state === 'signed_in_details' &&
+      lastEvent('prompt_shown').common.size_prefill === 'none', show(lastEvent('prompt_shown')));
+    tap('keep-fit');
+    check('No leak: flag OFF preselects nothing', state.size === null && role('prefill-line') === '', role('prefill-line'));
+    check('No leak: events 10 and 11 never fired', !/suggestion/.test(names()), names());
+    fresh('on');
+    custBtn('anonymous').click();
+    tap('open-flow');
+    check('No leak: anonymous gets no card and no prefill',
+      role('suggestion-card') === '' && names() === 'prompt_shown' && sizePrefill() === 'none', names());
+  });
+
+  // Part B: the rules of a suggestion.
+  scenario('Suggestion rules', () => {
+    const custBtn = (key) => panel.querySelector('[data-action="set-customer"][data-value="' + key + '"]');
+    const optBtn = (key) => panel.querySelector('[data-action="toggle-option"][data-value="' + key + '"]');
+    fresh('on');
+    custBtn('signed_in_details').click();
+    optBtn('hem').click();
+    tap('open-flow');
+    check('Rules: hem off means no card, because nothing differs from the standard (P8)',
+      role('suggestion-card') === '', role('suggestion-card'));
+    optBtn('hem').click();
+    optBtn('front').click();
+    tap('open-flow');
+    check('Rules: front off leaves the card without the front style',
+      role('suggestion-card').includes('Your last pair: side adjusters, turn-up hem.'), role('suggestion-card'));
+    optBtn('front').click();
+  });
+
+  // Part B: "Edit" on the size step.
+  scenario('Edit on the size step', () => {
+    panel.querySelector('[data-action="set-customer"][data-value="anonymous"]').click();
+    fresh('on');
+    tap('open-flow');
+    tap('choose-fit');
+    tap('open-sheet', 'hem');
+    tap('set-option', 'hem:turnup');
+    tap('close-sheet', 'done');
+    tap('next');
+    tap('next');
+    const edit = Array.from(phone.querySelectorAll('[data-action="open-sheet"]')).find((b) => b.textContent === 'Edit');
+    check('Edit: the link shows after the summary line', !!edit && role('your-details') !== '', role('your-details'));
+    tap('open-sheet');
+    check('Edit: event 5 has the step size_step', lastEvent('details_sheet_opened').props.step === 'size_step', show(lastEvent('details_sheet_opened')));
+    tap('expand-option', 'hem');
+    tap('set-option', 'hem:plain');
+    const beforeDone = state.count;
+    tap('close-sheet', 'done');
+    check('Edit: Done returns to the size step with the updated line and no new event',
+      state.screen === 'size' && role('your-details') === '' && state.count === beforeDone, state.screen + ' / ' + names());
+  });
+
+    // Part C: the product page entry.
+  scenario('Product page entry', () => {
+    panel.querySelector('[data-action="set-customer"][data-value="anonymous"]').click();
+    fresh('on');
+    const pdpBtn = panel.querySelector('[data-action="set-pdp-entry"]');
+    pdpBtn.click();
+    check('PDP entry: the switch restarts and writes a note',
+      state.pdpEntry === true && state.screen === 'pdp' && state.taps === 0 &&
+      (state.log[state.log.length - 1] || {}).note === 'Product page entry switched on. The flow started again.', JSON.stringify(state.log[state.log.length - 1]));
+    const before12 = state.count;
+    tap('toggle-size-fit');
+    check('PDP entry: opening Size and Fit fires event 12 with the link',
+      lastEvent('size_and_fit_expanded') && lastEvent('size_and_fit_expanded').props.has_details_link === true && state.count === before12 + 1,
+      show(lastEvent('size_and_fit_expanded')));
+    check('PDP entry: the section shows the detail rows',
+      phone.textContent.includes('Waistband') && phone.textContent.includes('Front style') && phone.textContent.includes('Hem'), phone.textContent.slice(0, 100));
+    check('PDP entry: the link shows',
+      !!phone.querySelector('[data-action="open-sheet"][data-value="pdp"]') && phone.textContent.includes('Change these details') &&
+      phone.textContent.includes('Made for you in 1-2 weeks. Same price.'), 'link');
+    tap('open-sheet', 'pdp');
+    check('PDP entry: the sheet opens with step product_page',
+      lastEvent('details_sheet_opened').props.step === 'product_page', show(lastEvent('details_sheet_opened')));
+    tap('close-sheet', 'done');
+    check('PDP entry: Done goes to the size step with entry product_page',
+      state.screen === 'size' && lastEvent('size_step_shown').props.entry === 'product_page', state.screen);
+    panelTap('restart');
+    tap('toggle-size-fit');
+    tap('open-sheet', 'pdp');
+    tap('close-sheet', 'backdrop');
+    check('PDP entry: the backdrop stays on the product page',
+      state.screen === 'pdp' && !state.sheet, state.screen);
+    pdpBtn.click();
+    tap('toggle-size-fit');
+    check('PDP entry: off, no link and no Hem row',
+      !phone.querySelector('[data-action="open-sheet"][data-value="pdp"]') && !phone.textContent.includes('Hem') &&
+      phone.textContent.includes('Waistband') && phone.textContent.includes('Front style'), 'off');
+    tap('toggle-size-fit');
+    tap('toggle-size-fit');
+    tap('toggle-size-fit');
+    check('PDP entry: off, event 12 has has_details_link false',
+      lastEvent('size_and_fit_expanded') && lastEvent('size_and_fit_expanded').props.has_details_link === false,
+      show(lastEvent('size_and_fit_expanded')));
+    pdpBtn.click();
+  });
+
+  scenario('Address: pe', () => {
+    const logSize = state.log.length;
+    applyHash('f=on&pe=1&s=pdp&fit=wide&leg=tapered');
+    render();
+    check('Address: pe=1 sets the product page entry on',
+      state.pdpEntry === true && buildHash().includes('pe=1'), buildHash());
+    applyHash('f=on&s=pdp&fit=wide&leg=tapered');
+    render();
+    check('Address: without pe, the entry is off',
+      state.pdpEntry === false && !buildHash().includes('pe=1'), buildHash());
+    check('Address: a page load adds no event', state.log.length === logSize, String(state.log.length - logSize));
+  });
+
+// More checks: the keep label, the leg step, and "Start again".
+  scenario('More checks', () => {
+    fresh('on');
+    tap('open-flow');
+    tap('choose-fit');
+    tap('set-fit', 'straight');
+    check('Keep label follows the fit', (tap('close'), tap('open-flow'), phone.textContent.includes('Keep Straight Fit')));
+    tap('choose-fit');
+    tap('next');
+    check('Straight Fit has no leg step', state.screen === 'size', state.screen);
+    panelTap('restart');
+    check('"Start again" resets the flow and keeps the flag', state.taps === 0 && state.screen === 'pdp' && state.mainFit === 'wide' && state.flag === 'on');
+  });
+
+  // Check 7: a flag change resets the flow, keeps the log, and adds one note.
+  scenario('Flag', () => {
+    fresh('on');
+    tap('open-flow');
+    tap('choose-fit');
+    tap('set-fit', 'slim');
+    const before = state.log.length;
+    setFlag('off');
+    const note = state.log[state.log.length - 1] || {};
+    check('Flag: a change resets the flow', state.flag === 'off' && state.screen === 'pdp' && state.taps === 0 && state.mainFit === 'wide' && !anySet(), buildHash());
+    check('Flag: a change keeps the log and adds one note', state.log.length === before + 1 && note.note === 'Feature flag set to OFF. The flow started again.', JSON.stringify(note));
+    check('Flag: the note has no number', !('n' in note) && typeof note.timestamp === 'string', JSON.stringify(note));
+    check('Flag: the address has f=off', buildHash().indexOf('f=off&') === 0, buildHash());
+    check('Flag: each flag control shows OFF',
+      Array.from(document.querySelectorAll('[data-action="set-flag"]')).every((b) => b.getAttribute('aria-pressed') === String(b.dataset.value === 'off')));
+    setFlag('off');
+    check('Flag: a tap on the selected value adds no note', state.log.length === before + 1, String(state.log.length - before));
+    setFlag('on');
+    check('Flag: the change back adds the note for ON', (state.log[state.log.length - 1] || {}).note === 'Feature flag set to ON. The flow started again.');
+  });
+
+  // Check 8: the event list and the log tools.
+  scenario('Log tools', () => {
+    fresh('on');
+    const list = document.getElementById('event-list');
+    const title = () => document.getElementById('events-title').textContent;
+    check('Log: the empty list shows the start text', list.children.length === 0 && !document.getElementById('event-empty').hidden && title() === 'Tracking events (0)', title());
+    tap('open-flow');
+    tap('keep-fit');
+    const shown = () => Array.from(list.querySelectorAll('[data-event]')).map((li) => li.dataset.event.replace('fit_flow:', '')).join(',');
+    check('Log: the list shows the events, with the newest at the top', shown() === 'size_step_shown,keep_fit_tapped,prompt_shown', shown());
+    check('Log: the title shows the number of events', title() === 'Tracking events (3)' && document.getElementById('event-empty').hidden, title());
+    const top = list.querySelector('[data-event]');
+    const part = (selector) => (top.querySelector(selector) || {}).textContent;
+    check('Log: an entry shows the number, the time, the name, the metric tag, and the specific properties',
+      part('.event-n') === '3' && /^\d\d:\d\d:\d\d$/.test(part('.entry-time')) && part('.event-name') === 'fit_flow:size_step_shown' &&
+      part('.metric-tag') === 'Diagnostic' && part('.props') === 'entry: keep_fit', top.textContent);
+    check('Log: the first event has the metric tag Exposure', list.querySelector('[data-event="fit_flow:prompt_shown"]').textContent.includes('Exposure'));
+    check('Log: the common properties do not show at the start', !list.textContent.includes('product_id'));
+    panelTap('toggle-props');
+    check('Log: "Show all properties" shows the common properties', list.textContent.includes('product_id: B2248') && list.textContent.includes('flag_variant: test') &&
+      find('toggle-props', undefined, panel).getAttribute('aria-pressed') === 'true');
+    panelTap('toggle-props');
+    check('Log: a second tap hides the common properties', !list.textContent.includes('product_id') && find('toggle-props', undefined, panel).getAttribute('aria-pressed') === 'false');
+    setFlag('off');
+    const note = list.querySelector('.log-note');
+    check('Log: a note shows in another style, with no number', !!note && note.textContent.includes('Feature flag set to OFF. The flow started again.') &&
+      !note.querySelector('.event-n') && list.firstElementChild === note && title() === 'Tracking events (3)');
+    panelTap('copy-log');
+    let parsed = null;
+    try { parsed = JSON.parse(lastCopy); } catch (error) { parsed = null; }
+    check('Log: the copied JSON text parses and has the same number of events',
+      Array.isArray(parsed) && parsed.filter((e) => e.name).length === state.count && state.count === 3, lastCopy.slice(0, 60));
+    check('Log: a copied event has the fields n, timestamp, name, props, and common', !!parsed && Object.keys(parsed[0]).join(',') === 'n,timestamp,name,props,common',
+      parsed ? Object.keys(parsed[0]).join(',') : 'no JSON');
+    check('Log: "Copied" shows', document.getElementById('copy-button').textContent === 'Copied');
+    panelTap('clear-log');
+    check('Log: "Clear log" empties the list', list.children.length === 0 && state.count === 0 && !document.getElementById('event-empty').hidden &&
+      title() === 'Tracking events (0)', title());
+    tap('open-flow');
+    check('Log: after "Clear log", the numbers start at 1', state.log.length === 1 && state.log[0].n === 1, show(state.log[0]));
+  });
+
+  // Check 9: the state in the address.
+  scenario('Address', () => {
+    const logSize = state.log.length;
+    applyHash('f=on&s=fit1&fit=slim&leg=tapered&wb=loops&hem=turnup&fr=flat&sheet=1&size=48');
+    render();
+    check('Address: the state comes from the address', state.flag === 'on' && state.screen === 'fit1' && !!phone.querySelector('[role="dialog"]') &&
+      role('details-line') === 'Belt loops, turn-up hem, flat front' && state.size === 48, buildHash());
+    check('Address: the same state goes back to the address', buildHash() === 'f=on&s=fit1&fit=slim&leg=tapered&wb=loops&hem=turnup&fr=flat&sheet=1&size=48', buildHash());
+    applyHash('f=off&s=fit2&fit=slim&leg=straight&wb=adjusters&hem=turnup&fr=pleated&sheet=1&size=94');
+    render();
+    check('Address: f=off ignores the option parameters', buildHash() === 'f=off&s=fit2&fit=slim&leg=straight&size=94' && !phone.querySelector(OPTION_PLACES), buildHash());
+    applyHash('f=yes&s=details&fit=huge&leg=bent&wb=rope&hem=wide&fr=open&sheet=1&size=7');
+    render();
+    check('Address: values that are not possible get the start value', buildHash() === 'f=on&s=pdp&fit=wide&leg=tapered', buildHash());
+    applyHash('v=a&s=fit2&fit=straight&sheet=1');
+    render();
+    check('Address: the old parameter v has no effect, and Straight Fit goes to fit screen 1', buildHash() === 'f=on&s=fit1&fit=straight&leg=tapered&sheet=1', buildHash());
+    applyHash('s=bag&fit=slim&sheet=1');
+    render();
+    check('Address: the bag with no size becomes the size step, with no sheet', buildHash() === 'f=on&s=size&fit=slim&leg=tapered' && state.entry === 'fit_picker', buildHash() + ', ' + state.entry);
+    applyHash('s=size');
+    render();
+    check('Address: the size step of the base fit has the entry keep_fit', state.entry === 'keep_fit', state.entry);
+    check('Address: a page load from an address adds no event', state.log.length === logSize, String(state.log.length - logSize));
+  });
+
+  // Section 6.2: the six new super properties, and the order of all 17.
+  scenario('Super properties', () => {
+    const custBtn = (key) => panel.querySelector('[data-action="set-customer"][data-value="' + key + '"]');
+    custBtn('anonymous').click();
+    fresh('on');
+    tap('open-flow');
+    const first = lastEvent('prompt_shown').common;
+    check('Super properties: 17 keys in the order of the tracking plan', Object.keys(first).join(',') === COMMON_KEYS, Object.keys(first).join(','));
+    check('Super properties: market nl, locale en-nl, device_type mobile', has(first, { market: 'nl', locale: 'en-nl', device_type: 'mobile' }), show(first));
+    check('Super properties: session_id is "demo-" and 6 characters', /^demo-[a-z0-9]{6}$/.test(first.session_id), first.session_id);
+    panelTap('restart');
+    tap('open-flow');
+    const second = lastEvent('prompt_shown').common;
+    check('Super properties: "Start again" keeps the session_id',
+      state.log.filter((e) => e.name).length === 2 && second.session_id === first.session_id, first.session_id + ' / ' + second.session_id);
+    setFlag('off');
+    tap('open-flow');
+    const third = lastEvent('prompt_shown').common;
+    custBtn('signed_in_size').click();
+    tap('open-flow');
+    const fourth = lastEvent('prompt_shown').common;
+    check('Super properties: a flag change and a customer change keep the session_id',
+      third.flag_variant === 'control' && fourth.customer_state === 'signed_in_size' && third.session_id === first.session_id && fourth.session_id === first.session_id,
+      third.session_id + ' / ' + fourth.session_id);
+    check('Super properties: every event of this run has the 17 keys',
+      state.log.filter((e) => e.name).every((e) => Object.keys(e.common).join(',') === COMMON_KEYS), names());
+    custBtn('anonymous').click();
+    setFlag('on');
+  });
+
+  // Section 6.3: opened_from names the control that opened the sheet.
+  scenario('Opened from', () => {
+    panel.querySelector('[data-action="set-customer"][data-value="anonymous"]').click();
+    fresh('on');
+    const from = () => lastEvent('details_sheet_opened').props;
+    tap('open-flow');
+    tap('choose-fit');
+    tap('open-sheet');
+    check('Opened from: the Details row gives details_row', from().opened_from === 'details_row' && from().step === 'main_fit', show(from()));
+    tap('close-sheet', 'backdrop');
+    tap('open-sheet', 'front');
+    check('Opened from: a thumb gives photo_thumb', from().opened_from === 'photo_thumb', show(from()));
+    tap('set-option', 'front:flat');
+    tap('close-sheet', 'done');
+    tap('next');
+    tap('next');
+    tap('open-sheet');
+    check('Opened from: "Edit" on the size step gives edit_link', from().opened_from === 'edit_link' && from().step === 'size_step', show(from()));
+    tap('close-sheet', 'done');
+    const pdpBtn = panel.querySelector('[data-action="set-pdp-entry"]');
+    pdpBtn.click();
+    tap('toggle-size-fit');
+    tap('open-sheet', 'pdp');
+    check('Opened from: "Change these details" on the product page gives product_page_link',
+      from().opened_from === 'product_page_link' && from().step === 'product_page', show(from()));
+    tap('close-sheet', 'backdrop');
+    pdpBtn.click();
+  });
+
+  // Section 6.4: the segment of the visit, and the row in the panel.
+  scenario('Segment', () => {
+    const text = () => document.getElementById('live-segment').textContent.trim();
+    const dot = () => {
+      const el = document.querySelector('#live-segment .vseg-dot');
+      return el ? el.dataset.seg + ':' + getComputedStyle(el).backgroundColor : 'none';
+    };
+    panel.querySelector('[data-action="set-customer"][data-value="anonymous"]').click();
+    fresh('on');
+    check('Segment: a fresh flow is 0, "Not yet", with no dot', visitSegment() === 0 && text() === 'Not yet' && dot() === 'none', text() + ' / ' + dot());
+    tap('open-flow');
+    check('Segment: the prompt alone is still 0 (step loss, not a segment)', visitSegment() === 0 && text() === 'Not yet', text());
+    tap('keep-fit');
+    check('Segment: "Keep" gives 1, with the slate dot',
+      visitSegment() === 1 && text() === '1 · Skipped the fit picker' && dot() === '1:rgb(81, 96, 110)', text() + ' / ' + dot());
+    tap('set-size', '48');
+    tap('add-to-bag');
+    check('Segment: the bag after "Keep" stays 1', visitSegment() === 1 && lastEvent('added_to_bag').props.has_opened_fit_picker === false, text());
+    fresh('on');
+    tap('open-flow');
+    tap('choose-fit');
+    check('Segment: "Choose fit and details" gives 2, with the amber dot',
+      visitSegment() === 2 && text() === '2 · Opened the fit picker, not in the bag (so far)' && dot() === '2:rgb(154, 91, 0)', text() + ' / ' + dot());
+    tap('next');
+    tap('next');
+    tap('set-size', '48');
+    tap('add-to-bag');
+    check('Segment: the bag on that path gives 3, with the teal dot',
+      visitSegment() === 3 && text() === '3 · Opened the fit picker, in the bag' && dot() === '3:rgb(15, 118, 110)', text() + ' / ' + dot());
+    panelTap('restart');
+    check('Segment: "Start again" gives 0', visitSegment() === 0 && text() === 'Not yet', text());
+    tap('open-flow');
+    tap('keep-fit');
+    tap('close');
+    tap('open-flow');
+    tap('choose-fit');
+    check('Segment: "Keep", back, then the fit picker counts as 2', visitSegment() === 2, String(visitSegment()));
+    fresh('off');
+    tap('open-flow');
+    tap('choose-fit');
+    check('Segment: the flag OFF has the segments too', visitSegment() === 2 && text().indexOf('2 ') === 0, text());
+    const seg = (hash) => { applyHash(hash); render(); return visitSegment(); };
+    check('Segment: from the address, fit1 gives 2, the size step of the base fit gives 1, a changed detail gives 2, the product page gives 0',
+      seg('f=on&s=fit1') === 2 && seg('f=on&s=size&size=48') === 1 && seg('f=on&s=size&size=48&hem=turnup') === 2 && seg('f=on&s=pdp') === 0,
+      [seg('f=on&s=fit1'), seg('f=on&s=size&size=48'), seg('f=on&s=size&size=48&hem=turnup'), seg('f=on&s=pdp')].join(','));
+    applyHash('f=on&s=size&size=48&hem=turnup');
+    render();
+    tap('add-to-bag');
+    check('Segment: the bag from that address has has_opened_fit_picker true and gives 3',
+      lastEvent('added_to_bag').props.has_opened_fit_picker === true && visitSegment() === 3, show(lastEvent('added_to_bag').props));
+  });
+
+  // Section 6.6: the fields of the two messages to the deck. The self-test page is not in a frame,
+  // so it catches the messages instead of posting them. The frame and mini rules are checked outside.
+  scenario('Deck messages', () => {
+    const sent = [];
+    const real = deckMessage;
+    deckMessage = (msg) => { sent.push(msg); };
+    try {
+      panel.querySelector('[data-action="set-customer"][data-value="anonymous"]').click();
+      fresh('on');
+      sent.length = 0;
+      tap('open-flow');
+      const ev = sent.find((m) => m.type === 'prototype-event');
+      const st = sent.filter((m) => m.type === 'prototype-state').pop();
+      check('Deck messages: prototype-event has n, name without the prefix, tag, props, and common with the 17 super properties',
+        !!ev && Object.keys(ev).join(',') === 'type,n,name,tag,props,common' && ev.n === 1 && ev.name === 'prompt_shown' && ev.tag === 'Exposure' &&
+        Object.keys(ev.common).join(',') === COMMON_KEYS, show(ev));
+      check('Deck messages: prototype-state has taps, events, screen, flag, customer, and segment',
+        !!st && Object.keys(st).join(',') === 'type,taps,events,screen,flag,customer,segment' &&
+        has(st, { taps: 1, events: 1, screen: 'prompt', flag: 'on', customer: 'anonymous', segment: 0 }), show(st));
+      check('Deck messages: the event comes before the state of the same tap',
+        sent.map((m) => m.type).join(',') === 'prototype-event,prototype-state', sent.map((m) => m.type).join(','));
+      tap('choose-fit');
+      check('Deck messages: the state after "Choose fit and details" has screen fit1 and segment 2',
+        has(sent[sent.length - 1], { type: 'prototype-state', screen: 'fit1', segment: 2, taps: 2, events: 2 }), show(sent[sent.length - 1]));
+      tap('next');
+      tap('next');
+      tap('set-size', '48');
+      tap('add-to-bag');
+      const bagEvent = sent.filter((m) => m.type === 'prototype-event').pop();
+      check('Deck messages: the bag event carries has_opened_fit_picker and tap_count, and the state has segment 3',
+        bagEvent.name === 'added_to_bag' && bagEvent.props.has_opened_fit_picker === true && bagEvent.props.tap_count === 6 &&
+        has(sent[sent.length - 1], { screen: 'bag', segment: 3, taps: 6 }), show(bagEvent.props) + ' / ' + show(sent[sent.length - 1]));
+      setFlag('off');
+      check('Deck messages: a flag change sends the state with flag off and segment 0',
+        has(sent[sent.length - 1], { type: 'prototype-state', flag: 'off', segment: 0, screen: 'pdp', taps: 0 }), show(sent[sent.length - 1]));
+      panel.querySelector('[data-action="set-customer"][data-value="signed_in_details"]').click();
+      check('Deck messages: a customer change sends the customer key', sent[sent.length - 1].customer === 'signed_in_details', show(sent[sent.length - 1]));
+      panel.querySelector('[data-action="set-customer"][data-value="anonymous"]').click();
+      setFlag('on');
+    } finally {
+      deckMessage = real;
+    }
+  });
+
+  // Section 6.5: the scenario buttons. Each path names one control per tap, so its parts equal the tap count.
+  scenario('Scenarios', () => {
+    const list = SCENARIOS();
+    const scen = (n) => find('scenario', String(n), panel).click();
+    const lastNote = () => (state.log.filter((e) => e.note).pop() || {}).note;
+    check('Scenarios: 7 scenarios and 7 buttons', list.length === 7 && panel.querySelectorAll('[data-action="scenario"]').length === 7, String(list.length));
+    check('Scenarios: labels 1 to 3 are the three segment names',
+      list.slice(0, 3).map((s) => s.label).join('|') === 'Skipped the fit picker|Opened the fit picker, not in the bag|Opened the fit picker, in the bag',
+      list.slice(0, 3).map((s) => s.label).join('|'));
+    check('Scenarios: the heading line', document.getElementById('scen-lead').textContent === 'The three segments, the known-customer layer, the next test',
+      document.getElementById('scen-lead').textContent);
+    fresh('off');
+    scen(1);
+    check('Scenarios: 1 with the flag OFF leaves the flag OFF, and the note has the path',
+      state.flag === 'off' && state.customer === 'anonymous' && !state.pdpEntry && state.screen === 'pdp' && state.taps === 0 &&
+      lastNote() === 'Scenario 1: Skipped the fit picker. Path: Select size and fit, Keep Tapered Leg, a size, Add to bag.', state.flag + ' / ' + lastNote());
+    scen(5);
+    check('Scenarios: 5 sets the flag ON and the customer signed_in_details', state.flag === 'on' && state.customer === 'signed_in_details', state.flag + ' / ' + state.customer);
+    scen(2);
+    check('Scenarios: 2 keeps the flag ON and sets the customer anonymous', state.flag === 'on' && state.customer === 'anonymous', state.flag + ' / ' + state.customer);
+    const parts = (n) => list[n - 1].path.split(',').length;
+    const walk = (n, steps) => { scen(n); steps.forEach((s) => tap(s[0], s[1])); };
+    walk(1, [['open-flow'], ['keep-fit'], SIZE, ['add-to-bag']]);
+    check('Scenarios: path 1 is 4 taps, segment 1', lastEvent('added_to_bag').props.tap_count === 4 && parts(1) === 4 && visitSegment() === 1, String(lastEvent('added_to_bag').props.tap_count));
+    walk(2, [['open-flow'], ['choose-fit'], ['open-sheet'], ['expand-option', 'hem'], HEM]);
+    check('Scenarios: path 2 is 5 taps and ends in segment 2 with the delivery notice', state.taps === parts(2) && visitSegment() === 2 &&
+      role('notice') === 'Delivery changes to 1-2 weeks. We make these trousers for you.', state.taps + ' / ' + role('notice'));
+    walk(3, [['open-flow'], ['choose-fit'], ['open-sheet', 'hem'], HEM, DONE, ['next'], ['next'], SIZE, ['add-to-bag']]);
+    check('Scenarios: path 3 is 9 taps, segment 3', lastEvent('added_to_bag').props.tap_count === 9 && parts(3) === 9 && visitSegment() === 3, String(lastEvent('added_to_bag').props.tap_count));
+    walk(4, [['open-flow'], ['keep-fit'], ['add-to-bag']]);
+    check('Scenarios: path 4 is 3 taps', lastEvent('added_to_bag').props.tap_count === 3 && parts(4) === 3, String(lastEvent('added_to_bag').props.tap_count));
+    walk(5, [['open-flow'], ['accept-suggestion'], ['set-size', '50'], ['add-to-bag']]);
+    check('Scenarios: path 5 is 4 taps', lastEvent('added_to_bag').props.tap_count === 4 && parts(5) === 4, String(lastEvent('added_to_bag').props.tap_count));
+    walk(6, [['open-flow'], ['accept-suggestion'], SIZE, ['add-to-bag']]);
+    check('Scenarios: path 6 is 4 taps', lastEvent('added_to_bag').props.tap_count === 4 && parts(6) === 4, String(lastEvent('added_to_bag').props.tap_count));
+    walk(7, [['toggle-size-fit'], ['open-sheet', 'pdp'], ['expand-option', 'hem'], HEM, DONE, SIZE, ['add-to-bag']]);
+    check('Scenarios: path 7 has one part per tap (' + parts(7) + ')', lastEvent('added_to_bag').props.tap_count === parts(7) && state.pdpEntry && state.flag === 'on',
+      String(lastEvent('added_to_bag').props.tap_count));
+    scen(1);
+  });
+
+  // Section 6.1: mini mode hides everything but the phone, and the phone fills the window.
+  scenario('Mini', () => {
+    const ids = ['topbar', 'panel', 'event-ticker', 'selftest-result'];
+    const displays = () => ids.map((id) => getComputedStyle(document.getElementById(id)).display).join(',');
+    const frameEl = document.getElementById('phone-frame');
+    const before = displays();
+    const beforeHeight = Math.round(frameEl.getBoundingClientRect().height);
+    applyMini(true);
+    const frame = frameEl.getBoundingClientRect();
+    const phoneBox = phone.getBoundingClientRect();
+    check('Mini: the top bar, the panel, the ticker, and the self-test box are hidden', displays() === 'none,none,none,none', displays());
+    check('Mini: the phone frame is as high and as wide as the window (within 1 px), with no zoom',
+      Math.abs(frame.height - window.innerHeight) <= 1 && Math.abs(frame.width - window.innerWidth) <= 1 && getComputedStyle(frameEl).zoom === '1',
+      Math.round(frame.width) + 'x' + Math.round(frame.height) + ' in ' + window.innerWidth + 'x' + window.innerHeight);
+    check('Mini: the phone fills the frame', Math.abs(phoneBox.height - frame.height) <= 1 && Math.abs(phoneBox.width - frame.width) <= 1,
+      Math.round(phoneBox.width) + 'x' + Math.round(phoneBox.height));
+    check('Mini: the page itself does not scroll', getComputedStyle(document.body).overflow === 'hidden' && getComputedStyle(document.body).backgroundColor === 'rgb(255, 255, 255)',
+      getComputedStyle(document.body).overflow);
+    const miniRules = Array.from(document.styleSheets[0].cssRules).filter((r) => r.selectorText && r.selectorText.indexOf('html.mini') === 0);
+    check('Mini: the mini rules are outside any media query', miniRules.length >= 5 && miniRules.every((r) => r.parentRule === null), String(miniRules.length));
+    applyMini(false);
+    check('Mini: applyMini(false) restores the page', displays() === before && !document.documentElement.classList.contains('mini') &&
+      Math.round(frameEl.getBoundingClientRect().height) === beforeHeight, displays() + ' / ' + before);
+  });
+
+  // Check 10: the page makes no external request. The names of the network calls are in parts, so this check does not find itself.
+  scenario('No external request', () => {
+    const external = /^\s*(https?:)?\/\//i;
+    const linked = Array.from(document.querySelectorAll('[src], [href]'))
+      .filter((el) => external.test(el.getAttribute('src') || el.getAttribute('href') || ''));
+    check('No external request: no element has an http address in src or href', linked.length === 0, linked.map((el) => el.outerHTML.slice(0, 60)).join(' | '));
+    const code = Array.from(document.scripts).map((s) => s.textContent).join('\n');
+    const calls = new RegExp('\\b(' + ['fe' + 'tch', 'XMLHttp' + 'Request', 'send' + 'Beacon', 'Web' + 'Socket', 'Event' + 'Source'].join('|') + ')\\b');
+    check('No external request: the script has no network call', !calls.test(code), (code.match(calls) || [''])[0]);
+    const css = Array.from(document.querySelectorAll('style')).map((s) => s.textContent).join('\n');
+    check('No external request: the CSS loads no file', !/url\(|@import/i.test(css));
+  });
+
+  // The end: the flag is ON, the log is empty, and the flow starts again.
+  state.flag = 'on';
+  state.log = [];
+  state.count = 0;
+  state.showAll = false;
+  resetFlow();
+  render();
+  lines.push('SELFTEST: ' + passed + ' passed, ' + failed + ' failed');
+  const out = document.getElementById('selftest-result');
+  out.hidden = false;
+  out.textContent = lines.join('\n');
+}
+
+// ---------- Start ----------
+
+applyHash(location.hash.slice(1));
+applyMini(MINI);
+fitPhone();
+// The embed key tightens the layout for the deck (part C).
+if (location.hash.includes('embed=1')) {
+  document.querySelector('.block h1').closest('.block').style.display = 'none';
+  document.querySelector('.page').style.paddingTop = '4px';
+}
+if (location.hash.includes('selftest')) {
+  // The self-test does not write the address.
+  testing = true;
+  render();
+  runSelfTest();
+} else {
+  render();
+}
+</script>
+</body>
+</html>

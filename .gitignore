@@ -1,0 +1,11 @@
+# Case material, private notes, and the local archive stay on this computer
+_local/
+session_logs/
+*.pptx
+*.mov
+.DS_Store
+node_modules/
+
+# Product photos belong to Suitsupply and stay out of the repository.
+# The prototype and the presentation fall back to drawings when this folder is missing.
+prototype/assets/

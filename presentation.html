@@ -1,0 +1,1506 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Suitsupply: design details in Custom Made Lite</title>
+<script>
+  // The photos are gitignored. A missing photo shows a grey box with its name, not a broken image.
+  function imgErr(img) {
+    img.style.display = 'none';
+    if (!img.classList.contains('ph-waist') && img.parentElement) img.parentElement.classList.add('noimg');
+  }
+</script>
+<style>
+  :root {
+    --ink: #2d2e2c; --text2: #454545; --icon2: #898989;
+    --line: #e1e1e1; --line-strong: #c6c6c6; --soft: #f6f6f6; --art: #efefef;
+    --focus: #1e65ff;
+    /* One colour, one meaning (spec section 2). */
+    --seg1: #51606e; --seg1-t: #eef1f3;
+    --seg2: #9a5b00; --seg2-t: #fbf3e6;
+    --seg3: #0f766e; --seg3-t: #eaf5f3;
+    --r1: #2d2e2c;   --r1-t: #f6f6f6;
+    --r11: #1a56db;  --r11-t: #eef4ff;
+    --r12: #6d4bc3;  --r12-t: #f3effb;
+    --stop: #b3261e; --stop-t: #fdf1f0;
+    --quiet: #6b6b6b; --quiet-t: #f6f6f6;
+    /* One scale unit: 1vw on a 16:9 screen, smaller on a short screen. */
+    --u: min(1vw, 1.78vh);
+    --fs-h1: clamp(24px, calc(var(--u) * 2.9), 52px);
+    --fs-sub: clamp(14px, calc(var(--u) * 1.3), 22px);
+    --fs-body: clamp(13px, calc(var(--u) * 1.12), 20px);
+    --fs-small: clamp(12px, calc(var(--u) * 0.98), 17px);
+    --fs-mono: clamp(11px, calc(var(--u) * 0.9), 15px);
+    --fs-big: clamp(26px, calc(var(--u) * 2.66), 48px);
+    --gap: clamp(12px, calc(var(--u) * 1.25), 24px);
+    --pad-x: clamp(48px, 6.25vw, 128px);
+    --pad-t: clamp(52px, 8vh, 96px);
+    --pad-b: clamp(40px, 6vh, 72px);
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; overflow: hidden; font-family: "GT America", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif; }
+  body { background: #fff; color: var(--ink); font-size: 16px; }
+  button { font: inherit; color: inherit; }
+  code { font-family: var(--mono); }
+
+  /* ---------- Slide frame ---------- */
+  .slide { display: none; position: absolute; inset: 0; padding: var(--pad-t) var(--pad-x) var(--pad-b); flex-direction: column; }
+  .slide.active { display: flex; }
+  .slide h1 { font-size: var(--fs-h1); font-weight: 500; line-height: 1.15; letter-spacing: -0.01em; max-width: 25em; margin: 0 0 calc(var(--u) * 0.7); flex: none; }
+  .slide .sub { font-size: var(--fs-sub); color: var(--text2); line-height: 1.45; max-width: 52em; flex: none; }
+  .body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: var(--gap); padding-top: calc(var(--u) * 1.1); padding-bottom: calc(var(--u) * 1.6); }
+  .fine { font-size: var(--fs-small); color: var(--icon2); }
+  .lab { font-size: 11px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--icon2); }
+  .hint-txt { color: var(--icon2); font-size: var(--fs-small); }
+
+  .stage-label { position: fixed; top: 18px; left: var(--pad-x); font-size: 12px; color: var(--icon2); z-index: 100; letter-spacing: .05em; text-transform: uppercase; }
+  .stage-label b { color: var(--text2); font-weight: 500; }
+  .hud { position: fixed; top: 18px; right: var(--pad-x); display: flex; gap: 16px; font-size: 13px; color: var(--icon2); z-index: 100; }
+  .hud .timer { font-variant-numeric: tabular-nums; }
+  .hud .timer.running { color: var(--focus); }
+  .hud .slide-num { color: var(--text2); }
+  .bar { position: fixed; bottom: 0; left: 0; height: 3px; background: var(--ink); z-index: 100; transition: width .3s ease; }
+  .hint { position: fixed; bottom: 14px; right: var(--pad-x); font-size: 11px; color: var(--icon2); z-index: 100; }
+  .notes { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--ink); color: #d4d4d4; padding: 14px var(--pad-x) 22px; font-size: 13px; line-height: 1.6; z-index: 150; max-height: 180px; overflow-y: auto; }
+  .notes.show { display: block; }
+  .notes b { color: #fff; font-weight: 500; }
+
+  /* ---------- Shared components (spec section 2) ---------- */
+  [data-seg="1"] { --c: var(--seg1); --t: var(--seg1-t); }
+  [data-seg="2"] { --c: var(--seg2); --t: var(--seg2-t); }
+  [data-seg="3"] { --c: var(--seg3); --t: var(--seg3-t); }
+  .seg { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--c); background: var(--t); border-radius: 2px; color: var(--c); font-size: 12px; font-weight: 500; line-height: 18px; padding: 2px 8px 2px 4px; white-space: nowrap; }
+  .seg i, .seg-dot { font-style: normal; width: 18px; height: 18px; border-radius: 50%; background: var(--c); color: #fff; font-size: 11px; font-weight: 500; line-height: 1; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+  .rel { display: inline-block; font-size: 12px; font-weight: 500; line-height: 16px; padding: 1px 6px; border-radius: 2px; border: 1px solid var(--c); color: var(--c); background: #fff; white-space: nowrap; vertical-align: middle; }
+  .rel[data-rel="1"] { --c: var(--r1); background: var(--r1); color: #fff; }
+  .rel[data-rel="1.1"] { --c: var(--r11); }
+  .rel[data-rel="1.2"] { --c: var(--r12); border-style: dashed; }
+  .mtype { display: inline-block; font-size: 12px; font-weight: 500; line-height: 16px; padding: 1px 7px; white-space: nowrap; }
+  .mtype[data-m="success"] { border-left: 3px solid var(--r1); color: var(--ink); background: var(--r1-t); }
+  .mtype[data-m="safety"] { border-left: 3px solid var(--stop); color: var(--stop); background: var(--stop-t); }
+  .mtype[data-m="early"] { border: 1px dashed var(--quiet); color: var(--quiet); border-radius: 2px; }
+  .arm { display: inline-block; font-size: 12px; font-weight: 500; line-height: 16px; padding: 2px 8px; border-radius: 2px; white-space: nowrap; }
+  .arm[data-arm="a"] { border: 1px solid var(--quiet); color: var(--quiet); background: #fff; }
+  .arm[data-arm="b"] { border: 1px solid var(--r1); color: #fff; background: var(--r1); }
+
+  /* The recurring legend: only the keys of the current slide. */
+  #legend { position: fixed; left: var(--pad-x); bottom: 14px; z-index: 90; display: flex; align-items: center; gap: 14px; font-size: 11px; color: var(--text2); white-space: nowrap; }
+  #legend:empty { display: none; }
+  #legend .lg-group { display: inline-flex; align-items: center; gap: 12px; }
+  #legend .lg-group + .lg-group { padding-left: 14px; border-left: 1px solid var(--line); }
+  #legend .lg-item { display: inline-flex; align-items: center; gap: 5px; }
+  #legend .seg-dot { width: 16px; height: 16px; font-size: 11px; }
+  #legend .rel, #legend .mtype, #legend .arm { font-size: 12px; line-height: 14px; }
+  body[data-slide="s4"] #legend [data-pick] { cursor: pointer; }
+  /* On the demo slide the phone sits bottom left, so the legend moves under the control column. */
+  body[data-slide="s5"] #legend { left: var(--legend-left-s5, var(--pad-x)); flex-direction: column; align-items: flex-start; gap: 6px; }
+  body[data-slide="s5"] #legend .lg-group + .lg-group { padding-left: 0; border-left: 0; }
+  body.notes-open #legend { display: none; }
+
+  /* Hover pop-up */
+  .pop { position: fixed; z-index: 200; background: #fff; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: 12px 16px; max-width: 340px; display: none; pointer-events: none; }
+  .pop.show { display: block; }
+  .pop h4 { font-size: 13px; font-weight: 500; margin: 0 0 4px; color: var(--ink); }
+  .pop h4 code { font-size: 12px; }
+  .pop p { font-size: 13px; color: var(--text2); line-height: 1.5; }
+
+  /* A detail area keeps its height, so nothing jumps when it fills. */
+  .detail { border-top: 1px solid var(--line); padding-top: 10px; display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; font-size: var(--fs-body); line-height: 1.45; }
+  .detail p { flex: 1 1 24em; }
+  .detail b { font-weight: 500; }
+  .fade-in { animation: fadeIn .15s ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* ---------- Slide 1: the gap ---------- */
+  .dchips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .dchip { font-size: var(--fs-small); padding: 5px 14px; border: 1px solid var(--line-strong); border-radius: 2px; background: #fff; cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
+  .dchip:hover { border-color: var(--ink); }
+  .dchip.sel { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .dcount { min-height: 1.5em; font-size: var(--fs-small); color: var(--text2); margin-top: 8px; }
+  .dcount b { color: var(--ink); font-weight: 500; }
+  .photo-row { display: flex; gap: calc(var(--u) * 1.3); align-items: flex-start; }
+  .ph { margin: 0; flex: 0 1 auto; min-width: 0; cursor: pointer; }
+  .ph-frame { position: relative; height: clamp(170px, calc(54vh - 52px), 640px); aspect-ratio: 828 / 1150; max-width: 100%; border-radius: 4px; overflow: hidden; background: var(--art); transition: transform .2s ease, box-shadow .2s ease; }
+  .ph:hover .ph-frame, .ph.zoom .ph-frame { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,.10); }
+  .ph-frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; display: block; transition: opacity .35s ease; }
+  .ph-frame .ph-waist { opacity: 0; object-position: 50% 30%; }
+  .ph:hover .ph-waist, .ph.zoom .ph-waist { opacity: 1; }
+  .ph-fallback { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; color: var(--icon2); font-size: var(--fs-small); }
+  .ph-frame.noimg .ph-fallback { display: flex; }
+  .ph figcaption { margin-top: 8px; font-size: var(--fs-small); color: var(--text2); line-height: 1.4; text-align: center; }
+  .ph figcaption b { display: block; color: var(--ink); font-weight: 500; }
+  .vals span { transition: color .15s; }
+  .photo-row[data-d] .vals span { color: var(--icon2); }
+  .photo-row[data-d="waistband"] .vals [data-d="waistband"],
+  .photo-row[data-d="hem"] .vals [data-d="hem"],
+  .photo-row[data-d="front"] .vals [data-d="front"] { color: var(--ink); font-weight: 500; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+
+  /* ---------- Slide 2: segments ---------- */
+  .fork { display: grid; grid-template-columns: auto clamp(36px, 4.5vw, 90px) minmax(0, 1fr) clamp(200px, 19vw, 340px); height: clamp(200px, 36vh, 400px); }
+  .fork-root { align-self: center; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+  .fork-root code { background: var(--ink); color: #fff; font-size: var(--fs-mono); padding: 8px 12px; border-radius: 3px; }
+  .fork-root span { font-size: var(--fs-small); color: var(--text2); max-width: 10em; line-height: 1.35; }
+  .fork-lines { width: 100%; height: 100%; display: block; overflow: visible; }
+  .fork-lines path { fill: none; stroke: var(--line-strong); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+  .fork-bars { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .fbar { display: flex; align-items: center; gap: 10px; padding: 0 14px; background: var(--t); border: 0; border-left: 3px solid var(--c); border-radius: 0 3px 3px 0; cursor: pointer; text-align: left; min-height: 0; overflow: hidden; white-space: nowrap; transition: box-shadow .15s; }
+  .fbar:hover, .fbar.sel { box-shadow: inset 0 0 0 1px var(--c); }
+  .fbar.sel { box-shadow: inset 0 0 0 2px var(--c); }
+  .fbar .fname { font-size: var(--fs-body); font-weight: 500; color: var(--ink); }
+  .fbar .frule { font-size: var(--fs-mono); color: var(--text2); overflow: hidden; text-overflow: ellipsis; }
+  .fbar .frule code { color: var(--text2); }
+  .fgroup { display: flex; flex-direction: column; min-height: 0; }
+  .fgroup .fbar { flex: 1 1 0; }
+  .fgroup .fbar + .fbar { border-top: 1px dashed var(--line-strong); }
+  .fork-share { display: flex; flex-direction: column; gap: 6px; padding-left: 12px; }
+  .fork-share > div { display: flex; align-items: center; gap: 10px; font-size: var(--fs-small); color: var(--text2); line-height: 1.3; min-height: 0; }
+  .fork-share .brk { align-self: stretch; width: 8px; flex: none; border: 1px solid var(--ink); border-left: 0; }
+  .s2-detail { min-height: calc(var(--fs-body) * 1.45 * 2 + 12px); }
+  .why3 { display: grid; grid-template-columns: auto repeat(3, minmax(0, 1fr)); gap: var(--gap); align-items: start; }
+  .why3 .lab { padding-top: 3px; }
+  .why3 p { font-size: var(--fs-small); color: var(--text2); line-height: 1.45; }
+  .why3 p b { display: block; color: var(--ink); font-weight: 500; }
+  .foot { font-size: var(--fs-small); color: var(--text2); display: flex; align-items: center; gap: 8px; }
+
+  /* ---------- Slide 3: three constraints ---------- */
+  .tiles3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); }
+  .ctile { text-align: left; background: #fff; border: 1px solid var(--line); border-radius: 4px; padding: calc(var(--u) * 1.9) calc(var(--u) * 1.8); cursor: pointer; display: flex; flex-direction: column; gap: calc(var(--u) * 0.5); transition: box-shadow .2s, border-color .2s; }
+  .ctile:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+  .ctile.open { border-color: var(--line-strong); }
+  .cword { font-size: clamp(34px, calc(var(--u) * 3.8), 68px); font-weight: 500; line-height: 1.05; letter-spacing: -0.01em; }
+  .cline { font-size: var(--fs-sub); color: var(--text2); line-height: 1.45; min-height: 2.9em; }
+  .crev-wrap { position: relative; margin-top: calc(var(--u) * 0.6); padding-top: calc(var(--u) * 0.9); border-top: 1px solid var(--line); }
+  .crev { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; border-left: 3px solid var(--r1); padding-left: 12px; visibility: hidden; opacity: 0; transition: opacity .2s; }
+  .crev b { font-size: var(--fs-sub); font-weight: 500; }
+  .crev span.t { font-size: var(--fs-body); color: var(--text2); line-height: 1.45; min-height: 4.35em; }
+  .ctile.open .crev { visibility: visible; opacity: 1; }
+  .more { position: absolute; left: 0; font-size: var(--fs-small); color: var(--icon2); transition: opacity .15s; }
+  .crev-wrap .more { top: calc(var(--u) * 0.9); }
+  .open .more { opacity: 0; }
+  .s3-sub { margin-top: 2px; }
+
+  /* ---------- Slide 4: the solution ---------- */
+  .flow { display: grid; grid-template-columns: 1fr 34px 1fr 34px 1.45fr 34px 1fr 34px 1fr; }
+  .pin { grid-row: 1; align-self: end; position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; padding: 0 0 12px; background: none; border: 0; cursor: pointer; text-align: left; font-size: var(--fs-small); line-height: 1.3; color: var(--text2); }
+  .pin::after { content: ''; position: absolute; left: 14px; bottom: 0; height: 12px; border-left: 1px solid var(--line-strong); }
+  .pin.sel { color: var(--ink); }
+  .pin.sel::after { border-left-color: var(--ink); }
+  .pin .pl { max-width: 15em; }
+  .fbox { grid-row: 2; position: relative; border: 1px solid var(--line-strong); border-radius: 4px; padding: calc(var(--u) * 1.1) calc(var(--u) * 1.1); min-height: clamp(80px, 15vh, 170px); display: flex; flex-direction: column; gap: 6px; background: #fff; transition: opacity .2s, border-color .2s, background .2s; }
+  .fbox b { font-size: var(--fs-body); font-weight: 500; }
+  .fbox .fs { font-size: var(--fs-small); color: var(--text2); }
+  .drow { margin-top: auto; border: 1px solid var(--line-strong); background: #fff; border-radius: 3px; padding: 6px 8px; font-size: var(--fs-small); display: flex; gap: 6px; align-items: center; justify-content: space-between; }
+  .farrow { grid-row: 2; align-self: center; height: 1px; background: var(--ink); position: relative; margin: 0 6px; }
+  .farrow::after { content: ''; position: absolute; right: -1px; top: -4px; border-left: 7px solid var(--ink); border-top: 4.5px solid transparent; border-bottom: 4.5px solid transparent; }
+  .flow[data-sel] .fbox { opacity: .4; }
+  .flow[data-sel="1"] .fbox[data-touch~="1"] { opacity: 1; border-color: var(--r1); background: var(--r1-t); }
+  .flow[data-sel="1"] .fbox[data-touch~="1"] .drow { border-color: var(--r1); }
+  .flow[data-sel="1.1"] .fbox[data-touch~="1.1"] { opacity: 1; border-color: var(--r11); background: var(--r11-t); }
+  .flow[data-sel="1.2"] .fbox[data-touch~="1.2"] { opacity: 1; border-color: var(--r12); border-style: dashed; background: var(--r12-t); }
+  .lc { grid-row: 3; position: relative; height: 58px; }
+  .lc::before { content: ''; position: absolute; top: 26px; left: 0; right: 0; border-top: 1.5px solid var(--ink); }
+  .lc.first::before { left: 50%; }
+  .lc.last::before { right: 50%; }
+  .lc.stop::after { content: ''; position: absolute; left: calc(50% - 4.5px); top: 22px; width: 9px; height: 9px; border-radius: 50%; background: var(--ink); }
+  .lc.stop .stub { position: absolute; left: 50%; top: 0; height: 22px; border-left: 1px dashed var(--line-strong); }
+  .lc.skip span { position: absolute; top: 34px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: var(--fs-small); font-weight: 500; }
+  .s4-detail { min-height: calc(var(--fs-body) * 1.45 * 2 + 12px); align-items: center; }
+
+  /* ---------- Slide 5: demo ---------- */
+  .slide.demo-slide h1 { font-size: clamp(22px, calc(var(--u) * 2.3), 40px); margin-bottom: calc(var(--u) * 1); }
+  .demo { display: flex; gap: clamp(28px, 3vw, 60px); align-items: flex-start; flex: 1; min-height: 0; }
+  .demo .phone { flex: 0 0 auto; position: relative; width: 390px; height: 912px; }
+  .demo .phone iframe { position: absolute; top: 0; left: 0; width: 390px; height: 912px; transform-origin: 0 0; border: 1px solid var(--line); border-radius: 4px; background: #fff; display: block; }
+  .demo .side { flex: 1 1 auto; min-width: 0; max-width: clamp(600px, calc(var(--u) * 58), 1000px); display: flex; flex-direction: column; gap: calc(var(--u) * 1); }
+  .flagbox { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .flagbox code { font-size: var(--fs-mono); color: var(--text2); }
+  .switch { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--line-strong); border-radius: 3px; background: #fff; cursor: pointer; }
+  .switch span { padding: 4px 12px; border-radius: 2px; border: 1px solid transparent; font-size: var(--fs-small); font-weight: 500; color: var(--icon2); transition: background .15s, color .15s; }
+  .switch[aria-checked="true"] .on { background: var(--r1); color: #fff; }
+  .switch[aria-checked="false"] .off { border-color: var(--quiet); color: var(--quiet); background: var(--quiet-t); }
+  .flagline { flex-basis: 100%; font-size: var(--fs-small); color: var(--text2); }
+  .visit { border: 1px solid var(--line); border-radius: 4px; padding: 10px 14px; }
+  .visit-top { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+  .vstatus { font-size: var(--fs-small); color: var(--text2); }
+  .vchips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .vchips .seg { font-size: clamp(12px, calc(var(--u) * 0.92), 15px); opacity: .35; transition: opacity .2s, box-shadow .2s; }
+  .vchips .seg.lit { opacity: 1; box-shadow: 0 0 0 1px var(--c); }
+  .vnote { min-height: 1.45em; margin-top: 6px; font-size: var(--fs-small); color: var(--text2); line-height: 1.45; }
+  .vnote code { font-size: var(--fs-mono); color: var(--ink); }
+  .scen-list { display: flex; flex-direction: column; gap: 6px; }
+  .scen { display: grid; grid-template-columns: 46px 1fr auto; gap: 2px 12px; align-items: center; text-align: left; width: 100%; padding: 8px 14px; border: 1px solid var(--line); border-radius: 4px; background: #fff; cursor: pointer; transition: border-color .2s, box-shadow .2s, opacity .2s; }
+  .scen:hover:not(:disabled) { border-color: var(--line-strong); box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+  .scen .mark { display: flex; align-items: center; }
+  .scen .t { font-size: var(--fs-body); font-weight: 500; }
+  .scen .k { font-size: var(--fs-small); color: var(--text2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .scen .d { grid-column: 2 / 4; font-size: var(--fs-small); color: var(--text2); line-height: 1.45; display: none; }
+  .scen.active, .scen.active:hover:not(:disabled) { border-color: var(--ink); box-shadow: inset 3px 0 0 var(--ink); }
+  .scen.active .d { display: block; }
+  .scen.active .k { color: var(--ink); font-weight: 500; }
+  .scen:disabled { opacity: .5; cursor: not-allowed; }
+  .scen.subrow { margin-left: 22px; width: calc(100% - 22px); }
+  #demo-live { font-size: var(--fs-small); color: var(--icon2); font-variant-numeric: tabular-nums; }
+
+  /* ---------- Slide 6: decisions ---------- */
+  .dec { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: calc(var(--u) * 2.6); align-items: start; }
+  .dec-list { display: flex; flex-direction: column; gap: 6px; }
+  .dec-item { display: flex; align-items: center; gap: 12px; text-align: left; padding: calc(var(--u) * 1.05) 16px; border: 1px solid var(--line); border-radius: 4px; background: #fff; cursor: pointer; font-size: var(--fs-sub); transition: border-color .15s, box-shadow .15s; }
+  .dec-item:hover { border-color: var(--line-strong); }
+  .dec-item.sel { border-color: var(--ink); box-shadow: inset 3px 0 0 var(--ink); font-weight: 500; }
+  .num { flex: none; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line-strong); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: var(--text2); background: #fff; }
+  .sel > .num, .open > .num { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .dec-cards { display: grid; }
+  .dec-card { grid-area: 1 / 1; border: 1px solid var(--line); border-radius: 4px; padding: calc(var(--u) * 2) calc(var(--u) * 2.2); opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility .2s; }
+  .dec-card.sel { opacity: 1; visibility: visible; }
+  .dec-card h3 { font-size: clamp(17px, calc(var(--u) * 1.6), 28px); font-weight: 500; margin-bottom: calc(var(--u) * 1.6); display: flex; align-items: center; gap: 12px; }
+  .dec-card dl { display: grid; grid-template-columns: auto 1fr; gap: calc(var(--u) * 1.2) 22px; }
+  .dec-card dt { font-size: 12px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; padding-top: .3em; }
+  .dec-card dt.buys { color: var(--ink); }
+  .dec-card dt.costs { color: var(--stop); }
+  .dec-card dt.instead { color: var(--quiet); }
+  .dec-card dd { margin: 0; font-size: clamp(16px, calc(var(--u) * 1.55), 28px); line-height: 1.4; }
+
+  /* ---------- Slide 7: tracking ---------- */
+  .track { display: grid; grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr); gap: calc(var(--u) * 2.4); align-items: start; }
+  .pane-title { margin-bottom: 6px; }
+  .track .pane-title { margin-top: calc(var(--u) * 0.6); }
+  .ents .hchips { margin-top: calc(var(--u) * 1.4); }
+  .ent { display: grid; grid-template-columns: minmax(0, 0.36fr) minmax(0, 0.64fr); gap: 4px 12px; padding: calc(var(--u) * 0.55) 0; border-top: 1px solid var(--line); align-items: start; }
+  .ent h3 { font-size: var(--fs-small); font-weight: 500; }
+  .ent p { font-size: var(--fs-small); color: var(--text2); line-height: 1.35; }
+  .evs { display: flex; flex-wrap: wrap; gap: 5px; }
+  .evchip { display: inline-flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: var(--fs-mono); padding: 3px 7px; border: 1px solid var(--line-strong); border-radius: 2px; background: #fff; cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+  .evchip:hover { border-color: var(--ink); }
+  .evchip.sel { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+  .evchip .seg-dot { width: 16px; height: 16px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  .insp { border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  .insp-head { padding: 9px 14px; background: var(--soft); border-bottom: 1px solid var(--line); }
+  .insp-head code { font-size: var(--fs-small); font-weight: 500; }
+  .insp-head p { font-size: var(--fs-small); color: var(--text2); margin-top: 2px; }
+  .iblock { padding: 8px 14px 10px; }
+  .iblock + .iblock { border-top: 1px solid var(--line); }
+  .iblock .lab { margin-bottom: 6px; }
+  .iblock .lab span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+  .props { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px 14px; }
+  /* Block A keeps the height of the largest event (set in sizeInspector), so blocks B and C never move. */
+  #insp-a { min-height: calc(var(--fs-mono) * 1.3 * 6 + 10px + 6px); align-content: start; }
+  #insp-a .none { font-size: var(--fs-small); color: var(--text2); grid-column: 1 / -1; }
+  .prop { min-width: 0; line-height: 1.3; font-size: var(--fs-mono); }
+  .prop code { font-size: var(--fs-mono); cursor: help; border-bottom: 1px dotted var(--line-strong); }
+  .prop .v { display: block; font-family: var(--mono); font-size: var(--fs-mono); color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .newtag { display: inline-block; font-size: 10px; line-height: 11px; padding: 0 4px; margin-left: 6px; border: 1px solid var(--line-strong); border-radius: 2px; color: var(--text2); vertical-align: middle; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  .hchips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .hchip { font-size: var(--fs-small); padding: 4px 12px; border: 1px solid var(--line-strong); border-radius: 2px; background: #fff; cursor: help; text-decoration: underline dotted var(--line-strong); text-underline-offset: 3px; }
+  .hchip:hover { border-color: var(--ink); }
+
+  /* ---------- Slide 8: metrics ---------- */
+  .mtiles { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr); gap: var(--gap); }
+  .mtile { text-align: left; background: #fff; border: 1px solid var(--line); border-left: 3px solid var(--r1); border-radius: 0 4px 4px 0; padding: calc(var(--u) * 1.3) calc(var(--u) * 1.5); cursor: pointer; display: flex; flex-direction: column; gap: 6px; transition: box-shadow .2s; }
+  .mtile:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+  .mt-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .mt-name { font-size: var(--fs-body); font-weight: 500; }
+  .mt-big { font-size: var(--fs-big); font-weight: 500; line-height: 1.1; letter-spacing: -0.01em; }
+  .mt-line { font-size: var(--fs-small); color: var(--text2); line-height: 1.4; min-height: 2.8em; }
+  .mt-base { align-self: flex-start; font-size: 12px; font-weight: 500; color: var(--quiet); border: 1px solid var(--quiet); border-radius: 2px; padding: 1px 7px; }
+  .mt-rev-wrap { position: relative; border-top: 1px solid var(--line); padding-top: 8px; margin-top: 2px; }
+  .mt-rev { display: block; font-size: var(--fs-small); line-height: 1.45; min-height: 5.8em; visibility: hidden; opacity: 0; transition: opacity .2s; }
+  .open .mt-rev { visibility: visible; opacity: 1; }
+  .mt-rev-wrap .more { top: 8px; }
+  .stopbar { width: 100%; text-align: left; background: #fff; border: 1px solid var(--line); border-left: 3px solid var(--stop); border-radius: 0 4px 4px 0; padding: 10px 16px; cursor: pointer; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; align-items: baseline; position: relative; }
+  .sb-label { font-size: var(--fs-small); font-weight: 500; color: var(--stop); white-space: nowrap; }
+  .sb-text { font-size: var(--fs-body); }
+  .sb-rev-wrap { grid-column: 2; position: relative; }
+  .sb-rev { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 18px; font-size: var(--fs-small); color: var(--text2); line-height: 1.45; visibility: hidden; opacity: 0; transition: opacity .2s; }
+  .open .sb-rev { visibility: visible; opacity: 1; }
+  .sb-rev-wrap .more { top: 0; }
+  .sigs { display: flex; flex-direction: column; gap: 8px; }
+  .sigrow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .siglab { flex: none; width: 7.2em; }
+  .schip { display: inline-flex; align-items: center; gap: 5px; font-size: var(--fs-small); padding: 3px 9px; border: 1px solid var(--line-strong); border-radius: 2px; background: #fff; }
+  .schip.early { border-style: dashed; border-color: var(--quiet); cursor: help; }
+  .schip.early:hover { border-style: solid; }
+
+  /* ---------- Slide 9: rollout ---------- */
+  .roll { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: calc(var(--u) * 3); flex: 1; min-height: 0; padding-top: calc(var(--u) * 1); }
+  .roll-left { display: flex; flex-direction: column; gap: var(--gap); justify-content: center; }
+  .tl { display: flex; flex-direction: column; }
+  .tl-step { position: relative; display: grid; grid-template-columns: 30px 1fr; gap: 0 12px; padding: calc(var(--u) * 0.55) 0; background: none; border: 0; cursor: pointer; text-align: left; align-items: center; }
+  .tl-step::before { content: ''; position: absolute; left: 14px; top: 0; bottom: 0; border-left: 1px solid var(--line-strong); }
+  .tl-step:first-child::before { top: 50%; }
+  .tl-step:last-child::before { bottom: 50%; }
+  .tl-step .num { position: relative; z-index: 1; width: 28px; height: 28px; }
+  .tl-t { display: block; font-size: var(--fs-body); font-weight: 500; }
+  .tl-l { display: block; font-size: var(--fs-small); color: var(--text2); }
+  .tl-step:hover .tl-t { text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
+  .tl-detail { min-height: calc(var(--fs-small) * 1.45 * 3 + 4px); font-size: var(--fs-small); line-height: 1.45; }
+  .tl-detail .rv { border-left: 3px solid var(--r1); padding-left: 12px; }
+  .stopline { border: 1px solid var(--line); border-left: 3px solid var(--stop); border-radius: 0 4px 4px 0; padding: 9px 14px; font-size: var(--fs-small); line-height: 1.45; }
+  .ab { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; }
+  .ab-ctrl { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: var(--fs-small); color: var(--text2); }
+  .segctl { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--line-strong); border-radius: 3px; }
+  .segctl button { font-size: var(--fs-small); padding: 4px 12px; border: 0; border-radius: 2px; background: none; cursor: pointer; color: var(--text2); }
+  .segctl button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .ab-frames { display: flex; gap: calc(var(--u) * 1.8); }
+  .ab-col { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+  .ab-phone { position: relative; width: 390px; height: 760px; }
+  .ab-phone iframe { position: absolute; top: 0; left: 0; width: 390px; height: 760px; transform-origin: 0 0; border: 1px solid var(--line); border-radius: 4px; background: #fff; display: block; }
+  .ab-cap { font-size: var(--fs-small); color: var(--text2); min-height: 1.45em; }
+
+  /* ---------- Slide 10: money ---------- */
+  .money { display: grid; grid-template-columns: minmax(0, 45fr) minmax(0, 55fr); gap: calc(var(--u) * 3); align-items: start; }
+  .money-left { display: flex; flex-direction: column; gap: 12px; }
+  .pcard { border: 1px solid var(--line); border-radius: 4px; padding: calc(var(--u) * 0.9) calc(var(--u) * 1.3); }
+  .pcard.changed { border-left: 3px solid var(--ink); }
+  .pcard h3 { font-size: var(--fs-body); font-weight: 500; margin-bottom: 4px; }
+  .prow { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-small); color: var(--text2); }
+  .prow b { font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .prow b.neg { color: var(--stop); }
+  .prow.avg { border-bottom: 0; }
+  .prow.avg b { font-size: var(--fs-sub); }
+  .formula { font-size: var(--fs-small); color: var(--text2); line-height: 1.45; }
+  .calc { border: 1px solid var(--line); border-radius: 4px; padding: calc(var(--u) * 1.1) calc(var(--u) * 1.4); display: flex; flex-direction: column; gap: calc(var(--u) * 0.75); }
+  .sl { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; align-items: baseline; }
+  .sl label { font-size: var(--fs-small); }
+  .sl output { font-size: var(--fs-small); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .trk { grid-column: 1 / -1; position: relative; }
+  .trk.has-tick { padding-bottom: 14px; }
+  .tick { position: absolute; top: 2px; left: calc(57.142857% + 8px - 9.142857px); width: 1px; height: 16px; background: var(--ink); pointer-events: none; }
+  .tick em { position: absolute; top: 17px; left: 0; transform: translateX(-50%); font-style: normal; font-size: 11px; color: var(--text2); white-space: nowrap; }
+  input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 20px; background: transparent; cursor: pointer; display: block; margin: 0; }
+  input[type=range]::-webkit-slider-runnable-track { height: 2px; background: var(--line-strong); border-radius: 1px; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--ink); margin-top: -7px; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--ink); }
+  input[type=range]::-moz-range-track { height: 2px; background: var(--line-strong); }
+  input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--ink); border: 2px solid #fff; }
+  .presets { display: flex; gap: 6px; flex-wrap: wrap; }
+  .presets button { font-size: var(--fs-small); padding: 4px 11px; border: 1px solid var(--line-strong); border-radius: 2px; background: #fff; cursor: pointer; }
+  .presets button:hover { border-color: var(--ink); }
+  .presets button.sel { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+  .outA { display: flex; align-items: baseline; gap: 4px 10px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: calc(var(--u) * 0.8); min-height: calc(clamp(30px, calc(var(--u) * 3.3), 58px) * 1.1 + calc(var(--u) * 0.8)); }
+  .outA .ab-pre { font-size: var(--fs-sub); color: var(--text2); }
+  .outA .hero { font-size: clamp(30px, calc(var(--u) * 3.3), 58px); font-weight: 500; line-height: 1.05; letter-spacing: -0.01em; }
+  .outA .hero.long { font-size: clamp(20px, calc(var(--u) * 2), 34px); }
+  .outA .txt { font-size: var(--fs-small); color: var(--text2); }
+  .outA .pct { font-size: var(--fs-small); color: var(--icon2); }
+  .outB p { font-size: var(--fs-small); color: var(--text2); margin-bottom: 6px; }
+  .outB b { font-size: var(--fs-body); font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .outB b.neg { color: var(--stop); }
+  .netbar { position: relative; height: 10px; background: var(--soft); border-radius: 2px; }
+  .netbar .zero { position: absolute; left: 50%; top: -4px; bottom: -4px; width: 1px; background: var(--ink); }
+  .netbar .fill { position: absolute; top: 0; bottom: 0; left: 50%; width: 0; background: var(--ink); transition: width .2s, left .2s, background .2s; }
+  .netbar .fill.neg { background: var(--stop); }
+  .calc .fine { line-height: 1.45; }
+
+  /* ---------- Slide 11: weaknesses ---------- */
+  .wk { display: flex; flex-direction: column; border-top: 1px solid var(--line); --revh: calc(var(--fs-body) * 1.45 + 18px); }
+  .wk-row { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; column-gap: 16px; align-items: center; padding: calc(var(--u) * 1.05) 4px; background: none; border: 0; border-bottom: 1px solid var(--line); cursor: pointer; text-align: left; }
+  .wk-row:hover .wk-title { text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
+  .wk-row .num { width: 28px; height: 28px; }
+  .wk-title { display: block; font-size: var(--fs-sub); font-weight: 500; }
+  .wk-line { display: block; font-size: var(--fs-body); color: var(--text2); line-height: 1.4; }
+  .wk-fact { font-size: clamp(18px, calc(var(--u) * 1.75), 30px); font-weight: 500; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  .wk-rev { grid-column: 2 / -1; height: 0; overflow: hidden; opacity: 0; display: flex; align-items: center; gap: 10px; border-left: 3px solid var(--r1); padding-left: 12px; font-size: var(--fs-body); line-height: 1.45; transition: height .2s ease, opacity .2s ease; }
+  .wk-rev .lab { color: var(--ink); flex: none; }
+  .wk-row.open .wk-rev { height: var(--revh); opacity: 1; }
+  .wk-spacer { height: var(--revh); flex: none; transition: height .2s ease; }
+  .wk:has(.wk-row.open) .wk-spacer { height: 0; }
+  .s11-foot { font-size: var(--fs-small); color: var(--text2); line-height: 1.45; }
+
+  /* ---------- Slide 12: asks ---------- */
+  .teams { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+  .team { text-align: left; background: #fff; border: 1px solid var(--line); border-radius: 4px; padding: calc(var(--u) * 1) calc(var(--u) * 1.1); cursor: pointer; display: flex; flex-direction: column; gap: 6px; transition: border-color .15s, box-shadow .15s; }
+  .team:hover { border-color: var(--line-strong); }
+  .team.sel { border-color: var(--ink); box-shadow: inset 3px 0 0 var(--ink); }
+  .team h3 { font-size: clamp(15px, calc(var(--u) * 1.3), 23px); font-weight: 500; }
+  .team .ask { font-size: clamp(14px, calc(var(--u) * 1.25), 22px); line-height: 1.35; }
+  .team .unb { margin-top: auto; font-size: var(--fs-small); color: var(--text2); }
+  .tdetail { border: 1px solid var(--line); border-radius: 4px; padding: calc(var(--u) * 0.9) calc(var(--u) * 1.3); min-height: calc(var(--fs-sub) * 1.45 + var(--fs-body) * 1.45 * 4 + 6px * 4 + calc(var(--u) * 1.8) + 2px); }
+  .tdetail h4 { font-size: var(--fs-sub); font-weight: 500; margin-bottom: 6px; }
+  .tdetail ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+  .tdetail li { position: relative; padding-left: 16px; font-size: var(--fs-body); line-height: 1.45; }
+  .tdetail li::before { content: ''; position: absolute; left: 2px; top: .6em; width: 5px; height: 5px; background: var(--ink); }
+  .tdetail li code { font-size: var(--fs-mono); }
+  .rec-box { padding: calc(var(--u) * 1.3) calc(var(--u) * 1.8); background: var(--r1); border-radius: 4px; color: #fff; }
+  .rec-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #c9c9c9; margin-bottom: 6px; }
+  .rec-text { font-size: clamp(15px, calc(var(--u) * 1.33), 24px); line-height: 1.5; }
+  .rec-text b { font-weight: 500; }
+
+  /* ---------- Slide 13: close ---------- */
+  #s13 { justify-content: center; }
+  #s13 h1 { font-size: clamp(28px, 4vw, 52px); }
+  .words3 { display: flex; gap: calc(var(--u) * 2.4); font-size: var(--fs-sub); font-weight: 500; margin: calc(var(--u) * 0.6) 0 calc(var(--u) * 2); }
+  .words3 span { color: var(--icon2); transition: color .45s ease; }
+  .words3 span.on { color: var(--ink); }
+  #s13 .sub + .fine { margin-top: 10px; }
+
+  @media print {
+    html, body { overflow: visible; height: auto; }
+    .slide { display: flex !important; position: relative; inset: auto; min-height: 100vh; break-after: page; page-break-after: always; }
+    .notes, .hud, .bar, .hint, .stage-label, #legend, .pop { display: none !important; }
+    iframe, .demo .phone, .ab-phone { display: none !important; }
+    .crev, .mt-rev, .sb-rev { visibility: visible !important; opacity: 1 !important; }
+    .more { display: none !important; }
+    .wk-rev { height: auto !important; opacity: 1 !important; padding-top: 4px; padding-bottom: 4px; }
+    .wk-spacer { display: none; }
+    .dec-card { opacity: 1 !important; visibility: visible !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage-label" id="stage-label"><b>01</b> · The gap</div>
+<div class="hud">
+  <span class="timer" id="timer">00:00</span>
+  <span class="slide-num" id="slide-num">1 / 13</span>
+</div>
+<div class="bar" id="bar"></div>
+<div id="legend" aria-label="Legend"></div>
+<div class="hint">&rarr; space &middot; N notes &middot; T timer</div>
+<div class="notes" id="notes"></div>
+
+<!-- Slide 1: The gap -->
+<section class="slide" id="s1" data-notes="What I found on the live site. Every fit already ships with its own waistband, its own hem and its own front. Point at the photos. Click Waistband: two values across the fits, and the customer chooses none of them. The same for hem and front. Same cloth, same price. Only the photo shows it, and the product page names two of the three. So the brief asks me to add design options. I think they already exist. They are just not offered. Four of the five fits are on screen. The fifth, Slim Straight, has no photo in black.">
+  <h1>Three details already change with the fit. The customer never gets to choose.</h1>
+  <p class="sub">Same cloth. Same price. Only the photo shows the difference.</p>
+  <div class="body">
+    <div>
+      <div class="dchips" id="dchips" role="group" aria-label="Highlight one detail">
+        <button class="dchip" data-key="waistband" aria-pressed="false">Waistband</button>
+        <button class="dchip" data-key="hem" aria-pressed="false">Hem</button>
+        <button class="dchip" data-key="front" aria-pressed="false">Front</button>
+      </div>
+      <p class="dcount" id="dcount" aria-live="polite"></p>
+    </div>
+    <div class="photo-row" id="photo-row">
+      <figure class="ph">
+        <div class="ph-frame"><img src="prototype/assets/fit-slim-tapered.jpg" alt="Slim Tapered, full length" onerror="imgErr(this)"><img class="ph-waist" src="prototype/assets/waist-slim-tapered.jpg" alt="Slim Tapered, waist close-up" onerror="imgErr(this)"><span class="ph-fallback">Slim Tapered</span></div>
+        <figcaption><b>Slim Tapered</b><span class="vals"><span data-d="waistband">side adjusters</span> · <span data-d="hem">turn-up</span> · <span data-d="front">pleated</span></span></figcaption>
+      </figure>
+      <figure class="ph">
+        <div class="ph-frame"><img src="prototype/assets/fit-straight.jpg" alt="Straight, full length" onerror="imgErr(this)"><img class="ph-waist" src="prototype/assets/waist-straight.jpg" alt="Straight, waist close-up" onerror="imgErr(this)"><span class="ph-fallback">Straight</span></div>
+        <figcaption><b>Straight</b><span class="vals"><span data-d="waistband">belt loops</span> · <span data-d="hem">plain</span> · <span data-d="front">flat</span></span></figcaption>
+      </figure>
+      <figure class="ph">
+        <div class="ph-frame"><img src="prototype/assets/fit-wide-tapered.jpg" alt="Wide Tapered, full length" onerror="imgErr(this)"><img class="ph-waist" src="prototype/assets/waist-wide-tapered.jpg" alt="Wide Tapered, waist close-up" onerror="imgErr(this)"><span class="ph-fallback">Wide Tapered</span></div>
+        <figcaption><b>Wide Tapered</b><span class="vals"><span data-d="waistband">side adjusters</span> · <span data-d="hem">plain</span> · <span data-d="front">pleated</span></span></figcaption>
+      </figure>
+      <figure class="ph">
+        <div class="ph-frame"><img src="prototype/assets/fit-wide-straight.jpg" alt="Wide Straight, full length" onerror="imgErr(this)"><img class="ph-waist" src="prototype/assets/waist-wide-straight.jpg" alt="Wide Straight, waist close-up" onerror="imgErr(this)"><span class="ph-fallback">Wide Straight</span></div>
+        <figcaption><b>Wide Straight</b><span class="vals"><span data-d="waistband">belt loops</span> · <span data-d="hem">plain</span> · <span data-d="front">pleated</span></span></figcaption>
+      </figure>
+    </div>
+    <p class="fine">Four of the five fits. The fifth, Slim Straight, has no photo in black.</p>
+  </div>
+</section>
+
+<!-- Slide 2: Who we build for -->
+<section class="slide" id="s2" data-legend="seg" data-notes="I think in segments and funnels, not personas. I had five customer types in an earlier version. I cut them, because they rested on things I cannot see. These three rest on events. Segment one: skipped the fit picker. They saw the prompt and tapped Keep. I assume that is about three in four. Segment two: opened the fit picker, but nothing went in the bag. Segment three: opened it and put the trousers in the bag. I stop at the bag, because the bag is the last step my events see. Orders and returns join later through the order line. Why these three. One: I can observe each with one or two events. Two: the fit picker is live today, so Suitsupply already has the baseline for all three before launch. Three: each one carries a different risk. The first must not slow down. The second must not get lost. The third must keep the pair. Click each bar to show it. Later I split further from metrics and feedback, for example opened the sheet and reset, or changed a detail and kept it. Returning customers are not a segment. They are a layer on top, and you will see them only in the shortcut part of the demo. A visitor who sees the prompt and leaves without a tap stays in the funnel as step loss. I do not call that a segment yet.">
+  <h1>Three segments, from what the customer does</h1>
+  <p class="sub">I start with behaviour I can measure on day one. I split further when the data says so.</p>
+  <div class="body">
+    <div class="fork">
+      <div class="fork-root"><code>prompt_shown</code><span>Everyone who sees the prompt</span></div>
+      <svg class="fork-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0,50 C55,50 45,37.5 100,37.5"/>
+        <path d="M0,50 C55,50 45,81.5 100,81.5"/>
+        <path d="M0,50 C55,50 45,93.8 100,93.8"/>
+      </svg>
+      <div class="fork-bars" id="fork-bars">
+        <button class="fbar" data-seg="1" data-key="1" style="flex: 75 1 0"><i class="seg-dot" data-seg="1">1</i><span class="fname">Skipped the fit picker</span><span class="frule"><code>keep_fit_tapped</code></span></button>
+        <div class="fgroup" style="flex: 25 1 0">
+          <button class="fbar" data-seg="2" data-key="2"><i class="seg-dot" data-seg="2">2</i><span class="fname">Opened the fit picker, not in the bag</span><span class="frule"><code>fit_picker_opened</code>, no <code>added_to_bag</code></span></button>
+          <button class="fbar" data-seg="3" data-key="3"><i class="seg-dot" data-seg="3">3</i><span class="fname">Opened the fit picker, in the bag</span><span class="frule"><code>fit_picker_opened</code> + <code>added_to_bag</code></span></button>
+        </div>
+      </div>
+      <div class="fork-share" aria-hidden="false">
+        <div style="flex: 75 1 0">about 75% (assumption)</div>
+        <div style="flex: 25 1 0"><span class="brk"></span><span>about 25% (assumption). The split needs a baseline (gap D2).</span></div>
+      </div>
+    </div>
+    <div class="detail s2-detail" id="s2-detail" aria-live="polite"><span class="hint-txt">Click a segment.</span></div>
+    <div class="why3">
+      <span class="lab">How I decided</span>
+      <p><b>1. Observable.</b>Each segment is one or two events, not a persona.</p>
+      <p><b>2. It exists today.</b>The fit picker is live, so the baseline exists before launch.</p>
+      <p><b>3. It matches the risk.</b>One group must not slow down. One group must not be lost. One group must keep the pair.</p>
+    </div>
+    <p class="foot"><span class="rel" data-rel="1.1">R1.1</span>Known customers are not a segment. They are a layer on top, in Release 1.1.</p>
+  </div>
+</section>
+
+<!-- Slide 3: The problem -->
+<section class="slide" id="s3" data-notes="The brief gives three constraints. I turned each into one word. Short: the fast path is four taps today and its strength is that it feels barely heavier than buying a normal pair. Clear: most customers are buying trousers, not designing them. Many do not know what a side adjuster is. Kept: a changed pair cannot go back into stock. The brief does not say the customer cannot return it. I assume today's return policy applies, so every returned changed pair is a write-off. Now click each tile. Each constraint gets one metric: Speed, Adoption, Keep. You will see these three again on the measurement slide. So the question for the solution is: where can three options live without breaking any of the three?">
+  <h1>Any fix must protect three things</h1>
+  <div class="body">
+    <div class="tiles3">
+      <button class="ctile" data-reveal aria-expanded="false">
+        <span class="cword">Short</span>
+        <span class="cline">4 taps today. It must stay 4.</span>
+        <span class="crev-wrap"><span class="more">What guards it?</span><span class="crev"><span class="mtype" data-m="success">Success</span><b>Guarded by: Speed</b><span class="t">Add-to-bag rate, not more than 2% lower.</span></span></span>
+      </button>
+      <button class="ctile" data-reveal aria-expanded="false">
+        <span class="cword">Clear</span>
+        <span class="cline">Most customers do not know what a side adjuster is.</span>
+        <span class="crev-wrap"><span class="more">What guards it?</span><span class="crev"><span class="mtype" data-m="success">Success</span><b>Guarded by: Adoption</b><span class="t">5% or more of orders carry a changed detail. If nobody finds or understands it, it did not earn its place.</span></span></span>
+      </button>
+      <button class="ctile" data-reveal aria-expanded="false">
+        <span class="cword">Kept</span>
+        <span class="cline">A returned changed pair is a write-off.</span>
+        <span class="crev-wrap"><span class="more">What guards it?</span><span class="crev"><span class="mtype" data-m="success">Success</span><b>Guarded by: Keep</b><span class="t">Return rate of changed pairs, 5 points or less above made-to-order fits.</span></span></span>
+      </button>
+    </div>
+    <p class="sub s3-sub">Three constraints from the brief. Each one gets a metric.</p>
+  </div>
+</section>
+
+<!-- Slide 4: The solution -->
+<section class="slide" id="s4" data-legend="rel" data-notes="The answer in one sentence: three design details behind one row in the fit picker, with no new step. Look at the lower line. The fast path does not touch the fit picker, so a customer who skips it has the same four taps and sees nothing new. The fit picker is the place where the customer already trades delivery time for a more personal pair, so the details make the same trade in the same place. Everything in Release 1 sits behind one flag. Release 1.1 is a layer for customers we know, with its own flag. Release 1.2 is the next test if Adoption is low. I did not add three options. I made three existing differences visible, choosable and measurable. Now let me show it.">
+  <h1>One row in the fit picker. No new step.</h1>
+  <p class="sub">I did not add three options. I made three existing differences visible, choosable and measurable.</p>
+  <div class="body">
+    <div class="flow" id="flow" data-sel="1">
+      <button class="pin" data-key="1.2" style="grid-column: 1"><span class="rel" data-rel="1.2">R1.2</span><span class="pl">Entry from the product page. The next test.</span></button>
+      <button class="pin" data-key="1.1" style="grid-column: 3"><span class="rel" data-rel="1.1">R1.1</span><span class="pl">Shortcuts for known customers. Own flag.</span></button>
+      <button class="pin" data-key="1" style="grid-column: 5"><span class="rel" data-rel="1">R1</span><span class="pl">Details row and sheet. Behind one flag.</span></button>
+      <button class="pin" data-key="1.1" style="grid-column: 7" aria-label="R1.1 on the size step"><span class="rel" data-rel="1.1">R1.1</span></button>
+
+      <div class="fbox" data-touch="1.2" style="grid-column: 1"><b>Product page</b></div>
+      <div class="farrow" style="grid-column: 2"></div>
+      <div class="fbox" data-touch="1.1" style="grid-column: 3"><b>Prompt</b></div>
+      <div class="farrow" style="grid-column: 4"></div>
+      <div class="fbox" data-touch="1" style="grid-column: 5"><b>Fit picker</b><span class="fs">Fit and leg</span><span class="drow"><span>Details: waistband · hem · front</span><span class="rel" data-rel="1">R1</span></span></div>
+      <div class="farrow" style="grid-column: 6"></div>
+      <div class="fbox" data-touch="1.1" style="grid-column: 7"><b>Size</b></div>
+      <div class="farrow" style="grid-column: 8"></div>
+      <div class="fbox" style="grid-column: 9"><b>Bag</b></div>
+
+      <div class="lc stop first" style="grid-column: 1"><span class="stub"></span></div>
+      <div class="lc" style="grid-column: 2"></div>
+      <div class="lc stop" style="grid-column: 3"><span class="stub"></span></div>
+      <div class="lc" style="grid-column: 4"></div>
+      <div class="lc skip" style="grid-column: 5"><span>Fast path: 4 taps, unchanged</span></div>
+      <div class="lc" style="grid-column: 6"></div>
+      <div class="lc stop" style="grid-column: 7"><span class="stub"></span></div>
+      <div class="lc" style="grid-column: 8"></div>
+      <div class="lc stop last" style="grid-column: 9"><span class="stub"></span></div>
+    </div>
+    <div class="detail s4-detail" id="s4-detail" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- Slide 5: See it work (demo) -->
+<section class="slide demo-slide" id="s5" data-legend="seg rel" data-notes="About six minutes. I say what I will do before each click. Watch two things: the event ticker under the phone, and the row This visit is. <b>One, skipped the fit picker.</b> Select size and fit, Keep, a size, Add to bag. Four taps. Segment one lights up at Keep. For this customer nothing is new except the wording of the prompt. <b>The switch.</b> I turn the flag off. This is today's flow, and it is also the stop rule: one switch, everyone gets today's flow. The same three segments exist with the flag off. That is why I can compare them. Flag back on. <b>Two, opened the fit picker, not in the bag.</b> Select size and fit, Choose fit and details. Segment two lights up. I tap the Details row, then Turn-up. The delivery notice appears at once: made for you, one to two weeks. Now I leave. In the data this is a details_sheet_opened with no added_to_bag. That is the sheet exit rate, my early signal for confusion. <b>Three, opened the fit picker, in the bag.</b> The same start. I tap a photo thumb, so the sheet opens with that option expanded. Turn-up, Done, Next, a size, Add to bag. Nine taps for one changed detail. Segment three lights up at the bag. Point at More options: full Custom Made stays one tap away, at 229 euro in this cloth and two to three weeks. <b>The layer for known customers, Release 1.1.</b> Last details: the card shows, I tap Use these details. The size is outlined, not selected, because a changed pair cannot go back into stock. Four taps instead of nine. If time allows, size on file: a standard pair, size preselected, three taps. The rule: preselect only what can go back into stock, suggest what cannot. <b>Only if asked:</b> the product page entry, seven taps, the next test.">
+  <h1>Demo: three segments, one switch</h1>
+  <div class="demo">
+    <div class="phone" id="demo-phone">
+      <iframe id="demo-frame" title="Live prototype"></iframe>
+    </div>
+    <div class="side">
+      <div class="flagbox">
+        <code>trousers-design-options</code>
+        <button id="flag-switch" class="switch" role="switch" aria-checked="true" aria-label="Feature flag"><span class="on">ON · test</span><span class="off">OFF · control</span></button>
+        <p class="flagline" id="flag-line">New flow.</p>
+      </div>
+      <div class="visit" id="visit-seg">
+        <div class="visit-top"><span class="lab">This visit is</span><span class="vstatus" id="visit-status">Not in the test yet</span></div>
+        <div class="vchips">
+          <span class="seg" data-seg="1"><i>1</i>Skipped the fit picker</span>
+          <span class="seg" data-seg="2"><i>2</i>Opened the fit picker, not in the bag</span>
+          <span class="seg" data-seg="3"><i>3</i>Opened the fit picker, in the bag</span>
+        </div>
+        <p class="vnote" id="visit-note" aria-live="polite"></p>
+      </div>
+      <div class="scen-list" id="scenarios">
+        <button class="scen active" data-hash="c=a" data-row="1"><span class="mark"><i class="seg-dot" data-seg="1">1</i></span><span class="t">Skipped the fit picker</span><span class="k">4 taps</span><span class="d">Select size and fit, Keep, a size, Add to bag. Nothing new.</span></button>
+        <button class="scen" data-hash="c=a" data-row="2" data-d-off="Open the fit picker, then leave. With the flag off there is no Details row."><span class="mark"><i class="seg-dot" data-seg="2">2</i></span><span class="t">Opened the fit picker, not in the bag</span><span class="k"></span><span class="d">Choose fit and details, open Details, tap Turn-up. Delivery changes at once. Then leave.</span></button>
+        <button class="scen" data-hash="c=a" data-row="3" data-k-off="fit only" data-d-off="Change the fit, then size and bag. With the flag off there are no details."><span class="mark"><i class="seg-dot" data-seg="3">3</i></span><span class="t">Opened the fit picker, in the bag</span><span class="k">9 taps</span><span class="d">One changed detail, then size and bag. Full Custom Made stays one tap away.</span></button>
+        <button class="scen" data-hash="c=s" data-row="4a" data-needs-flag><span class="mark"><span class="rel" data-rel="1.1">R1.1</span></span><span class="t">Known customer: size on file</span><span class="k">3 taps</span><span class="d">Signed in, standard pair. The size is preselected.</span></button>
+        <button class="scen subrow" data-hash="c=h" data-row="4b" data-needs-flag><span class="mark"><span class="rel" data-rel="1.1">R1.1</span></span><span class="t">Known customer: last details</span><span class="k">4 taps</span><span class="d">"Use these details" in one tap. The size is suggested, not preselected.</span></button>
+        <button class="scen" data-hash="c=a&amp;pe=1" data-row="5" data-needs-flag><span class="mark"><span class="rel" data-rel="1.2">R1.2</span></span><span class="t">Next test: product page entry</span><span class="k">7 taps</span><span class="d">Tap "Size &amp; Fit" on the product page: the details can be changed right there. For the case where Adoption is low.</span></button>
+      </div>
+      <p id="demo-live">Taps: 0 · events: 0</p>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 6: Why these decisions -->
+<section class="slide" id="s6" data-notes="You saw it working. Here is why it is built this way. I will speak to three. <b>One, the placement.</b> The fit picker already changes these details, and it already trades delivery time for a more personal pair. So the options make the same trade in the same place, and the fast path stays four taps. The cost: nine taps to change one detail, and fewer customers find it. I rejected a new step, a row on the size step, and a block after the bag. <b>Two, the front style.</b> Normally I would check the Custom Made data first: which detail has the highest adjustment rate and return rate, and what production says about cost. For this prototype I used what I could see: the fits already differ by front, the product page names it, all six competitor configurators I checked offer it, and production already makes both. The cost: a pleat changes the fit at the hip, so it has its own switch. <b>Five, the prefill rule.</b> Preselect only what can go back into stock. A wrong size on a standard pair is a normal return. A wrong changed pair is a write-off. So its size and its details need an active tap. The other two are on the slide if you want them. Each cost is a bet. Next: how I see if a bet fails.">
+  <h1>Every decision buys something and costs something</h1>
+  <p class="sub">Each cost is accepted on purpose and written down before launch.</p>
+  <div class="body">
+    <div class="dec">
+      <div class="dec-list" id="dec-list">
+        <button class="dec-item" data-key="1"><span class="num">1</span>Details live in the fit picker</button>
+        <button class="dec-item" data-key="2"><span class="num">2</span>Front style is the third option</button>
+        <button class="dec-item" data-key="3"><span class="num">3</span>A notice, not a warning</button>
+        <button class="dec-item" data-key="4"><span class="num">4</span>Photos, not renders</button>
+        <button class="dec-item" data-key="5"><span class="num">5</span>Preselect only what can go back into stock</button>
+      </div>
+      <div class="dec-cards" id="dec-cards">
+        <div class="dec-card" data-key="1"><h3><span class="num">1</span>Details live in the fit picker</h3><dl>
+          <dt class="buys">Buys</dt><dd>The fast path stays 4 taps. Same trade, same place.</dd>
+          <dt class="costs">Costs</dt><dd>9 taps to change one detail. Fewer customers find it.</dd>
+          <dt class="instead">Instead of</dt><dd>A new step before size. A row on the size step. A block after the bag.</dd></dl></div>
+        <div class="dec-card" data-key="2"><h3><span class="num">2</span>Front style is the third option</h3><dl>
+          <dt class="buys">Buys</dt><dd>It already differs per fit. The page names it. Production makes both.</dd>
+          <dt class="costs">Costs</dt><dd>A pleat changes the hip, so it gets its own switch.</dd>
+          <dt class="instead">Instead of</dt><dd>Leg length or pockets: new measurements, more return risk.</dd></dl></div>
+        <div class="dec-card" data-key="3"><h3><span class="num">3</span>A notice, not a warning</h3><dl>
+          <dt class="buys">Buys</dt><dd>The cost and the gain in one glance, at the moment of choice.</dd>
+          <dt class="costs">Costs</dt><dd>No return text in the flow.</dd>
+          <dt class="instead">Instead of</dt><dd>A confirmation screen: more taps, and it makes a sure customer unsure.</dd></dl></div>
+        <div class="dec-card" data-key="4"><h3><span class="num">4</span>Photos, not renders</h3><dl>
+          <dt class="buys">Buys</dt><dd>A photo of a real pair. A close-up next to it.</dd>
+          <dt class="costs">Costs</dt><dd>No photo of a changed combination.</dd>
+          <dt class="instead">Instead of</dt><dd>Generated images that can promise what production does not make.</dd></dl></div>
+        <div class="dec-card" data-key="5"><h3><span class="num">5</span>Preselect only what can go back into stock</h3><dl>
+          <dt class="buys">Buys</dt><dd>A wrong size on a standard pair is a normal return.</dd>
+          <dt class="costs">Costs</dt><dd>One more tap on a changed pair.</dd>
+          <dt class="instead">Instead of</dt><dd>Preselecting everything we know: fast, but a wrong changed pair is a write-off.</dd></dl></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 7: What we track -->
+<section class="slide" id="s7" data-legend="seg" data-notes="Twelve events, grouped by six entities. Each entity answers one question. The naming rule: the object first, then the action in the past tense. Shown means the system showed something. Tapped means the customer acted. Click through two or three. Watch the right side. Only the top block changes. The two lower blocks are super properties: they ride on every event. I split them in two. Context is set once per visit: market, locale, device type, session id, consent state, identity tier, the flag variant, the product. In PostHog I would register these once. Flow state is read fresh at each event: the fit, the three effective details, how many differ from the standard, the delivery estimate, and how the size is prefilled. That means I can cut any event by any of them without a join. Six are new since the last version, marked new. The three segments come straight from these events: Keep tapped is segment one, fit picker opened is two or three, and the bag event carries has_opened_fit_picker, so the split also reaches the order line. Four rules keep the data honest. They are in the chips: where the test starts, how a return finds its group, how consent sets the identity tier, and why the decisions read orders and not clicks.">
+  <h1>Twelve events. Each carries the same 17 properties.</h1>
+  <div class="body">
+    <div class="track">
+      <div class="ents" id="ents">
+        <p class="lab pane-title">12 events, 6 entities</p>
+        <div class="ent"><div><h3>The visit</h3><p>How far does the customer go?</p></div><div class="evs">
+          <button class="evchip" data-key="prompt_shown">prompt_shown</button>
+          <button class="evchip" data-key="keep_fit_tapped">keep_fit_tapped<i class="seg-dot" data-seg="1">1</i></button>
+          <button class="evchip" data-key="fit_picker_opened">fit_picker_opened<i class="seg-dot" data-seg="2">2</i><i class="seg-dot" data-seg="3">3</i></button>
+          <button class="evchip" data-key="size_step_shown">size_step_shown</button></div></div>
+        <div class="ent"><div><h3>The fit</h3><p>Which shape?</p></div><div class="evs">
+          <button class="evchip" data-key="fit_changed">fit_changed</button></div></div>
+        <div class="ent"><div><h3>The details</h3><p>Do they personalise?</p></div><div class="evs">
+          <button class="evchip" data-key="details_sheet_opened">details_sheet_opened</button>
+          <button class="evchip" data-key="detail_value_tapped">detail_value_tapped</button>
+          <button class="evchip" data-key="details_reset_tapped">details_reset_tapped</button></div></div>
+        <div class="ent"><div><h3>The suggestion</h3><p>Do known customers accept?</p></div><div class="evs">
+          <button class="evchip" data-key="suggestion_shown">suggestion_shown</button>
+          <button class="evchip" data-key="suggestion_accepted">suggestion_accepted</button></div></div>
+        <div class="ent"><div><h3>The order</h3><p>Does it end in a bag?</p></div><div class="evs">
+          <button class="evchip" data-key="added_to_bag">added_to_bag<i class="seg-dot" data-seg="3">3</i></button></div></div>
+        <div class="ent"><div><h3>The product page</h3><p>Do readers change details?</p></div><div class="evs">
+          <button class="evchip" data-key="size_and_fit_expanded">size_and_fit_expanded</button></div></div>
+        <div class="hchips">
+          <span class="lab">Four rules</span>
+          <button class="hchip" data-pop="Exposure|A user enters the test at prompt_shown. Everyone before it saw the same page.">Exposure</button>
+          <button class="hchip" data-pop="Variant on the order|flag_variant travels to the order line, so a return finds its test group.">Variant on the order</button>
+          <button class="hchip" data-pop="Consent sets identity|consent_state decides identity_tier. No consent for personalisation means anonymous.">Consent sets identity</button>
+          <button class="hchip" data-pop="Orders over clicks|Adoption and Keep read order data, so customers who decline analytics still count.">Orders over clicks</button>
+        </div>
+      </div>
+      <div>
+        <p class="lab pane-title">Inspector</p>
+        <div class="insp" id="insp">
+          <div class="insp-head"><code id="insp-name">fit_flow:added_to_bag</code><p id="insp-when"></p></div>
+          <div class="iblock"><p class="lab">Event properties</p><div class="props" id="insp-a"></div></div>
+          <div class="iblock"><p class="lab">Super properties · context <span>(set once per visit)</span></p><div class="props" id="insp-b"></div></div>
+          <div class="iblock"><p class="lab">Super properties · flow state <span>(read at each event)</span></p><div class="props" id="insp-c"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 8: How we measure -->
+<section class="slide" id="s8" data-legend="seg metric" data-notes="Three numbers, one per constraint from slide three. All three must hold. <b>Adoption</b>: five percent or more of trouser orders in the test group carry a changed detail. It is a funnel guess: a quarter open the fit picker, forty percent of them open the sheet, half of those change something. Each guess can be replaced one by one when you share the baselines. <b>Speed</b>: the add-to-bag rate from the prompt is not more than two percent lower. Two percent is relative, so one point at a fifty percent rate. This is the number that protects segment one. If the test cannot say not worse and cannot say worse, I extend by up to two weeks. I do not roll out on a maybe. <b>Keep</b>: the return rate of changed pairs, not more than five points above made-to-order fits. I compare with made-to-order fits, not with stock pairs, because that is the fair neighbour. Returns take about forty five days to read, so I watch early signals in days: sheet exit and reset rate for segment two, cancellations within twenty four hours, and one question after delivery: did the details match what you expected. <b>The stop rule</b> is written before launch. The flag goes off within one working day, with one owner, if Speed drops, if changed pairs come back too often, or if production makes them wrong or late.">
+  <h1>Success is three numbers. All three must hold.</h1>
+  <p class="sub">Every threshold is an assumption until Suitsupply shares the baselines.</p>
+  <div class="body">
+    <div class="mtiles">
+      <button class="mtile" data-reveal aria-expanded="false">
+        <span class="mt-top"><span class="mtype" data-m="success">Success</span><i class="seg-dot" data-seg="3" title="Reads segment 3">3</i></span>
+        <span class="mt-name">Adoption</span>
+        <span class="mt-big">5% or more</span>
+        <span class="mt-line">of trouser orders carry a changed detail</span>
+        <span class="mt-base">Baseline: need data</span>
+        <span class="mt-rev-wrap"><span class="more">Click for the derivation</span><span class="mt-rev">25% open the fit picker × 40% open the sheet × 50% change a detail ≈ 5%. All three are assumptions. Baseline: gap D3.</span></span>
+      </button>
+      <button class="mtile" data-reveal aria-expanded="false">
+        <span class="mt-top"><span class="mtype" data-m="success">Success</span><i class="seg-dot" data-seg="1" title="Reads segment 1">1</i></span>
+        <span class="mt-name">Speed</span>
+        <span class="mt-big">not more than 2% lower</span>
+        <span class="mt-line">add-to-bag rate from the prompt (relative)</span>
+        <span class="mt-base">Baseline: need data</span>
+        <span class="mt-rev-wrap"><span class="more">Click for the detail</span><span class="mt-rev">2% relative is 1 point at a 50% rate. Also: median time to bag not more than 10% longer. Unclear result: extend by up to 2 weeks. Still unclear: no rollout.</span></span>
+      </button>
+      <button class="mtile" data-reveal aria-expanded="false">
+        <span class="mt-top"><span class="mtype" data-m="success">Success</span><i class="seg-dot" data-seg="3" title="Reads segment 3">3</i></span>
+        <span class="mt-name">Keep</span>
+        <span class="mt-big">5 points or less</span>
+        <span class="mt-line">return rate of changed pairs, above made-to-order fits</span>
+        <span class="mt-base">Baseline: need data</span>
+        <span class="mt-rev-wrap"><span class="more">Click for the detail</span><span class="mt-rev">Within 30 days of delivery. Read on the first 300 changed orders with a closed window. Split by return reason, so a size return is not blamed on a detail.</span></span>
+      </button>
+    </div>
+    <button class="stopbar" data-reveal aria-expanded="false">
+      <span class="sb-label">Stop rule</span>
+      <span class="sb-text">Flag OFF within one working day. Owner: the Custom Made PM.</span>
+      <span class="sb-rev-wrap"><span class="more">Click for the three triggers</span><span class="sb-rev"><span>1. Speed: add-to-bag or order rate significantly lower.</span><span>2. Keep: more than 5 points above made-to-order fits.</span><span>3. Operations: made wrong above 2%, or late above 10%.</span><span>Each option also has its own switch.</span></span></span>
+    </button>
+    <div class="sigs">
+      <div class="sigrow"><span class="siglab"><span class="mtype" data-m="safety">Safety</span></span><span class="schip">Order rate</span><span class="schip">Made wrong ≤ 2%</span><span class="schip">Late ≤ 10%</span></div>
+      <div class="sigrow"><span class="siglab"><span class="mtype" data-m="early">Early signal</span></span>
+        <span class="schip early" tabindex="0" data-pop="Sheet exit rate|Visits that open the details sheet and end with no bag, divided by visits that open the sheet. Watch: above the exit rate of picker users who never opened the sheet."><i class="seg-dot" data-seg="2">2</i>Sheet exit rate</span>
+        <span class="schip early" tabindex="0" data-pop="Reset rate|Visits that tap Reset to standard, divided by visits that open the sheet. Watch: above 20%."><i class="seg-dot" data-seg="2">2</i>Reset rate &gt; 20%</span>
+        <span class="schip early" tabindex="0" data-pop="24-hour cancellations|Changed orders cancelled or queried within 24 hours. Watch: more than 2 points above standard orders.">24-hour cancellations</span>
+        <span class="schip early" tabindex="0" data-pop="Expectation match|One question after delivery: did the details match what you expected? Watch: under 90% yes, with at least 100 answers.">Expectation match &lt; 90%</span>
+        <span class="schip early" tabindex="0" data-pop="Flip rate|Customers who open the sheet and set the same option three times or more. Watch: rising week over week.">Flip rate</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 9: How we roll out -->
+<section class="slide" id="s9" data-legend="arm metric" data-notes="One flag, one market, and a fair test. On the right is the test itself: A is the control, the flag is off, today's flow. B is the test. The same screen in both. On the fit picker, B adds exactly one row. Click Prompt: the wording is the only thing every customer in B sees, so segment one is touched only here. Click Size step: B shows the chosen details and the new delivery time before the bag. On the left, the stages. Stage zero: the team orders through production, to find errors before a customer does. Stage one: ten percent of one market for a week, only to find errors. Stage two: the real fifty fifty test, about four weeks, about 31,000 users, which gives about 465 changed orders if Adoption is five percent. A user enters the test at prompt_shown. Stage three: Adoption and Speed decide at week four. Keep decides later, when 300 changed orders have passed their thirty day return window, around day forty five. If there are fewer than 300, the read is a signal, not proof, and I stay in one market. Stage four: more markets, one at a time. The stop rule is checked every day in every stage.">
+  <h1>One flag, one market, a 50/50 test</h1>
+  <div class="roll">
+    <div class="roll-left">
+      <div class="tl" id="tl">
+        <button class="tl-step" data-key="0"><span class="num">0</span><span><span class="tl-t">Team test</span><span class="tl-l">Orders through production</span></span></button>
+        <button class="tl-step" data-key="1"><span class="num">1</span><span><span class="tl-t">10% of one market</span><span class="tl-l">1 week. Find errors only.</span></span></button>
+        <button class="tl-step" data-key="2"><span class="num">2</span><span><span class="tl-t">50/50 A/B test</span><span class="tl-l">About 4 weeks</span></span></button>
+        <button class="tl-step" data-key="3"><span class="num">3</span><span><span class="tl-t">Decision</span><span class="tl-l">Adoption and Speed at week 4. Keep at about day 45.</span></span></button>
+        <button class="tl-step" data-key="4"><span class="num">4</span><span><span class="tl-t">More markets</span><span class="tl-l">One at a time</span></span></button>
+      </div>
+      <div class="tl-detail" id="tl-detail" aria-live="polite"><span class="hint-txt">Click a step.</span></div>
+      <p class="stopline">Checked every day: the stop rule. OFF gives every customer today's flow.</p>
+    </div>
+    <div class="ab">
+      <div class="ab-ctrl"><span>Same screen in both arms:</span>
+        <span class="segctl" id="ab-ctl" role="group" aria-label="Screen">
+          <button data-s="prompt" aria-pressed="false">Prompt</button><button data-s="fit1" aria-pressed="true">Fit picker</button><button data-s="size" aria-pressed="false">Size step</button>
+        </span>
+      </div>
+      <div class="ab-frames">
+        <div class="ab-col"><span class="arm" data-arm="a">A · control · flag OFF</span><div class="ab-phone"><iframe id="ab-a" title="Control group A, flag off"></iframe></div></div>
+        <div class="ab-col"><span class="arm" data-arm="b">B · test · flag ON</span><div class="ab-phone"><iframe id="ab-b" title="Test group B, flag on"></iframe></div></div>
+      </div>
+      <p class="ab-cap" id="ab-cap" aria-live="polite">B adds one row: Details.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 10: The money -->
+<section class="slide" id="s10" data-notes="Every number on the left is invented. The structure is the point. A standard pair: kept, it earns 109. Returned, it costs 10 in handling and goes back to stock. At twenty percent returns that averages 85.2. A changed pair: kept, it earns 99, a little less because it is made to order. Returned, it costs 90, because the money goes back and the garment is lost. Same return rate, and the average is 61.2. So each changed order that replaces a standard order loses 24. Each changed order that is new earns 61. The break-even: about three in ten changed orders must be new orders. Move the first slider to the Keep limit, twenty five percent. It becomes four in ten. That is why Keep is a hard limit. Now the surcharge preset: about 30 euro closes the gap, and it still sits below full Custom Made at 229 in this cloth. I did not add a surcharge in Release 1, because a made-to-order fit has no surcharge today. The limits, honestly. One: every cost is a placeholder. Two: the model needs to know if a changed order is new or moved, and per order I cannot see that. I can only compare orders and margin per user between A and B. Three: it looks at one purchase and ignores repeat buying.">
+  <h1>A returned changed pair costs what a kept pair earns</h1>
+  <div class="body">
+    <div class="money">
+      <div class="money-left">
+        <div class="pcard">
+          <h3>Standard pair, from stock</h3>
+          <div class="prow"><span>Kept</span><b>+109</b></div>
+          <div class="prow"><span>Returned, back to stock</span><b class="neg">&minus;10</b></div>
+          <div class="prow avg"><span>At 20% returns</span><b>85.2</b></div>
+        </div>
+        <div class="pcard changed">
+          <h3>Changed pair, made to order</h3>
+          <div class="prow"><span>Kept</span><b id="mc-kept">+99</b></div>
+          <div class="prow"><span>Returned, written off</span><b class="neg">&minus;90</b></div>
+          <div class="prow avg"><span>Average at <span id="mc-r">20</span>% returns</span><b id="mc">61.2</b></div>
+        </div>
+        <p class="formula">Average = kept share × what a kept pair earns, minus returned share × what a returned pair costs.</p>
+      </div>
+      <div class="calc" id="calc">
+        <div class="sl"><label for="sl-r">Return rate of changed pairs</label><output id="o-r" for="sl-r">20%</output>
+          <div class="trk has-tick"><input type="range" id="sl-r" min="5" max="40" step="1" value="20"><span class="tick" aria-hidden="true"><em>Keep limit</em></span></div></div>
+        <div class="sl"><label for="sl-n">Share of changed orders that are new orders</label><output id="o-n" for="sl-n">30%</output>
+          <div class="trk"><input type="range" id="sl-n" min="0" max="100" step="5" value="30"></div></div>
+        <div class="sl"><label for="sl-s">Surcharge on a changed pair</label><output id="o-s" for="sl-s">&euro;0</output>
+          <div class="trk"><input type="range" id="sl-s" min="0" max="50" step="5" value="0"></div></div>
+        <div class="presets" id="presets">
+          <button data-p="20,30,0">Base case</button>
+          <button data-p="25,40,0">At the Keep limit</button>
+          <button data-p="20,0,30">With a &euro;30 surcharge</button>
+        </div>
+        <div class="outA" aria-live="polite"><span class="ab-pre" id="o-pre">about</span><span class="hero" id="o-hero">3 in 10</span><span class="txt" id="o-txt">changed orders must be new orders to break even</span><span class="pct" id="o-pct">(28%)</span></div>
+        <div class="outB"><p>Net effect of 465 changed orders: <b id="o-net">+&euro;725</b></p><div class="netbar" aria-hidden="true"><span class="fill" id="o-bar"></span><span class="zero"></span></div></div>
+        <p class="fine">Standard pairs stay at 20% returns. Full Custom Made in this cloth is &euro;229, so a &euro;30 surcharge still sits below it.</p>
+        <div class="hchips">
+          <button class="hchip" data-pop="Every cost is invented|109, 99, 10 and 90 are placeholders. The structure is the point. Suitsupply's numbers replace them.">Every cost is invented</button>
+          <button class="hchip" data-pop="New or moved?|The model needs the share of changed orders that are new. Per order I cannot see that. The A/B test can only show it as a difference in orders and margin per user between A and B.">New or moved?</button>
+          <button class="hchip" data-pop="One purchase only|It ignores repeat purchase, a higher basket, and production capacity.">One purchase only</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 11: Where this is weakest -->
+<section class="slide" id="s11" data-notes="I would rather say these before you do. <b>One.</b> The money needs new orders, about three in ten. Per order, I cannot tell a new order from one that moved from a stock pair. What I can do is compare orders and margin per exposed user between the two arms. <b>Two.</b> One market may be too small. My test size assumes half of the users who see the prompt add to bag. If the real rate is thirty percent, the same test needs about seventy-two thousand users per group. I need today's rate before I promise a date. <b>Three.</b> Keep reads late and rough. At 300 orders and twenty percent returns the measurement is uncertain by about 4.5 points, and my limit is 5. And it arrives around day forty five. So the first Keep read is a signal, not proof, and the early signals carry the first weeks. <b>Four.</b> The five percent Adoption target stands on three stacked guesses. If one of them is half, Adoption is two and a half percent, and I get about 230 changed orders, under the 300 I need for Keep. The baselines settle it before launch, and the product page entry is prototyped as the next test. <b>Five.</b> No photo exists of a changed combination. The customer buys from a close-up and a caption, on a pair that is a write-off if it comes back. The expectation-match question measures exactly this. Smaller ones are on the bottom line. One more about my own segments: two and three are defined by the outcome, so they describe what happened. They do not predict it. That is why I split further later.">
+  <h1>Five things I cannot prove yet</h1>
+  <div class="body">
+    <div class="wk" id="wk">
+      <button class="wk-row" data-reveal data-reveal-group="wk" aria-expanded="false"><span class="num">1</span><span><span class="wk-title">New order or moved order</span><span class="wk-line">Break-even needs new orders. Per order, I cannot tell new from moved.</span></span><span class="wk-fact">3 in 10</span>
+        <span class="wk-rev"><span class="lab">Settled by</span><span>Compare orders and margin per exposed user between A and B, not per changed order.</span></span></button>
+      <button class="wk-row" data-reveal data-reveal-group="wk" aria-expanded="false"><span class="num">2</span><span><span class="wk-title">One market may be too small</span><span class="wk-line">The test size assumes a 50% add-to-bag rate. At 30%, the same test needs about 72,000 users per group.</span></span><span class="wk-fact">31,000 &rarr; 72,000 per group</span>
+        <span class="wk-rev"><span class="lab">Settled by</span><span>Today's add-to-bag rate (gap D2) before launch. If one market is too small: run longer, or pool a second market. No rollout on a maybe.</span></span></button>
+      <button class="wk-row" data-reveal data-reveal-group="wk" aria-expanded="false"><span class="num">3</span><span><span class="wk-title">Keep reads late and rough</span><span class="wk-line">The limit is 5 points. The measurement is uncertain by about 4.5.</span></span><span class="wk-fact">300 orders · &plusmn; 4.5 pts · day 45</span>
+        <span class="wk-rev"><span class="lab">Settled by</span><span>Early signals in days. One market until 300 orders. Treat the first read as a signal.</span></span></button>
+      <button class="wk-row" data-reveal data-reveal-group="wk" aria-expanded="false"><span class="num">4</span><span><span class="wk-title">Adoption stands on three guesses</span><span class="wk-line">If one guess is half, Adoption is 2.5% and the Keep sample is too small.</span></span><span class="wk-fact">25% × 40% × 50%</span>
+        <span class="wk-rev"><span class="lab">Settled by</span><span>Baselines D2 and D3 before launch. The product page entry (R1.2) is ready as the next test.</span></span></button>
+      <button class="wk-row" data-reveal data-reveal-group="wk" aria-expanded="false"><span class="num">5</span><span><span class="wk-title">A combination nobody photographed</span><span class="wk-line">A changed pair has no photo. The customer buys from a close-up and a caption.</span></span><span class="wk-fact">0 photos</span>
+        <span class="wk-rev"><span class="lab">Settled by</span><span>The expectation-match question after delivery. If under 90% yes: better images before more markets.</span></span></button>
+      <div class="wk-spacer" aria-hidden="true"></div>
+    </div>
+    <p class="s11-foot">Also open: the pleat changes the hip (own switch). The return rule is Suitsupply's call (gap L1). Segments 2 and 3 are defined by the outcome, so they describe and do not predict. Not tested with a screen reader.</p>
+  </div>
+</section>
+
+<!-- Slide 12: What I need from the team -->
+<section class="slide" id="s12" data-legend="rel" data-notes="Each weak point needs something from one of you. I grouped it by team. <b>Production</b>: which waistband, hem and front can each fit have, and is one to two weeks true for a changed pair. That sets the scope of Release 1. <b>Legal and customer service</b>: does today's thirty day return policy cover a changed pair. I assumed yes. If the answer is no, Keep moves from returns to cancellations and the money changes. <b>Data and analytics</b>: today's rate at each step of the flow, and the return rate of made-to-order fits. Every threshold I showed waits for these. <b>Engineering</b>: where a detail lives on the order line, and that the flag fails open to today's flow. <b>Content</b>: a close-up and a plain name for every value, because most customers do not know what a side adjuster is. My recommendation: ship Release 1 to one market behind one flag. Protect the fast path. Measure the three numbers. The shortcuts and the product page entry are prototyped and wait as the next tests.">
+  <h1>What I need from each team</h1>
+  <div class="body">
+    <div class="teams" id="teams">
+      <button class="team" data-key="prod"><h3>Production</h3><span class="ask">Which details can each fit have, and how fast?</span><span class="unb">Unblocks: Release 1 scope</span></button>
+      <button class="team" data-key="legal"><h3>Legal and customer service</h3><span class="ask">Does today's return policy cover a changed pair?</span><span class="unb">Unblocks: Keep, the money</span></button>
+      <button class="team" data-key="data"><h3>Data and analytics</h3><span class="ask">Today's rate at each step</span><span class="unb">Unblocks: every threshold</span></button>
+      <button class="team" data-key="eng"><h3>Engineering</h3><span class="ask">Where does a detail live on the order line?</span><span class="unb">Unblocks: the build, the stop rule</span></button>
+      <button class="team" data-key="content"><h3>Content</h3><span class="ask">A close-up and a plain name for every value</span><span class="unb">Unblocks: Clear, slide 3</span></button>
+    </div>
+    <div class="tdetail" id="tdetail" aria-live="polite"><span class="hint-txt">Click a team.</span></div>
+    <div class="rec-box">
+      <div class="rec-label">My recommendation</div>
+      <div class="rec-text">Ship Release 1 to <b>one market</b> behind <b>one flag</b>. Protect the fast path. Measure the three numbers. Release 1.1 and 1.2 are prototyped and wait as the next tests.</div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 13: Close -->
+<section class="slide" id="s13" data-notes="Three differences that already exist. Now visible, choosable and measurable. Thank you. Then stop and let the silence hold.">
+  <h1>Visible, choosable, measurable.</h1>
+  <div class="words3" id="words3"><span>Waistband</span><span>Hem</span><span>Front</span></div>
+  <p class="sub">Three differences that already exist. Thank you.</p>
+  <p class="fine">The pack: reasoning, tracking plan, user stories, gap analysis, and the prototype. It runs from one file, with no network.</p>
+</section>
+
+
+<script>
+'use strict';
+
+let shownAt = 0; // when the current slide appeared
+const $ = (sel, root) => (root || document).querySelector(sel);
+const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+// ---------- Hover pop-up (chips, properties, signals) ----------
+const pop = document.createElement('div');
+pop.className = 'pop';
+pop.setAttribute('role', 'tooltip');
+document.body.appendChild(pop);
+function showPop(el, title, text) {
+  pop.innerHTML = '<h4>' + title + '</h4><p>' + esc(text) + '</p>';
+  pop.classList.add('show');
+  const r = el.getBoundingClientRect();
+  const pw = pop.offsetWidth, ph = pop.offsetHeight;
+  let top = r.bottom + 8;
+  if (top + ph > window.innerHeight - 8) top = r.top - ph - 8;
+  pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth - pw - 8)) + 'px';
+  pop.style.top = Math.max(8, top) + 'px';
+}
+function hidePop() { pop.classList.remove('show'); }
+function popFromAttr(el) {
+  const parts = el.dataset.pop.split('|');
+  showPop(el, esc(parts[0]), parts[1] || '');
+}
+$$('[data-pop]').forEach((el) => {
+  el.addEventListener('mouseenter', () => popFromAttr(el));
+  el.addEventListener('mouseleave', hidePop);
+  el.addEventListener('focus', () => popFromAttr(el));
+  el.addEventListener('blur', hidePop);
+  el.addEventListener('click', () => popFromAttr(el));
+});
+
+// ---------- Shared helper 1: click-to-toggle reveal ([data-reveal]) ----------
+// A reveal never changes the slide's height: its space is reserved in the CSS.
+$$('[data-reveal]').forEach((el) => {
+  el.addEventListener('click', () => {
+    const open = !el.classList.contains('open');
+    const group = el.dataset.revealGroup;
+    if (group && open) {
+      $$('[data-reveal-group="' + group + '"]').forEach((other) => {
+        if (other !== el) { other.classList.remove('open'); other.setAttribute('aria-expanded', 'false'); }
+      });
+    }
+    el.classList.toggle('open', open);
+    el.setAttribute('aria-expanded', String(open));
+  });
+});
+
+// ---------- Shared helper 2: select one, show its detail ----------
+// items: the buttons (data-key). onSelect(key) renders the detail. hover: preview on hover.
+// toggle: a second click clears the selection.
+function makeSelect(items, opts) {
+  let pinned = opts.initial === undefined ? null : opts.initial;
+  function apply(key) {
+    items.forEach((it) => {
+      const on = key !== null && it.dataset.key === key;
+      it.classList.toggle('sel', on);
+      it.setAttribute('aria-pressed', String(on));
+    });
+    opts.onSelect(key);
+  }
+  items.forEach((it) => {
+    it.addEventListener('click', () => {
+      pinned = (opts.toggle && pinned === it.dataset.key) ? null : it.dataset.key;
+      apply(pinned);
+    });
+    if (opts.hover) {
+      // A cursor that only rests on an item when the slide appears does not count as a hover.
+      it.addEventListener('mouseenter', () => { if (Date.now() - shownAt > 400) apply(it.dataset.key); });
+      it.addEventListener('mouseleave', () => apply(pinned));
+    }
+  });
+  apply(pinned);
+  return { set(key) { pinned = key; apply(key); }, get() { return pinned; }, render() { apply(pinned); } };
+}
+
+// A mouse click leaves the focus on the button. Take it back, so Space and the arrows drive the deck.
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (b && e.detail > 0) b.blur();
+});
+
+// ---------- Slide 1: the three details ----------
+const D_NAMES = { waistband: 'Waistband', hem: 'Hem', front: 'Front' };
+const photoRow = $('#photo-row');
+const s1Select = makeSelect($$('.dchip'), {
+  toggle: true, hover: true, initial: null,
+  onSelect(key) {
+    if (key) photoRow.dataset.d = key; else delete photoRow.dataset.d;
+    if (!key) { $('#dcount').textContent = ''; return; }
+    const values = new Set($$('.vals [data-d="' + key + '"]', photoRow).map((s) => s.textContent.trim()));
+    $('#dcount').innerHTML = D_NAMES[key] + ': <b>' + values.size + ' values</b> across the fits. The customer chooses <b>0</b>.';
+  },
+});
+$$('.ph').forEach((ph) => ph.addEventListener('click', () => ph.classList.toggle('zoom')));
+// A photo that failed before this script ran still gets its fallback.
+$$('.ph-frame img').forEach((img) => { if (img.complete && img.naturalWidth === 0) imgErr(img); });
+
+// ---------- Slide 2: the segment fork ----------
+const SEG_NAMES = { 1: 'Skipped the fit picker', 2: 'Opened the fit picker, not in the bag', 3: 'Opened the fit picker, in the bag' };
+const segChip = (n) => '<span class="seg" data-seg="' + n + '"><i>' + n + '</i>' + SEG_NAMES[n] + '</span>';
+const SEG_DETAIL = {
+  1: ['only the new prompt wording.', 'slow down.', 'Speed.'],
+  2: ['the Details row and the sheet.', 'get lost or confused.', 'sheet exit rate and reset rate (early signals).'],
+  3: ['the full flow to the bag.', 'send the pair back.', 'Adoption and Keep.'],
+};
+const segDetailHtml = (k) => segChip(k) + '<p><b>Sees:</b> ' + SEG_DETAIL[k][0] + ' <b>Must not:</b> ' + SEG_DETAIL[k][1] + ' <b>Watched by:</b> ' + SEG_DETAIL[k][2] + '</p>';
+const s2Select = makeSelect($$('#fork-bars .fbar'), {
+  toggle: true, initial: null,
+  onSelect(key) {
+    const box = $('#s2-detail');
+    box.innerHTML = key ? segDetailHtml(key) : '<span class="hint-txt">Click a segment.</span>';
+    box.classList.remove('fade-in'); void box.offsetWidth; box.classList.add('fade-in');
+  },
+});
+
+// ---------- Slide 4: release pins ----------
+const REL_TAG = { '1': '<span class="rel" data-rel="1">R1</span>', '1.1': '<span class="rel" data-rel="1.1">R1.1</span>', '1.2': '<span class="rel" data-rel="1.2">R1.2</span>' };
+const REL_CAPTION = {
+  '1': 'Three details behind one row. Delivery changes the moment a detail changes. One switch turns it off.',
+  '1.1': 'Known customers get a shorter path. Preselect only what can go back into stock. Suggest what cannot.',
+  '1.2': 'If Adoption is low, the details also open from the product page. Off by default.',
+};
+const s4Select = makeSelect($$('#flow .pin'), {
+  initial: '1',
+  onSelect(key) {
+    $('#flow').dataset.sel = key;
+    const box = $('#s4-detail');
+    box.innerHTML = REL_TAG[key] + '<p>' + REL_CAPTION[key] + '</p>';
+    box.classList.remove('fade-in'); void box.offsetWidth; box.classList.add('fade-in');
+  },
+});
+
+// ---------- Slide 6: decisions ----------
+const s6Select = makeSelect($$('#dec-list .dec-item'), {
+  hover: true, initial: '1',
+  onSelect(key) { $$('#dec-cards .dec-card').forEach((c) => c.classList.toggle('sel', c.dataset.key === key)); },
+});
+
+// ---------- Slide 7: the event inspector ----------
+// [name, demo value, meaning, isNew]
+const SUPER_CONTEXT = [
+  ['market', "'nl'", 'The market of the storefront. The rollout goes one market at a time.', true],
+  ['locale', "'en-nl'", 'Language and market of the page.', true],
+  ['device_type', "'mobile'", 'Device class.', true],
+  ['session_id', "'demo-k3f9x2'", 'The visit. Segments are computed per visit. Holds no personal data.', true],
+  ['consent_state', "'analytics_only'", 'The consent in force. Personalisation consent is needed for any tier above anonymous. With no analytics consent, no event is sent at all.', true],
+  ['identity_tier', "'anonymous'", 'The identity tier. Derived from customer_state. The cut for known customers.', true],
+  ['customer_state', "'anonymous'", 'What we know about the customer.', false],
+  ['flag_variant', "'test'", 'Group in Experiment 1.', false],
+  ['product_id', "'B2248'", 'Product code.', false],
+];
+const SUPER_FLOW = [
+  ['fit', "'wide_tapered'", 'Selected fit.', false],
+  ['is_fit_in_stock', 'true', 'The selected fit has stock.', false],
+  ['waistband', "'side_adjusters'", 'Effective waistband.', false],
+  ['hem', "'turn_up'", 'Effective hem.', false],
+  ['front', "'pleated'", 'Effective front style.', false],
+  ['changed_detail_count', '1', 'Details that differ from the standard of the fit.', false],
+  ['delivery_estimate', "'1_2_weeks'", 'Delivery text on screen.', false],
+  ['size_prefill', "'none'", 'How the size step treats the size.', false],
+];
+const SUGGEST_PROPS = [
+  ['suggestion_type', "'last_details'", 'What the card offers: the last details, or a selection started on this device.', false],
+  ['suggestion_source', "'order_history'", 'Where the suggestion comes from: order history or device storage.', false],
+];
+const EVENTS = {
+  prompt_shown: { when: 'The prompt shows after a tap on Select size and fit.', none: 'None. It is the exposure event and carries only the super properties.', props: [] },
+  keep_fit_tapped: { when: 'The customer taps Keep [fit]. The size step follows.', none: 'None. Only the super properties.', props: [] },
+  fit_picker_opened: { when: 'The customer opens the fit picker.', none: 'None. Only the super properties.', props: [] },
+  size_step_shown: { when: 'The size step shows.', props: [
+    ['entry', "'fit_picker'", 'How the customer reached the size step: keep_fit, fit_picker, suggestion or product_page.', false]] },
+  fit_changed: { when: 'The main fit or the leg shape changes.', props: [
+    ['fit_part', "'main_fit'", 'The part of the fit that changed: main_fit or leg_shape.', false],
+    ['value', "'straight'", 'The new value of that part.', false],
+    ['reverted_option_count', '0', 'Options that went back to standard, because the new fit cannot make them.', false]] },
+  details_sheet_opened: { when: 'The details sheet opens.', props: [
+    ['step', "'main_fit'", 'Where the sheet was opened: main_fit, leg_shape, size_step or product_page.', false],
+    ['opened_from', "'photo_thumb'", 'Which control opened the sheet: details_row, photo_thumb, edit_link or product_page_link. It shows which entry customers find.', true]] },
+  detail_value_tapped: { when: 'The customer taps an option tile.', props: [
+    ['option', "'hem'", 'The option of the tile: waistband, hem or front.', false],
+    ['value', "'turn_up'", 'The new value.', false],
+    ['previous_value', "'plain'", 'The effective value before the tap.', false],
+    ['is_standard_value', 'false', 'The new value is the standard of the selected fit.', false]] },
+  details_reset_tapped: { when: 'The customer taps Reset to standard.', props: [
+    ['reset_detail_count', '1', 'The options that went back to standard.', false]] },
+  suggestion_shown: { when: 'A suggestion card shows on the prompt.', props: SUGGEST_PROPS },
+  suggestion_accepted: { when: 'The customer taps the button of the card.', props: SUGGEST_PROPS },
+  added_to_bag: { when: 'The customer taps the enabled Add to bag.', props: [
+    ['size', '48', 'The selected size.', false],
+    ['size_length', "'regular'", 'The length column of the size.', false],
+    ['has_changed_detail', 'true', 'At least one detail differs from the standard of the fit.', false],
+    ['is_made_to_order', 'true', 'Production makes the pair after the order.', false],
+    ['price', '179', 'The price shown.', false],
+    ['currency', "'EUR'", 'The three-letter currency code.', false],
+    ['size_prefill_outcome', "'none'", 'A prefilled size was kept, changed, or there was none.', false],
+    ['has_opened_fit_picker', 'true', 'The fit picker opened in this flow before the bag. It separates segment 1 from segment 3, and it travels to the order line.', true],
+    ['tap_count', '9', 'Taps inside the flow up to and including Add to bag. It checks the tap claims on real traffic.', true]] },
+  size_and_fit_expanded: { when: 'The customer opens Size & Fit on the product page.', props: [
+    ['has_details_link', 'false', 'The section shows the link Change these details (test group of Experiment 3).', false]] },
+};
+const propsHtml = (list) => list.map((p) =>
+  '<div class="prop"><code data-meaning="' + esc(p[2]) + '">' + p[0] + '</code>' +
+  '<span class="v">' + esc(p[1]) + (p[3] ? '<span class="newtag">new</span>' : '') + '</span></div>').join('');
+$('#insp-b').innerHTML = propsHtml(SUPER_CONTEXT);
+$('#insp-c').innerHTML = propsHtml(SUPER_FLOW);
+const s7Select = makeSelect($$('#ents .evchip'), {
+  initial: 'added_to_bag',
+  onSelect(key) {
+    const ev = EVENTS[key];
+    $('#insp-name').textContent = 'fit_flow:' + key;
+    $('#insp-when').textContent = 'Fires when: ' + ev.when;
+    const a = $('#insp-a');
+    a.innerHTML = ev.props.length ? propsHtml(ev.props) : '<p class="none">' + ev.none + '</p>';
+    a.classList.remove('fade-in'); void a.offsetWidth; a.classList.add('fade-in');
+  },
+});
+// Reserve block A for the largest event (added_to_bag, 9 properties) at the current screen size.
+function sizeInspector() {
+  const a = $('#insp-a');
+  if (!a.offsetParent) return;
+  const keep = a.innerHTML;
+  a.style.minHeight = '0px';
+  a.innerHTML = propsHtml(EVENTS.added_to_bag.props);
+  const h = a.offsetHeight;
+  a.innerHTML = keep;
+  a.style.minHeight = h + 'px';
+}
+$('#insp').addEventListener('mouseover', (e) => {
+  const c = e.target.closest('.prop code');
+  if (c) showPop(c, '<code>' + esc(c.textContent) + '</code>', c.dataset.meaning);
+});
+$('#insp').addEventListener('mouseout', (e) => { if (e.target.closest('.prop code')) hidePop(); });
+
+// ---------- Slide 9: timeline and the A/B frames ----------
+const TL_DETAIL = {
+  0: 'Real orders by the team, to find production errors before a customer does.',
+  1: 'No decision is made on this week.',
+  2: 'About 31,000 users. About 465 changed orders at 5% Adoption. Exposure at prompt_shown.',
+  3: 'Keep reads the first 300 changed orders with a closed 30-day window. Under 300: a signal, not proof. Stay in one market.',
+  4: 'Release 1.1 starts as its own test.',
+};
+const s9Select = makeSelect($$('#tl .tl-step'), {
+  toggle: true, initial: null,
+  onSelect(key) {
+    const box = $('#tl-detail');
+    box.innerHTML = key === null ? '<span class="hint-txt">Click a step.</span>' : '<p class="rv">' + TL_DETAIL[key] + '</p>';
+    box.classList.remove('fade-in'); void box.offsetWidth; box.classList.add('fade-in');
+  },
+});
+const AB_HASH = {
+  prompt: ['f=off&mini=1&s=prompt', 'f=on&mini=1&s=prompt'],
+  fit1: ['f=off&mini=1&s=fit1', 'f=on&mini=1&s=fit1'],
+  size: ['f=off&mini=1&s=size&size=48', 'f=on&mini=1&s=size&size=48&hem=turnup'],
+};
+const AB_CAPTION = {
+  prompt: 'The only change every customer in B sees: the wording.',
+  fit1: 'B adds one row: Details.',
+  size: 'B shows the details and the new delivery time before the bag.',
+};
+const abA = $('#ab-a'), abB = $('#ab-b');
+let abScreen = 'fit1';
+function loadMini() {
+  const t = Date.now();
+  abA.src = 'prototype/index.html?run=' + t + '#' + AB_HASH[abScreen][0];
+  abB.src = 'prototype/index.html?run=' + (t + 1) + '#' + AB_HASH[abScreen][1];
+  $('#ab-cap').textContent = AB_CAPTION[abScreen];
+}
+function unloadMini() { abA.src = 'about:blank'; abB.src = 'about:blank'; }
+$$('#ab-ctl button').forEach((b) => b.addEventListener('click', () => {
+  abScreen = b.dataset.s;
+  $$('#ab-ctl button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  loadMini();
+}));
+// Each mini phone is built at 390 wide and scaled like the demo phone.
+function fitMini() {
+  const wraps = $$('.ab-phone');
+  if (!wraps.length || !wraps[0].offsetParent) return;
+  const slide = $('#s9');
+  const padB = parseFloat(getComputedStyle(slide).paddingBottom) || 0;
+  const capH = $('#ab-cap').offsetHeight + 8;
+  const avail = window.innerHeight - wraps[0].getBoundingClientRect().top - Math.max(60, capH + padB + 4);
+  const k = Math.max(0.55, Math.min(1, avail / 760));
+  const h = Math.min(760, Math.floor(avail / k));
+  wraps.forEach((w) => {
+    const f = w.querySelector('iframe');
+    f.style.height = h + 'px';
+    f.style.transform = 'scale(' + k + ')';
+    w.style.width = Math.round(390 * k) + 'px';
+    w.style.height = Math.round(h * k) + 'px';
+  });
+}
+
+// ---------- Slide 10: the money model (exact, spec section 3) ----------
+const MS = 109 * 0.8 - 10 * 0.2; // 85.2, a standard pair at 20% returns
+function moneyModel(r, n, s) {
+  const mc = (99 + s) * (1 - r) - 90 * r;
+  let gap = MS - mc;
+  if (Math.abs(gap) < 1e-9) gap = 0;
+  const breakEven = gap / MS;
+  const netPerOrder = mc - (1 - n) * MS;
+  return { ms: MS, mc: mc, gap: gap, breakEven: breakEven, netPerOrder: netPerOrder, net465: 465 * netPerOrder };
+}
+const euro = (v) => {
+  const x = Math.round(v);
+  if (x === 0) return '€0';
+  return (x > 0 ? '+' : '−') + '€' + Math.abs(x).toLocaleString('en-US');
+};
+function breakEvenText(be) {
+  if (be <= 0) return { pre: '', hero: 'Every changed order pays for itself', txt: '', pct: '', long: true };
+  if (be > 1) return { pre: '', hero: 'No share of new orders is enough', txt: '', pct: '', long: true };
+  const n = Math.round(be * 10);
+  return { pre: n === 0 ? 'less than' : 'about', hero: (n === 0 ? 1 : n) + ' in 10', txt: 'changed orders must be new orders to break even', pct: '(' + Math.round(be * 100) + '%)', long: false };
+}
+const slR = $('#sl-r'), slN = $('#sl-n'), slS = $('#sl-s');
+function updateMoney() {
+  const r = +slR.value / 100, n = +slN.value / 100, s = +slS.value;
+  const m = moneyModel(r, n, s);
+  $('#o-r').textContent = slR.value + '%';
+  $('#o-n').textContent = slN.value + '%';
+  $('#o-s').textContent = '€' + s;
+  $('#mc-r').textContent = slR.value;
+  $('#mc-kept').textContent = '+' + (99 + s);
+  $('#mc').textContent = m.mc.toFixed(1);
+  const t = breakEvenText(m.breakEven);
+  $('#o-pre').textContent = t.pre;
+  $('#o-pre').hidden = !t.pre;
+  $('#o-hero').textContent = t.hero;
+  $('#o-hero').classList.toggle('long', t.long);
+  $('#o-txt').textContent = t.txt;
+  $('#o-pct').textContent = t.pct;
+  const net = $('#o-net');
+  net.textContent = euro(m.net465);
+  net.classList.toggle('neg', Math.round(m.net465) < 0);
+  const bar = $('#o-bar');
+  const frac = Math.min(1, Math.abs(m.net465) / 15000);
+  const w = Math.round(m.net465) === 0 ? 0 : Math.max(0.4, frac * 50);
+  bar.style.width = w + '%';
+  bar.style.left = m.net465 >= 0 ? '50%' : (50 - w) + '%';
+  bar.classList.toggle('neg', m.net465 < 0);
+  $$('#presets button').forEach((b) => b.classList.toggle('sel', b.dataset.p === [slR.value, slN.value, slS.value].join(',')));
+}
+[slR, slN, slS].forEach((sl) => {
+  sl.addEventListener('input', updateMoney);
+  // After a drag, give the arrow keys back to the deck.
+  sl.addEventListener('pointerup', () => setTimeout(() => sl.blur(), 0));
+});
+$$('#presets button').forEach((b) => b.addEventListener('click', () => {
+  const p = b.dataset.p.split(',');
+  slR.value = p[0]; slN.value = p[1]; slS.value = p[2];
+  updateMoney();
+}));
+updateMoney();
+
+// ---------- Slide 12: team questions ----------
+const TEAMS = {
+  prod: ['Production', [
+    'Can each of the 5 fits have each waistband, hem and front (gap P1)?',
+    'Is 1-2 weeks true for a changed pair?',
+    'Is there a window to change an order before cutting starts?']],
+  legal: ['Legal and customer service', [
+    'Does the 30-day policy apply (gap L1)?',
+    'Does the 14-day withdrawal right apply to preset options (gap L2)?',
+    'Can service tag cancellations and contacts with the order line and a reason?']],
+  data: ['Data and analytics', [
+    "Today's funnel from the prompt, per step (gap D2).",
+    "Today's share of non-base fits (gap D3).",
+    'The return rate of made-to-order fits.',
+    'Can a return join back to <code>flag_variant</code>?']],
+  eng: ['Engineering', [
+    'Where is a detail stored, and how does production read it?',
+    "Does the flag fail open to today's flow?",
+    'Can the flow read the account size in time, without blocking the page? <span class="rel" data-rel="1.1">R1.1</span>']],
+  content: ['Content', [
+    'A close-up photo of each value on each fit.',
+    'Plain names and translations for the first market.',
+    'The wording of the expectation-match question.']],
+};
+const teamHtml = (k) => '<h4>' + TEAMS[k][0] + '</h4><ul>' + TEAMS[k][1].map((q) => '<li>' + q + '</li>').join('') + '</ul>';
+const s12Select = makeSelect($$('#teams .team'), {
+  toggle: true, initial: null,
+  onSelect(key) {
+    const box = $('#tdetail');
+    box.innerHTML = key ? teamHtml(key) : '<span class="hint-txt">Click a team.</span>';
+    box.classList.remove('fade-in'); void box.offsetWidth; box.classList.add('fade-in');
+  },
+});
+
+// ---------- Slide 13: the three words light up ----------
+let closeTimers = [];
+function playClose() {
+  closeTimers.forEach(clearTimeout);
+  const words = $$('#words3 span');
+  words.forEach((w) => w.classList.remove('on'));
+  closeTimers = words.map((w, i) => setTimeout(() => w.classList.add('on'), 400 + i * 300));
+}
+
+// ---------- The legend ----------
+const LEGEND = {
+  seg: [1, 2, 3].map((n) => '<span class="lg-item"><i class="seg-dot" data-seg="' + n + '">' + n + '</i>' + SEG_NAMES[n] + '</span>').join(''),
+  rel: '<span class="lg-item" data-pick="1">' + REL_TAG['1'] + 'Release 1</span>' +
+       '<span class="lg-item" data-pick="1.1">' + REL_TAG['1.1'] + 'Known customers</span>' +
+       '<span class="lg-item" data-pick="1.2">' + REL_TAG['1.2'] + 'Next test</span>',
+  metric: '<span class="lg-item"><span class="mtype" data-m="success">Success</span></span>' +
+          '<span class="lg-item"><span class="mtype" data-m="safety">Safety</span></span>' +
+          '<span class="lg-item"><span class="mtype" data-m="early">Early signal</span></span>',
+  arm: '<span class="lg-item"><span class="arm" data-arm="a">A</span>control</span>' +
+       '<span class="lg-item"><span class="arm" data-arm="b">B</span>test</span>',
+};
+const legend = $('#legend');
+function buildLegend(keys) {
+  legend.innerHTML = (keys || '').split(/\s+/).filter((k) => LEGEND[k])
+    .map((k) => '<span class="lg-group" data-key="' + k + '">' + LEGEND[k] + '</span>').join('');
+}
+// On slide 4 a legend entry selects its release, like a pin.
+legend.addEventListener('click', (e) => {
+  const it = e.target.closest('[data-pick]');
+  if (it && slides[current].id === 's4') s4Select.set(it.dataset.pick);
+});
+
+// ---------- The deck ----------
+const slides = $$('.slide');
+const notes = $('#notes');
+const timerEl = $('#timer');
+const bar = $('#bar');
+const slideNum = $('#slide-num');
+let current = 0, timerRunning = false, timerStart = null, timerInterval = null;
+
+const STAGES = [
+  ['01','The gap'], ['02','Who we build for'], ['03','The problem'], ['04','The solution'],
+  ['05','See it work'], ['06','Why these decisions'], ['07','What we track'], ['08','How we measure'],
+  ['09','How we roll out'], ['10','The money'], ['11','Where this is weakest'],
+  ['12','What I need from the team'], ['13','Close']
+];
+
+function show(i) {
+  if (i < 0 || i >= slides.length) return;
+  const leaving = slides[current];
+  leaving.classList.remove('active');
+  if (leaving.id === 's9' && i !== current) unloadMini();
+  current = i;
+  shownAt = Date.now();
+  const s = slides[current];
+  s.classList.add('active');
+  document.body.dataset.slide = s.id;
+  notes.innerHTML = s.dataset.notes || '';
+  slideNum.textContent = (current + 1) + ' / ' + slides.length;
+  bar.style.width = ((current + 1) / slides.length * 100) + '%';
+  const st = STAGES[i] || ['', ''];
+  $('#stage-label').innerHTML = '<b>' + st[0] + '</b> · ' + st[1];
+  buildLegend(s.dataset.legend);
+  hidePop();
+  // A click in a phone leaves the focus in the frame. Take it back, so the deck keys keep working.
+  if (document.activeElement && document.activeElement.tagName === 'IFRAME') document.activeElement.blur();
+  if (s.id === 's5') { loadScenario(activeScen()); fitDemo(); }
+  if (s.id === 's7') sizeInspector();
+  if (s.id === 's9') { fitMini(); loadMini(); }
+  if (s.id === 's13') playClose();
+}
+function next() { show(current + 1); }
+function prev() { show(current - 1); }
+
+function handleKey(key, e) {
+  if (e && (e.metaKey || e.ctrlKey || e.altKey)) return;
+  // A focused slider keeps its arrow keys.
+  if (e && e.target && e.target.type === 'range' && (key === 'ArrowLeft' || key === 'ArrowRight' || key === 'ArrowUp' || key === 'ArrowDown')) return;
+  if (key === 'ArrowRight' || key === ' ' || key === 'PageDown') { if (e) e.preventDefault(); next(); }
+  else if (key === 'ArrowLeft' || key === 'PageUp') { if (e) e.preventDefault(); prev(); }
+  else if (key === 'n' || key === 'N') {
+    notes.classList.toggle('show');
+    document.body.classList.toggle('notes-open', notes.classList.contains('show'));
+  }
+  else if (key === 't' || key === 'T') {
+    timerRunning = !timerRunning;
+    timerEl.classList.toggle('running', timerRunning);
+    if (timerRunning) {
+      timerStart = Date.now();
+      timerInterval = setInterval(() => {
+        const sec = Math.floor((Date.now() - timerStart) / 1000);
+        timerEl.textContent = String(Math.floor(sec / 60)).padStart(2, '0') + ':' + String(sec % 60).padStart(2, '0');
+      }, 500);
+    } else { clearInterval(timerInterval); }
+  }
+  else if (key === 'Home') show(0);
+  else if (key === 'End') show(slides.length - 1);
+}
+document.addEventListener('keydown', (e) => handleKey(e.key, e));
+
+// ---------- Slide 5: the demo ----------
+// The deck drives the prototype only by reloading the frame with a new address.
+// The query makes it a new page, not a hash jump, so the taps, the events and the ticker start at zero.
+const demoFrame = $('#demo-frame');
+const flagSwitch = $('#flag-switch');
+let flag = 'on';
+const visit = { exposed: false, seg: 0, stateSeg: false, picker: false, kept: false, bagAfterPicker: false };
+const activeScen = () => $('.scen.active') || $('.scen');
+$$('.scen').forEach((b) => {
+  b.dataset.kOn = $('.k', b).textContent;
+  b.dataset.dOn = $('.d', b).textContent;
+});
+
+function loadScenario(btn) {
+  demoFrame.src = 'prototype/index.html?run=' + Date.now() + '#f=' + flag + '&' + btn.dataset.hash;
+  Object.assign(visit, { exposed: false, seg: 0, stateSeg: false, picker: false, kept: false, bagAfterPicker: false });
+  renderVisit();
+  setLive(0, 0);
+}
+function setActive(btn) {
+  $$('.scen').forEach((b) => b.classList.toggle('active', b === btn));
+}
+$$('.scen').forEach((btn) => btn.addEventListener('click', () => {
+  if (btn.disabled) return;
+  setActive(btn);
+  loadScenario(btn);
+}));
+
+// The switch and the phone's own flag control must agree. Returns true if the active row changed.
+function setFlagUI(f) {
+  flag = f === 'off' ? 'off' : 'on';
+  const off = flag === 'off';
+  flagSwitch.setAttribute('aria-checked', String(!off));
+  $('#flag-line').textContent = off ? "Today's flow. This is also the stop rule." : 'New flow.';
+  $$('.scen').forEach((b) => {
+    if (b.hasAttribute('data-needs-flag')) b.disabled = off;
+    $('.k', b).textContent = off && b.dataset.kOff ? b.dataset.kOff : b.dataset.kOn;
+    $('.d', b).textContent = off && b.dataset.dOff ? b.dataset.dOff : b.dataset.dOn;
+  });
+  if (off && activeScen().disabled) { setActive($('.scen[data-row="1"]')); return true; }
+  return false;
+}
+flagSwitch.addEventListener('click', () => {
+  setFlagUI(flag === 'on' ? 'off' : 'on');
+  loadScenario(activeScen());
+});
+
+function setLive(taps, events) {
+  $('#demo-live').textContent = 'Taps: ' + taps + ' · events: ' + events;
+}
+function renderVisit() {
+  const seg = visit.seg;
+  $$('#visit-seg .vchips .seg').forEach((c) => c.classList.toggle('lit', Number(c.dataset.seg) === seg));
+  $('#visit-status').textContent = (!visit.exposed && seg === 0) ? 'Not in the test yet' : (seg === 2 ? 'In the test, so far' : 'In the test');
+  $('#visit-note').innerHTML = seg === 3 ? 'The bag event confirms it: it carries <code>has_opened_fit_picker</code>.' : '';
+}
+// Fallback when the prototype does not send a segment: compute it from the event names.
+function segFromEvents() {
+  if (visit.picker && visit.bagAfterPicker) return 3;
+  if (visit.picker) return 2;
+  if (visit.kept) return 1;
+  return 0;
+}
+
+window.addEventListener('message', (e) => {
+  const d = e.data;
+  if (!d || typeof d !== 'object') return;
+  const fromDemo = !!e.source && e.source === demoFrame.contentWindow;
+  const fromMini = !!e.source && (e.source === abA.contentWindow || e.source === abB.contentWindow);
+  if (d.type === 'deck-key') {
+    if (fromDemo || fromMini) handleKey(String(d.key), null);
+    return;
+  }
+  if (!fromDemo) return;
+  if (d.type === 'prototype-state') {
+    setLive(Number(d.taps) || 0, Number(d.events) || 0);
+    if ((d.flag === 'on' || d.flag === 'off') && d.flag !== flag) setFlagUI(d.flag);
+    if (typeof d.segment === 'number') {
+      visit.stateSeg = true;
+      visit.seg = d.segment;
+      if (d.segment > 0) visit.exposed = true;
+    }
+    if (['prompt', 'fit1', 'fit2', 'size', 'bag'].includes(d.screen)) visit.exposed = true;
+    renderVisit();
+  } else if (d.type === 'prototype-event') {
+    const name = String(d.name || '').replace('fit_flow:', '');
+    if (name === 'prompt_shown') visit.exposed = true;
+    if (name === 'keep_fit_tapped') visit.kept = true;
+    if (name === 'fit_picker_opened') visit.picker = true;
+    if (name === 'added_to_bag' && visit.picker) visit.bagAfterPicker = true;
+    if (!visit.stateSeg) visit.seg = segFromEvents();
+    renderVisit();
+  }
+});
+
+// The phone keeps its proportions: 390 wide, at most 912 high (top bar, phone, event ticker).
+// It scales down to fit the screen, but not below 72%, so the text stays readable on a room screen.
+function fitDemo() {
+  const box = document.getElementById('demo-phone');
+  if (!box || !box.offsetParent) return;
+  const frame = document.getElementById('demo-frame');
+  const avail = window.innerHeight - box.getBoundingClientRect().top - 24;
+  const scale = Math.max(0.72, Math.min(1, avail / 912));
+  const h = Math.min(912, Math.floor(avail / scale));
+  frame.style.height = h + 'px';
+  frame.style.transform = 'scale(' + scale + ')';
+  box.style.width = Math.round(390 * scale) + 'px';
+  box.style.height = Math.round(h * scale) + 'px';
+  placeDemoLegend();
+}
+function placeDemoLegend() {
+  const side = $('#s5 .side');
+  if (side && side.offsetParent) document.documentElement.style.setProperty('--legend-left-s5', Math.round(side.getBoundingClientRect().left) + 'px');
+}
+window.addEventListener('resize', () => { fitDemo(); fitMini(); sizeInspector(); });
+
+// ---------- Print: every reveal open, every detail listed, frames hidden ----------
+window.addEventListener('beforeprint', () => {
+  $('#s2-detail').innerHTML = [1, 2, 3].map((k) => '<div style="flex-basis:100%;display:flex;gap:12px">' + segDetailHtml(k) + '</div>').join('');
+  $('#s4-detail').innerHTML = ['1', '1.1', '1.2'].map((k) => '<p style="flex-basis:100%">' + REL_TAG[k] + ' ' + REL_CAPTION[k] + '</p>').join('');
+  $('#tl-detail').innerHTML = Object.keys(TL_DETAIL).map((k) => '<p class="rv">' + k + '. ' + TL_DETAIL[k] + '</p>').join('');
+  $('#tdetail').innerHTML = Object.keys(TEAMS).map(teamHtml).join('');
+});
+window.addEventListener('afterprint', () => { s2Select.render(); s4Select.render(); s9Select.render(); s12Select.render(); });
+
+show(0);
+</script>
+
+</body>
+</html>
