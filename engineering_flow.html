@@ -1,0 +1,1267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Engineering flow</title>
+<style>
+  :root {
+    --ink: #2d2e2c; --text2: #454545; --muted: #6b6b6b; --faint: #898989;
+    --line: #e1e1e1; --line2: #c6c6c6; --soft: #f6f6f6;
+    --seg1: #51606e; --seg1-t: #eef1f3;
+    --seg2: #9a5b00; --seg2-t: #fbf3e6;
+    --seg3: #0f766e; --seg3-t: #eaf5f3;
+    --r1: #2d2e2c; --r11: #1a56db; --r11-t: #eef4ff; --r12: #6d4bc3; --r12-t: #f3effb;
+    --stop: #b3261e; --stop-t: #fdf1f0;
+    --quiet: #6b6b6b; --quiet-t: #f6f6f6;
+    --focus: #1e65ff;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --sans: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: #fff; color: var(--ink); font: 400 14px/1.45 var(--sans); }
+  .wrap { max-width: 1600px; margin: 0 auto; padding: 0 20px; }
+  h1, h2, h3 { font-weight: 500; margin: 0; letter-spacing: -0.005em; }
+  h1 { font-size: 22px; }
+  h2 { font-size: 18px; }
+  h3 { font-size: 15px; }
+  p { margin: 0; }
+  code { font-family: var(--mono); font-size: 0.86em; overflow-wrap: anywhere; }
+  code.e { background: var(--soft); border: 1px solid var(--line2); border-radius: 2px; padding: 0 4px; white-space: nowrap; }
+  button { font: inherit; color: inherit; }
+  .muted { color: var(--muted); }
+  .small { font-size: 12.5px; }
+
+  /* Header */
+  header.top { padding: 18px 0 12px; border-bottom: 1px solid var(--line); }
+  .top-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .lead { margin-top: 4px; color: var(--text2); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 12px; align-items: center; font-size: 12.5px; }
+  .lg-group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .lg-label { color: var(--faint); margin-right: 2px; }
+  .seg { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--c); background: var(--t); border-radius: 2px; color: var(--c); font-size: 12px; font-weight: 500; line-height: 18px; padding: 1px 8px 1px 3px; white-space: nowrap; }
+  .seg i { font-style: normal; width: 16px; height: 16px; border-radius: 50%; background: var(--c); color: #fff; font-size: 10.5px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
+  [data-seg="1"] { --c: var(--seg1); --t: var(--seg1-t); }
+  [data-seg="2"] { --c: var(--seg2); --t: var(--seg2-t); }
+  [data-seg="3"] { --c: var(--seg3); --t: var(--seg3-t); }
+  .sdot { display: inline-flex; width: 15px; height: 15px; border-radius: 50%; background: var(--c); color: #fff; font-size: 10px; font-weight: 600; align-items: center; justify-content: center; vertical-align: middle; margin-left: 3px; }
+  .rel { display: inline-block; font-size: 11.5px; font-weight: 500; line-height: 16px; padding: 0 6px; border-radius: 2px; border: 1px solid var(--c); color: var(--c); background: #fff; white-space: nowrap; vertical-align: middle; }
+  .rel[data-rel="1"] { --c: var(--r1); background: var(--r1); color: #fff; }
+  .rel[data-rel="1.1"] { --c: var(--r11); }
+  .rel[data-rel="1.2"] { --c: var(--r12); border-style: dashed; }
+  .pill-stop { --c: var(--stop); display: inline-block; font-size: 11.5px; font-weight: 500; line-height: 16px; padding: 0 6px; border-radius: 2px; border: 1px solid var(--c); color: var(--c); background: var(--stop-t); white-space: nowrap; }
+  .pill-ctl { display: inline-block; font-size: 11.5px; font-weight: 500; line-height: 16px; padding: 0 6px; border-radius: 2px; border: 1px solid var(--quiet); color: var(--quiet); background: var(--quiet-t); white-space: nowrap; }
+  nav.toc { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 10px; font-size: 13px; }
+  nav.toc a { color: var(--text2); text-decoration: none; border-bottom: 1px solid var(--line2); }
+  nav.toc a:hover { color: var(--ink); border-color: var(--ink); }
+
+  /* Sections */
+  section.sec { padding: 22px 0 8px; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; }
+  .sec-head p { color: var(--muted); font-size: 13px; }
+
+  /* Flow */
+  .flow-grid { display: grid; grid-template-columns: minmax(0, 1fr) clamp(300px, 23vw, 370px); gap: 16px; align-items: start; }
+  .dia-box { border: 1px solid var(--line); border-radius: 4px; padding: 6px; background: #fff; min-width: 0; }
+  #dia { display: block; width: 100%; height: auto; max-width: 1180px; margin: 0 auto; user-select: none; -webkit-user-select: none; }
+  .panel { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow: auto; border: 1px solid var(--line); border-radius: 4px; padding: 14px 14px 16px; background: #fff; font-size: 13px; }
+  .panel .pk { display: flex; gap: 6px; align-items: center; color: var(--faint); font-size: 12px; }
+  .panel h3 { margin: 4px 0 2px; font-size: 16px; }
+  .panel .ptitle-code { color: var(--muted); font-size: 12px; }
+  .panel .blk { margin-top: 11px; }
+  .panel .blk > .bl { color: var(--faint); font-size: 11.5px; margin-bottom: 2px; }
+  .panel .blk p + p { margin-top: 4px; }
+  .panel ul { margin: 2px 0 0; padding-left: 16px; }
+  .panel li + li { margin-top: 2px; }
+  .ev-card { border: 1px solid var(--line); border-radius: 4px; padding: 7px 8px; margin-top: 6px; }
+  .ev-card .eh { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .ptag { font-size: 11px; color: var(--muted); border: 1px solid var(--line2); border-radius: 2px; padding: 0 5px; line-height: 15px; }
+  .ptag.exp { color: var(--ink); border-color: var(--ink); }
+  table.mini { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 12px; table-layout: fixed; }
+  table.mini td { padding: 2px 4px 2px 0; vertical-align: top; border-top: 1px solid var(--line); }
+  table.mini td:first-child { width: 55%; }
+  .btn { display: inline-block; border: 1px solid var(--ink); border-radius: 2px; background: #fff; padding: 3px 10px; font-size: 12.5px; cursor: pointer; }
+  .btn:hover { background: var(--soft); }
+  .linkbtn { border: 0; background: none; padding: 0; cursor: pointer; text-align: left; border-bottom: 1px solid var(--line2); }
+  .linkbtn:hover { border-color: var(--ink); }
+  .fires { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 3px; }
+  .howto { display: grid; grid-template-columns: 34px 1fr; gap: 6px 10px; align-items: center; margin-top: 10px; font-size: 12.5px; }
+  .howto svg { display: block; }
+
+  /* SVG */
+  #dia text { font-family: var(--sans); fill: var(--ink); }
+  #dia .nt { font-size: 12.5px; font-weight: 600; }
+  #dia .ns { font-size: 10px; fill: var(--muted); font-family: var(--mono); }
+  #dia .nl { font-size: 10px; fill: var(--text2); }
+  #dia text.a { font-family: var(--mono); font-size: 10.5px; }
+  #dia text.e { font-family: var(--mono); font-size: 10px; }
+  #dia .n { font-size: 10px; fill: var(--muted); }
+  #dia .noev { font-size: 9.5px; fill: var(--faint); }
+  #dia .cap { font-family: var(--mono); font-size: 9.5px; fill: var(--faint); }
+  #dia .dl { font-family: var(--mono); font-size: 11px; font-weight: 600; }
+  #dia .dl.sans { font-family: var(--sans); font-size: 11.5px; }
+  #dia .dl.sm { font-size: 10px; }
+  #dia .pl { font-size: 10px; fill: var(--text2); }
+  #dia .pl.b { fill: var(--r11); }
+  #dia .sdn { font-size: 8.5px; font-weight: 700; fill: #fff; }
+  #dia .tagt { font-size: 9.5px; font-weight: 600; }
+  #dia .stopt { font-size: 9.5px; font-weight: 600; fill: var(--stop); }
+  .chip rect { fill: var(--soft); stroke: var(--line2); stroke-width: 1; }
+  .chip.on rect { fill: var(--ink); stroke: var(--ink); }
+  .chip.on text { fill: #fff !important; }
+  .sd.s1 { fill: var(--seg1); } .sd.s2 { fill: var(--seg2); } .sd.s3 { fill: var(--seg3); }
+  .halo { fill: #fff; opacity: 0.92; }
+  .el { cursor: pointer; outline: none; transition: opacity .12s; }
+  .nbox { fill: #fff; stroke: var(--ink); stroke-width: 1.2; }
+  .k-r1 .nbox { stroke-width: 1.8; }
+  .k-r11 .nbox { fill: var(--r11-t); stroke: var(--r11); stroke-width: 1.5; }
+  .k-ctl .nbox { fill: var(--quiet-t); stroke: var(--quiet); stroke-width: 1.2; }
+  .k-ctl .nt { fill: var(--quiet); }
+  .k-exit .nbox { fill: #fff; stroke: var(--quiet); stroke-dasharray: 5 3; }
+  .rsep { stroke: var(--line); stroke-width: 1; }
+  .row .rbg { fill: transparent; }
+  .row:hover .rbg, .row:focus-visible .rbg { fill: var(--soft); }
+  .row.sel .rbg { fill: #fff; stroke: var(--ink); stroke-width: 1.4; }
+  .dshape { fill: #fff; stroke: var(--ink); stroke-width: 1.4; }
+  .d-r11 .dshape { stroke: var(--r11); fill: var(--r11-t); }
+  .d-r12 .dshape { stroke: var(--r12); fill: var(--r12-t); stroke-dasharray: 5 3; }
+  .d-r11 .dl { fill: var(--r11); } .d-r12 .dl { fill: var(--r12); }
+  .pbox { fill: #fff; stroke: var(--faint); stroke-width: 1; stroke-dasharray: 3 2; }
+  .edge .line { fill: none; stroke: var(--ink); stroke-width: 1.4; }
+  .edge .hit { fill: none; stroke: transparent; stroke-width: 14; }
+  .edge.r-r11 .line { stroke: var(--r11); }
+  .edge.r-r12 .line { stroke: var(--r12); stroke-dasharray: 6 3; }
+  .edge.r-ctl .line { stroke: var(--quiet); }
+  .edge.rule .line { stroke: var(--faint); stroke-dasharray: 2 3; }
+  .edge.r-r11 text.a { fill: var(--r11); } .edge.r-r12 text.a { fill: var(--r12); }
+  .edge.r-ctl .n { fill: var(--quiet); font-weight: 600; }
+  #dia.dim .el { opacity: 0.18; }
+  #dia.dim .el.hl, #dia.dim .el.sel, #dia.dim .el.evhl, #dia.dim .el.hv { opacity: 1; }
+  .edge.hl .line, .edge.sel .line, .edge.evhl .line, .edge.hv .line { stroke-width: 2.6; }
+  .node.sel .nbox, .node.hl.sel .nbox { stroke-width: 2.6; }
+  .diamond.sel .dshape, .pill.sel .pbox { stroke-width: 2.6; }
+  .el:focus-visible .nbox, .el:focus-visible .dshape, .el:focus-visible .pbox { stroke: var(--focus); stroke-width: 2.4; }
+  .edge:focus-visible .line { stroke: var(--focus); stroke-width: 2.6; }
+
+  /* Tables */
+  .tbl-wrap { border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  table.t { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; }
+  table.t th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; padding: 7px 10px; border-bottom: 1px solid var(--line); background: var(--soft); }
+  table.t td { padding: 7px 10px; vertical-align: top; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
+  table.t tr:first-child td { border-top: 0; }
+  table.t tr.click { cursor: pointer; }
+  table.t tr.click:hover td { background: #fafafa; }
+  table.t tr.click.on td { background: var(--soft); box-shadow: inset 0 0 0 0 transparent; }
+  table.t tr.click.on td:first-child { box-shadow: inset 3px 0 0 var(--ink); }
+  table.t tr.click:focus-visible td { outline: 2px solid var(--focus); outline-offset: -2px; }
+  .ent { color: var(--muted); font-size: 12px; }
+  .num { display: inline-block; min-width: 18px; color: var(--faint); font-size: 12px; }
+  .seq { display: flex; flex-wrap: wrap; gap: 3px 4px; align-items: center; }
+  .seq .arr { color: var(--faint); font-size: 11px; }
+  .grp-ctx { color: var(--text2); }
+  .grp-flow { color: var(--seg3); }
+
+  /* Rules, flags */
+  .two { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+  .flags { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .card { border: 1px solid var(--line); border-radius: 4px; padding: 12px 14px; }
+  .card.f1 { border-top: 3px solid var(--r1); }
+  .card.f11 { border-top: 3px solid var(--r11); }
+  .card.f12 { border-top: 3px dashed var(--r12); }
+  .card h3 { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .card dl { margin: 8px 0 0; display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 5px 10px; font-size: 13px; }
+  .card dt { color: var(--faint); font-size: 12px; padding-top: 1px; }
+  .card dd { margin: 0; }
+  .stopbar { margin-top: 14px; border: 1px solid var(--stop); background: var(--stop-t); border-radius: 4px; padding: 10px 14px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+  .stopbar b { color: var(--stop); font-weight: 600; }
+  .note-line { margin-top: 10px; font-size: 13px; color: var(--text2); }
+  footer { border-top: 1px solid var(--line); margin-top: 24px; padding: 12px 0 28px; color: var(--muted); font-size: 12.5px; }
+
+  @media (max-width: 1099.98px) {
+    .flow-grid { grid-template-columns: minmax(0, 1fr); }
+    .panel { position: static; max-height: none; }
+    .two, .flags { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="top-row">
+    <h1>Trousers design options: engineering flow</h1>
+    <span class="small muted">Source of truth: <code>prototype/index.html</code>. Its self-test: 260 passed, 0 failed.</span>
+  </div>
+  <p class="lead">How the prototype works, read from its code: every screen, customer action (<code>data-action</code>), condition, event, and state rule.</p>
+  <div class="legend" aria-label="Legend">
+    <div class="lg-group"><span class="lg-label">Segments</span>
+      <span class="seg" data-seg="1"><i>1</i>Skipped the fit picker</span>
+      <span class="seg" data-seg="2"><i>2</i>Opened the fit picker, not in the bag</span>
+      <span class="seg" data-seg="3"><i>3</i>Opened the fit picker, in the bag</span>
+    </div>
+    <div class="lg-group"><span class="lg-label">Releases</span>
+      <span class="rel" data-rel="1">R1</span>
+      <span class="rel" data-rel="1.1">R1.1</span>
+      <span class="rel" data-rel="1.2">R1.2</span>
+    </div>
+    <div class="lg-group"><span class="pill-stop">Stop rule</span><span class="pill-ctl">Control, flag OFF</span></div>
+  </div>
+  <nav class="toc" aria-label="Sections">
+    <a href="#flow">Flow</a><a href="#events">Events</a><a href="#props">Super properties</a><a href="#rules">Rules</a><a href="#flags">Flags and exposure</a><a href="#paths">Reference paths</a><a href="#order">Order line</a>
+  </nav>
+</header>
+
+<section class="sec" id="flow" aria-labelledby="flow-h">
+  <div class="sec-head"><h2 id="flow-h">Flow</h2><p>Click a screen, an action row, a line, or a decision. Hover to trace its path. Escape clears.</p></div>
+  <div class="flow-grid">
+    <div class="dia-box">
+      <svg id="dia" viewBox="0 0 1000 772" role="group" aria-label="Flow diagram of the prototype">
+        <defs>
+          <marker id="m-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2d2e2c"/></marker>
+          <marker id="m-r11" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a56db"/></marker>
+          <marker id="m-r12" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6d4bc3"/></marker>
+          <marker id="m-ctl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6b6b6b"/></marker>
+          <marker id="m-rule" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#898989"/></marker>
+        </defs>
+        <rect id="dia-bg" x="0" y="0" width="1000" height="772" fill="#fff"/>
+        <g id="l-edges"></g><g id="l-nodes"></g><g id="l-rows"></g>
+      </svg>
+    </div>
+    <aside class="panel" id="panel" aria-live="polite" aria-label="Detail panel"></aside>
+  </div>
+</section>
+
+<section class="sec" id="events" aria-labelledby="events-h">
+  <div class="sec-head"><h2 id="events-h">Events</h2><p>12 events. <code>track()</code> sends each as <code>fit_flow:</code> plus the name, with its own properties and the 17 super properties. Click a row to see where it fires.</p></div>
+  <div class="tbl-wrap"><table class="t" id="ev-table">
+    <colgroup><col style="width:10%"><col style="width:15%"><col style="width:24%"><col style="width:22%"><col style="width:8%"><col style="width:21%"></colgroup>
+    <thead><tr><th>Entity</th><th>Name</th><th>Fires when</th><th>Own properties</th><th>Panel tag</th><th>Feeds</th></tr></thead>
+    <tbody></tbody>
+  </table></div>
+  <p class="note-line">Adoption and Keep read order data, not events, so customers who decline analytics still count. The panel tag is <code class="f">EVENT_TAGS</code>, shown in the prototype's event panel and ticker.</p>
+</section>
+
+<section class="sec" id="props" aria-labelledby="props-h">
+  <div class="sec-head"><h2 id="props-h">Super properties</h2><p>17 properties on every event, built by <code class="f">commonProps()</code> at event time, in the order the self-test checks (<code class="f">COMMON_KEYS</code>). Flow state shows the state after the action.</p></div>
+  <div class="tbl-wrap"><table class="t" id="sp-table">
+    <colgroup><col style="width:18%"><col style="width:10%"><col style="width:30%"><col style="width:42%"></colgroup>
+    <thead><tr><th>Name</th><th>Group</th><th>Values</th><th>Source in the code</th></tr></thead>
+    <tbody></tbody>
+  </table></div>
+</section>
+
+<section class="sec" id="rules" aria-labelledby="rules-h">
+  <div class="sec-head"><h2 id="rules-h">Rules</h2><p>The decision functions in plain words. The code wins over every document.</p></div>
+  <div class="two">
+    <div class="tbl-wrap"><table class="t" id="rules-table">
+      <colgroup><col style="width:30%"><col style="width:70%"></colgroup>
+      <thead><tr><th>Function</th><th>Rule</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="tbl-wrap"><table class="t" id="state-table">
+      <colgroup><col style="width:64%"><col style="width:36%"></colgroup>
+      <thead><tr><th>State rule</th><th>Code</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </div>
+</section>
+
+<section class="sec" id="flags" aria-labelledby="flags-h">
+  <div class="sec-head"><h2 id="flags-h">Flags and exposure</h2><p>Flag keys come from the tracking plan. The prototype has panel switches that stand in for them.</p></div>
+  <div class="flags" id="flag-cards"></div>
+  <div class="stopbar"><b>Stop rule</b><span>The Custom Made PM sets <code>trousers-design-options</code> to OFF within one working day when Speed, Keep, or Operations fails. OFF gives every customer today's flow. The per-option rule switches off one option only.</span></div>
+  <p class="note-line">Fails open: if the flag service fails, the customer gets today's flow (US-11, gap E5). A customer lookup that fails or takes more than 300 milliseconds shows the baseline, with no late card (US-18). Neither is in the prototype: its address default is <code>f=on</code>.</p>
+</section>
+
+<section class="sec" id="paths" aria-labelledby="paths-h">
+  <div class="sec-head"><h2 id="paths-h">Reference paths</h2><p>A count starts on the product page and ends at "Add to bag". Each tap on a phone control counts. Checked by clicking the real controls. Click a row to trace it.</p></div>
+  <div class="tbl-wrap"><table class="t" id="path-table">
+    <colgroup><col style="width:13%"><col style="width:11%"><col style="width:6%"><col style="width:27%"><col style="width:33%"><col style="width:10%"></colgroup>
+    <thead><tr><th>Path</th><th>Setup</th><th>Taps</th><th>Taps in order (<code>data-action</code>)</th><th>Events in order</th><th>Segment at the bag</th></tr></thead>
+    <tbody></tbody>
+  </table></div>
+  <p class="note-line">Segment 0 at the bag: the suggestion and product page paths fire neither <code class="e">keep_fit_tapped</code> nor <code class="e">fit_picker_opened</code>, so <code class="f">visitSegment()</code> stays 0 and <code class="p">has_opened_fit_picker</code> is false.</p>
+</section>
+
+<section class="sec" id="order" aria-labelledby="order-h">
+  <div class="sec-head"><h2 id="order-h">Order line</h2><p>The prototype ends at the bag. These fields travel to the order (tracking plan, section 5).</p></div>
+  <div class="two">
+    <div class="tbl-wrap"><table class="t" id="order-table">
+      <colgroup><col style="width:24%"><col style="width:32%"><col style="width:44%"></colgroup>
+      <thead><tr><th>Field</th><th>At the bag in the prototype</th><th>Why</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div>
+      <div class="tbl-wrap"><table class="t" id="record-table">
+        <colgroup><col style="width:34%"><col style="width:38%"><col style="width:28%"></colgroup>
+        <thead><tr><th>Record</th><th>Fields</th><th>Feeds</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <p class="note-line">Adoption, Keep, safety, and money read the order system, so customers who decline analytics still count. Returns, cancellations, and expectation answers join back to the test through <code class="p">flag_variant</code> on the order line.</p>
+      <p class="note-line">Returns are allowed under today's 30-day policy. A changed pair cannot go back into stock, so every returned changed pair is a write-off. Split returns by reason, so a size return does not count against the detail.</p>
+    </div>
+  </div>
+</section>
+
+<footer>Built from <code>prototype/index.html</code>, <code>deliverables/3_tracking_plan.md</code>, and the deck's colour system. Every action, event, property, and function name in the code font exists in the prototype. The flag key <code>trousers-details-pdp-entry</code> comes from the tracking plan only. No photos, no network requests.</footer>
+</div>
+
+<script>
+'use strict';
+
+// ---------- Helpers for code names ----------
+const A = (s) => '<code class="a">' + s + '</code>';   // data-action
+const E = (s) => '<code class="e">' + s + '</code>';   // event
+const P = (s) => '<code class="p">' + s + '</code>';   // property
+const V = (s) => '<code class="v">' + s + '</code>';   // property or state value
+const F = (s) => '<code class="f">' + s + '</code>';   // function, constant, or state field
+const C = (s) => '<code>' + s + '</code>';             // other code
+const R = (r) => r ? '<span class="rel" data-rel="' + r + '">R' + r + '</span>' : '';
+const SEG = (n) => '<span class="sdot" data-seg="' + n + '">' + n + '</span>';
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+// ---------- Events (prototype EVENT_TAGS order) ----------
+const SUGG_PROPS = [['suggestion_type', ['last_details', 'resume_selection']], ['suggestion_source', ['order_history', 'device_storage']]];
+const EVENTS = [
+  { name: 'prompt_shown', entity: 'The visit', tag: 'Exposure', props: [],
+    when: A('open-flow') + ' "Select size and fit". Always, in both groups.',
+    feeds: 'Exposure for R1 and R1.1. Base of Speed (a) and of the order rate. Start of Speed (b).' },
+  { name: 'keep_fit_tapped', entity: 'The visit', tag: 'Diagnostic', props: [], seg: [1],
+    when: A('keep-fit') + ' "Keep [fit]" on the prompt. ' + E('size_step_shown') + ' follows.',
+    feeds: 'Segment 1. Speed (b): time to bag on the Keep path.' },
+  { name: 'fit_picker_opened', entity: 'The visit', tag: 'Diagnostic', props: [], seg: [2, 3],
+    when: A('choose-fit') + ' "Choose fit and details" (ON) or "Choose fit" (OFF). Sets ' + F('pickerOpened') + '.',
+    feeds: 'Segments 2 and 3. Adoption factor: 25% open the fit picker.' },
+  { name: 'fit_changed', entity: 'The fit', tag: 'Diagnostic',
+    props: [['fit_part', ['main_fit', 'leg_shape']], ['value', ['slim', 'straight', 'wide', 'tapered']], ['reverted_option_count', ['0 to 3']]],
+    when: A('set-fit') + ' or ' + A('set-leg') + ' with a new value. A tap on the selected one sends nothing. Fires after ' + F('dropUnavailable()') + '.',
+    feeds: 'Diagnostic. ' + P('reverted_option_count') + ' shows values that went back to standard.' },
+  { name: 'details_sheet_opened', entity: 'The details', tag: 'Diagnostic',
+    props: [['step', ['main_fit', 'leg_shape', 'size_step', 'product_page']], ['opened_from', ['details_row', 'photo_thumb', 'edit_link', 'product_page_link']]],
+    when: A('open-sheet') + ' from the Details row, a thumb, "Edit", or "Change these details". These controls exist only when ' + F('featureOn()') + '.',
+    feeds: 'Adoption factor: 40% open the sheet. Sheet exit (no ' + E('added_to_bag') + '). Base of the reset rate.' },
+  { name: 'detail_value_tapped', entity: 'The details', tag: 'Diagnostic',
+    props: [['option', ['waistband', 'hem', 'front']], ['value', ['belt_loops', 'side_adjusters', 'plain', 'turn_up', 'flat', 'pleated']], ['previous_value', ['same values']], ['is_standard_value', ['true', 'false']]],
+    when: A('set-option') + ' on any enabled tile, also the selected one and the standard one.',
+    feeds: 'Adoption factor: 50% change a detail. Flip rate: 3 or more taps on one option.' },
+  { name: 'details_reset_tapped', entity: 'The details', tag: 'Diagnostic',
+    props: [['reset_detail_count', ['1 to 3']]],
+    when: A('reset-options') + ' "Reset to standard". Enabled only when ' + F('anySet()') + '.',
+    feeds: 'Reset rate: this ÷ ' + E('details_sheet_opened') + '. Watch above 20%.' },
+  { name: 'size_step_shown', entity: 'The visit', tag: 'Diagnostic',
+    props: [['entry', ['keep_fit', 'fit_picker', 'suggestion', 'product_page']]],
+    when: F('showSize()') + ': after ' + A('keep-fit') + ', ' + A('next') + ' to the size step, ' + A('accept-suggestion') + ', or ' + A('close-sheet') + ' "Done" on the product page.',
+    feeds: 'Diagnostic: how the customer reached the size step.' },
+  { name: 'added_to_bag', entity: 'The order', tag: 'Speed', seg: [3],
+    props: [['size', ['48']], ['size_length', ['regular', 'long', 'short']], ['has_changed_detail', ['true', 'false']], ['is_made_to_order', ['true', 'false']], ['price', ['179']], ['currency', ['EUR']], ['size_prefill_outcome', ['kept', 'changed', 'none']], ['has_opened_fit_picker', ['true', 'false']], ['tap_count', ['state.taps + 1']]],
+    when: A('add-to-bag') + ', enabled only when a size is set.',
+    feeds: 'Speed (a) add-to-bag rate and (b) time to bag. Segment 3. Experiment 2 decides on it. ' + P('tap_count') + ' checks the paths.' },
+  { name: 'suggestion_shown', entity: 'The suggestion', tag: 'Diagnostic', props: SUGG_PROPS, rel: '1.1',
+    when: A('open-flow') + ', right after ' + E('prompt_shown') + ', when ' + F('suggestion()') + ' is not null.',
+    feeds: 'R1.1: do known customers accept? Base for ' + E('suggestion_accepted') + '.' },
+  { name: 'suggestion_accepted', entity: 'The suggestion', tag: 'Diagnostic', props: SUGG_PROPS, rel: '1.1',
+    when: A('accept-suggestion') + ' "Use these details" or "Continue". ' + E('size_step_shown') + ' with ' + V('suggestion') + ' follows.',
+    feeds: 'R1.1 acceptance. The 4-tap shortcut to the bag.' },
+  { name: 'size_and_fit_expanded', entity: 'The product page', tag: 'Exposure', props: [['has_details_link', ['true', 'false']]], rel: '1.2',
+    when: A('toggle-size-fit') + ' when "Size &amp; Fit" opens, not on close. Fires in every variant.',
+    feeds: 'Exposure for Experiment 3 (R1.2). It decides on Adoption.' },
+];
+const EVX = Object.fromEntries(EVENTS.map((e, i) => [e.name, Object.assign(e, { n: i + 1 })]));
+
+// ---------- Diagram data ----------
+// Rows: actions on one screen. ev: the events they fire. two: the chip goes on a second line.
+const ROWS = {
+  r_prompt_close: { parent: 'prompt', a: 'close' },
+  r_card_dismiss: { parent: 'card', a: 'dismiss-suggestion' },
+  r_set_fit: { parent: 'fit1', a: 'set-fit', ev: ['fit_changed'] },
+  r_fit1_close: { parent: 'fit1', a: 'close' },
+  r_set_leg: { parent: 'fit2', a: 'set-leg', ev: ['fit_changed'] },
+  r_back: { parent: 'fit2', a: 'back' },
+  r_expand: { parent: 'sheet', a: 'expand-option' },
+  r_set_option: { parent: 'sheet', a: 'set-option', ev: ['detail_value_tapped'], two: true },
+  r_reset: { parent: 'sheet', a: 'reset-options', ev: ['details_reset_tapped'], two: true },
+  r_close_sheet: { parent: 'sheet', a: 'close-sheet' },
+  r_set_size: { parent: 'size', a: 'set-size' },
+  r_size_close: { parent: 'size', a: 'close' },
+  r_bag_details: { parent: 'bag', a: 'open-bag-details' },
+  r_restart: { parent: 'bag', a: 'restart' },
+};
+
+const NODES = [
+  { id: 'pdp', x: 250, y: 14, w: 160, h: 46, title: 'Product page', sub: "screen 'pdp'" },
+  { id: 'control', x: 15, y: 72, w: 160, h: 96, title: "Today's flow", sub: 'control, flag OFF', k: 'ctl',
+    lines: ['Prompt of today, "Choose fit"', 'No Details row, sheet, Edit', 'No card, prefill, page link'] },
+  { id: 'prompt', x: 250, y: 184, w: 160, h: 66, title: 'Prompt', sub: "screen 'prompt'", rows: ['r_prompt_close'] },
+  { id: 'card', x: 15, y: 290, w: 160, h: 66, title: 'Suggestion card', sub: 'on the prompt', k: 'r11', tag: 'R1.1', rows: ['r_card_dismiss'] },
+  { id: 'fullcm', x: 515, y: 134, w: 150, h: 52, title: 'Full Custom Made', sub: 'exit, €229, 2-3 weeks', k: 'exit' },
+  { id: 'fit1', x: 515, y: 250, w: 150, h: 88, title: 'Fit screen 1', sub: "screen 'fit1'", rows: ['r_set_fit', 'r_fit1_close'] },
+  { id: 'fit2', x: 515, y: 438, w: 150, h: 88, title: 'Fit screen 2', sub: "'fit2', Slim and Wide", rows: ['r_set_leg', 'r_back'] },
+  { id: 'sheet', x: 800, y: 400, w: 180, h: 160, title: 'Details sheet', sub: 'state.sheet, overlay', k: 'r1', tag: 'R1', rows: ['r_expand', 'r_set_option', 'r_reset', 'r_close_sheet'] },
+  { id: 'size', x: 250, y: 530, w: 160, h: 110, title: 'Size step', sub: "screen 'size'", rows: ['r_set_size', 'r_size_close'], foot: 'Add to bag needs a size' },
+  { id: 'bag', x: 250, y: 682, w: 160, h: 84, title: 'Bag', sub: "screen 'bag'", rows: ['r_bag_details', 'r_restart'] },
+];
+
+const DIAMONDS = [
+  { id: 'd_flag', cx: 330, cy: 118, hw: 70, hh: 28, label: 'featureOn()?', cap: { x: 404, y: 118, t: 'trousers-design-options' } },
+  { id: 'd_sugg', cx: 95, cy: 219, hw: 64, hh: 26, label: 'suggestion()?', k: 'r11', cap: { x: 20, y: 183, t: 'null: no card' } },
+  { id: 'd_pdp', cx: 890, cy: 112, hw: 66, hh: 26, label: 'pdpEntry?', k: 'r12' },
+  { id: 'd_straight', cx: 590, cy: 388, hw: 66, hh: 26, label: 'Straight Fit?', sans: true },
+  { id: 'd_avail', cx: 450, cy: 478, hw: 62, hh: 27, label: 'isAvailable()?', small: true },
+  { id: 'd_changed', cx: 900, cy: 700, hw: 72, hh: 28, label: 'isChanged()?' },
+];
+
+const PILLS = [
+  { id: 'o_revert', x: 400, y: 512, w: 100, h: 36, of: 'd_avail', lines: [['no: back to', ''], ['standard + notice', '']] },
+  { id: 'o_yes', x: 520, y: 660, w: 290, h: 48, of: 'd_changed', lines: [['yes: Delivery 1-2 weeks, made to order', ''], ['"Changed" tags, "Edit" on the size step', ''], ['signed-in size: suggested, not preselected', 'b']] },
+  { id: 'o_no', x: 520, y: 716, w: 290, h: 36, of: 'd_changed', lines: [['no: Delivery 1-2 days if the fit is in stock', ''], ['signed-in size: preselected again', 'b']] },
+];
+
+// Label items: ['a', action], ['c', event, segs], ['n', note], ['t', stop tag]
+const EDGES = [
+  { id: 'e_open_flow', from: 'pdp', to: 'd_flag', pts: [[330, 60], [330, 90]], ev: ['prompt_shown'],
+    labels: [{ x: 340, y: 75, rows: [[['a', 'open-flow'], ['c', 'prompt_shown']]] }] },
+  { id: 'e_flag_on', from: 'd_flag', to: 'prompt', pts: [[330, 146], [330, 184]],
+    labels: [{ x: 338, y: 165, rows: [[['n', 'ON']]] }] },
+  { id: 'e_flag_off', from: 'd_flag', to: 'control', pts: [[260, 118], [175, 118]], k: 'ctl',
+    labels: [{ x: 217, y: 107, align: 'middle', rows: [[['n', 'OFF']]] }, { x: 217, y: 131, align: 'middle', rows: [[['t', 'stop rule']]] }] },
+  { id: 'e_sugg', from: 'prompt', to: 'd_sugg', pts: [[250, 219], [159, 219]], k: 'r11',
+    labels: [{ x: 205, y: 209, align: 'middle', rows: [[['n', 'on show']]] }] },
+  { id: 'e_sugg_yes', from: 'd_sugg', to: 'card', pts: [[95, 245], [95, 290]], k: 'r11', ev: ['suggestion_shown'],
+    labels: [{ x: 103, y: 267, rows: [[['n', 'yes'], ['c', 'suggestion_shown']]] }] },
+  { id: 'e_accept', from: 'card', to: 'size', pts: [[95, 356], [95, 600], [250, 600]], k: 'r11', ev: ['suggestion_accepted', 'size_step_shown'],
+    labels: [{ x: 103, y: 392, rows: [[['a', 'accept-suggestion']], [['c', 'suggestion_accepted']], [['c', 'size_step_shown']]] }] },
+  { id: 'e_keep', from: 'prompt', to: 'size', pts: [[330, 250], [330, 530]], ev: ['keep_fit_tapped', 'size_step_shown'],
+    labels: [{ x: 322, y: 302, align: 'end', rows: [[['a', 'keep-fit']], [['c', 'keep_fit_tapped', [1]]], [['c', 'size_step_shown']]] }] },
+  { id: 'e_choose', from: 'prompt', to: 'fit1', pts: [[410, 214], [590, 214], [590, 250]], ev: ['fit_picker_opened'],
+    labels: [{ x: 420, y: 203, rows: [[['a', 'choose-fit']]] }, { x: 420, y: 226, rows: [[['c', 'fit_picker_opened', [2, 3]]]] }] },
+  { id: 'e_more', from: 'fit1', to: 'fullcm', pts: [[650, 250], [650, 186]],
+    labels: [{ x: 658, y: 210, rows: [[['a', 'more-options']], [['n', 'no event, a log note']]] }] },
+  { id: 'e_next1', from: 'fit1', to: 'd_straight', pts: [[590, 338], [590, 362]],
+    labels: [{ x: 598, y: 350, rows: [[['a', 'next']]] }] },
+  { id: 'e_straight_no', from: 'd_straight', to: 'fit2', pts: [[590, 414], [590, 438]],
+    labels: [{ x: 598, y: 426, rows: [[['n', 'no: Slim, Wide']]] }] },
+  { id: 'e_straight_yes', from: 'd_straight', to: 'size', pts: [[524, 388], [375, 388], [375, 530]], ev: ['size_step_shown'],
+    labels: [{ x: 384, y: 378, rows: [[['n', 'yes:'], ['a', 'next']]] }, { x: 384, y: 400, rows: [[['c', 'size_step_shown']]] }] },
+  { id: 'e_next2', from: 'fit2', to: 'size', pts: [[590, 526], [590, 566], [410, 566]], ev: ['size_step_shown'],
+    labels: [{ x: 598, y: 546, rows: [[['a', 'next']]] }, { x: 420, y: 579, rows: [[['c', 'size_step_shown']]] }] },
+  { id: 'e_sheet1', from: 'fit1', to: 'sheet', pts: [[665, 316], [730, 316], [730, 450], [800, 450]], ev: ['details_sheet_opened'],
+    labels: [{ x: 738, y: 352, rows: [[['a', 'open-sheet']], [['c', 'details_sheet_opened']]] }] },
+  { id: 'e_sheet2', from: 'fit2', to: 'sheet', pts: [[665, 488], [800, 488]], ev: ['details_sheet_opened'],
+    labels: [{ x: 732, y: 478, align: 'middle', rows: [[['a', 'open-sheet']]] }, { x: 732, y: 499, align: 'middle', rows: [[['c', 'details_sheet_opened']]] }] },
+  { id: 'e_avail_link', from: 'fit2', to: 'd_avail', pts: [[515, 478], [513, 478]], rule: true },
+  { id: 'e_avail_no', from: 'd_avail', to: 'o_revert', pts: [[450, 505], [450, 512]], rule: true },
+  { id: 'e_tsf', from: 'pdp', to: 'd_pdp', pts: [[410, 37], [890, 37], [890, 86]], k: 'r12', ev: ['size_and_fit_expanded'],
+    labels: [{ x: 428, y: 26, rows: [[['a', 'toggle-size-fit'], ['c', 'size_and_fit_expanded']]] }] },
+  { id: 'e_pdp_yes', from: 'd_pdp', to: 'sheet', pts: [[890, 138], [890, 400]], k: 'r12', ev: ['details_sheet_opened'],
+    labels: [{ x: 882, y: 160, align: 'end', rows: [[['n', 'yes:'], ['a', 'open-sheet']], [['c', 'details_sheet_opened']]] }] },
+  { id: 'e_pdp_no', from: 'd_pdp', to: null, pts: [[824, 112], [786, 112]], k: 'r12', stub: true,
+    labels: [{ x: 780, y: 112, align: 'end', rows: [[['n', 'no: rows of today']]] }] },
+  { id: 'e_done_pdp', from: 'sheet', to: 'size', pts: [[820, 560], [820, 600], [410, 600]], k: 'r12', ev: ['size_step_shown'],
+    labels: [{ x: 790, y: 590, align: 'end', rows: [[['a', 'close-sheet'], ['n', '"Done", sheet opened on the product page']]] }, { x: 790, y: 612, align: 'end', rows: [[['c', 'size_step_shown']]] }] },
+  { id: 'e_edit', from: 'size', to: 'sheet', pts: [[410, 628], [850, 628], [850, 560]], ev: ['details_sheet_opened'],
+    labels: [{ x: 470, y: 642, rows: [[['a', 'open-sheet'], ['n', '"Edit", changed pair only'], ['c', 'details_sheet_opened']]] }] },
+  { id: 'e_changed', from: 'sheet', to: 'd_changed', pts: [[930, 560], [930, 682]], rule: true,
+    labels: [{ x: 936, y: 612, rows: [[['n', 'each']], [['n', 'change']]] }] },
+  { id: 'e_changed_yes', from: 'd_changed', to: 'o_yes', pts: [[828, 700], [818, 700], [818, 684], [810, 684]], rule: true },
+  { id: 'e_changed_no', from: 'd_changed', to: 'o_no', pts: [[818, 700], [818, 734], [810, 734]], rule: true },
+  { id: 'e_bag', from: 'size', to: 'bag', pts: [[330, 640], [330, 682]], ev: ['added_to_bag'],
+    labels: [{ x: 322, y: 653, align: 'end', rows: [[['a', 'add-to-bag'], ['c', 'added_to_bag', [3]]]] }] },
+];
+
+// ---------- Detail panel content ----------
+// Example values of own properties come from a real run of the prototype.
+const DETAIL = {
+  pdp: { kind: 'Screen', title: 'Product page', code: "screen: 'pdp'",
+    trigger: 'Start of every flow: ' + F('resetFlow()') + ' sets the screen to ' + V('pdp') + '. ' + A('close') + ' on the prompt, a fit screen, or the size step also lands here, with no reset.',
+    cond: 'With ' + F('featureOn()') + ' and ' + F('state.pdpEntry') + ', the "Size &amp; Fit" rows show the details and "Change these details" (R1.2).',
+    state: 'None on show. ' + A('toggle-size-fit') + ' toggles ' + F('state.sizeFitOpen') + '.',
+    events: [],
+    notes: 'Controls: ' + A('open-flow') + ' "Select size and fit" and ' + A('toggle-size-fit') + ' "Size &amp; Fit". A page load from the address (' + F('applyHash()') + ') sends no event.' },
+  control: { kind: 'Branch outcome', title: "Today's flow (control)", rel: 'ctl',
+    trigger: F('featureOn()') + ' is false: ' + F('state.flag') + ' is ' + V('off') + ' (' + A('set-flag') + ', address ' + C('f=off') + '), or all three option switches are off.',
+    cond: 'Same screens as the test. The customer sees "Want a different fit?", "These trousers come in 5 other fits.", and "Choose fit".',
+    state: 'No Details row, no sheet, no "Edit", no suggestion card, no size prefill (' + P('size_prefill') + ' ' + V('none') + '), no product page link.',
+    events: [],
+    eventsNote: 'Fire: ' + E('prompt_shown') + ', ' + E('keep_fit_tapped') + ', ' + E('fit_picker_opened') + ', ' + E('fit_changed') + ', ' + E('size_step_shown') + ', ' + E('added_to_bag') + ', ' + E('size_and_fit_expanded') + '. Never: ' + E('details_sheet_opened') + ', ' + E('detail_value_tapped') + ', ' + E('details_reset_tapped') + ', ' + E('suggestion_shown') + ', ' + E('suggestion_accepted') + '.',
+    notes: P('flag_variant') + ' is ' + V('control') + '. With the flag ON and every option switched off, the flow equals today\'s but ' + P('flag_variant') + ' stays ' + V('test') + '. The three segments exist in both groups. Fast path 4 taps, Straight Fit 6.' },
+  prompt: { kind: 'Screen', title: 'Prompt', code: "screen: 'prompt'",
+    trigger: A('open-flow') + ' "Select size and fit" on the product page.',
+    cond: F('featureOn()') + ' sets the text. ON: "Want a different fit or details?", ' + F('promptText()') + ', "Choose fit and details". OFF: "Want a different fit?", "Choose fit". ' + F('keepLabel()') + ': "Keep Tapered Leg", "Keep Straight Leg", or "Keep Straight Fit".',
+    state: F('state.screen') + ' = ' + V('prompt') + '.',
+    events: [{ ev: 'prompt_shown', ex: {} }],
+    eventsNote: E('suggestion_shown') + ' follows at once when ' + F('suggestion()') + ' is not null.',
+    notes: 'Exposure for R1 and R1.1. Users who never reach it stay out of the analysis. Controls: ' + A('choose-fit') + ', ' + A('keep-fit') + ', ' + A('close') + ', and the card buttons.' },
+  card: { kind: 'Screen part', title: 'Suggestion card', rel: '1.1',
+    trigger: 'Shows on the prompt when ' + F('suggestion()') + ' is not null.',
+    cond: V('last_details') + ' (' + V('signed_in_details') + ', ' + V('order_history') + '): "Welcome back", "Your last pair: side adjusters, turn-up hem, pleated front.", "Use these details". ' + V('resume_selection') + ' (' + V('identified') + ', ' + V('device_storage') + '): "Pick up where you left off", "Straight Fit · side adjusters · size 48 Regular", "Continue", "Start fresh".',
+    state: F('state.card') + ' is true until "Start fresh", the accept, or the size step.',
+    events: [{ ev: 'suggestion_shown', ex: { suggestion_type: 'last_details', suggestion_source: 'order_history' } }],
+    notes: 'Details are always suggested, never preselected. The customer switch ' + A('set-customer') + ' (' + F('CUSTOMERS') + ') stands in for the flag ' + C('trousers-details-shortcuts') + '.' },
+  fullcm: { kind: 'Exit', title: 'More options: full Custom Made', rel: 'exit',
+    trigger: A('more-options') + ' on fit screen 1 or 2. It exists with the flag ON and OFF, as on the live site.',
+    cond: 'Always shown on the fit screens.',
+    state: F('state.moreOpen') + ' toggles. A card shows "Full Custom Made: every detail, €229 in this cloth, 2-3 weeks." Any other tap closes it.',
+    events: [], eventsNote: 'None. It writes a log note, not an event. It counts as a tap.',
+    notes: 'On the live site it leaves the flow. Full Custom Made starts from generic details, not from this product (gap). Values: ' + F('FULL_CM') + '.' },
+  fit1: { kind: 'Screen', title: 'Fit screen 1', code: "screen: 'fit1'",
+    trigger: A('choose-fit') + ' on the prompt, or ' + A('back') + ' from fit screen 2 (no event).',
+    cond: 'The Details row (' + A('open-sheet') + ') renders only when ' + F('featureOn()') + '. With changed options, the caption says "The photo shows the standard details of this fit." and close-ups show the change.',
+    state: A('set-fit') + ' sets ' + F('state.mainFit') + ' (' + V('slim') + ', ' + V('straight') + ', ' + V('wide') + ' from ' + F('MAIN_FITS') + ').',
+    events: [], eventsNote: 'None on show. ' + E('fit_picker_opened') + ' belongs to ' + A('choose-fit') + '.',
+    notes: 'Controls: ' + A('set-fit') + ', ' + A('next') + ', ' + A('open-sheet') + ', ' + A('more-options') + ', ' + A('close') + '.' },
+  fit2: { kind: 'Screen', title: 'Fit screen 2 (Slim and Wide only)', code: "screen: 'fit2'",
+    trigger: A('next') + ' on fit screen 1 when ' + F('state.mainFit') + ' is not ' + V('straight') + '.',
+    cond: 'Slim Fit, Straight Leg shows "Shown in another colour." Slim Fit, Straight Leg and Wide Fit, Straight Leg are not in stock (' + F('inStock') + ' false): made to order, delivery 1-2 weeks, also with standard details.',
+    state: A('set-leg') + ' sets ' + F('state.leg') + ' (' + V('tapered') + ', ' + V('straight') + ' from ' + F('LEGS') + ').',
+    events: [], eventsNote: 'None on show.',
+    notes: 'Controls: ' + A('set-leg') + ', ' + A('back') + ', ' + A('next') + ', ' + A('open-sheet') + ', ' + A('more-options') + ', ' + A('close') + '.' },
+  sheet: { kind: 'Overlay', title: 'Details sheet', rel: '1', code: 'state.sheet = true',
+    trigger: A('open-sheet') + ' from fit screen 1, fit screen 2, "Edit" on the size step, or "Change these details" on the product page.',
+    cond: 'Only when ' + F('featureOn()') + '. Switched-off options have no row. The screen behind is inert.',
+    state: F('state.sheetOpen') + ' = the option of a thumb, else ' + V('null') + ' (all rows collapsed). It shows the close-up strip, ' + F('deliveryText()') + ', and ' + F('noticeLine()') + '.',
+    events: [], eventsNote: E('details_sheet_opened') + ' fires on the line that opens it.',
+    notes: 'Controls: ' + A('expand-option') + ', ' + A('set-option') + ', ' + A('reset-options') + ', ' + A('close-sheet') + ' ("Done" or the backdrop). Escape also closes it. From the product page, "Done" opens the size step. The backdrop stays on the product page.' },
+  size: { kind: 'Screen', title: 'Size step', code: "screen: 'size'",
+    trigger: F('showSize(entry)') + ', from ' + A('keep-fit') + ', ' + A('next') + ', ' + A('accept-suggestion') + ', or ' + A('close-sheet') + ' "Done" on the product page.',
+    cond: '"Edit" (' + A('open-sheet') + ') and "Your details" show only when ' + F('featureOn()') + ' and ' + F('isChanged()') + '. "Add to bag" is disabled until a size is set.',
+    state: F('state.entry') + ' = the entry. ' + F('state.card') + ' = false. ' + F('applySizePrefill()') + ', then ' + F('syncSizePrefill()') + '.',
+    events: [{ ev: 'size_step_shown', ex: { entry: 'keep_fit' } }],
+    notes: F('prefillLine()') + ': "Size 50 Regular is selected, from your Size Passport." or "Your Size Passport says 50 Regular. Changed trousers are made for you, so tap to confirm." or "Last time on this device: 48 Regular". A suggested size is outlined, not selected.' },
+  bag: { kind: 'Screen', title: 'Bag', code: "screen: 'bag'",
+    trigger: A('add-to-bag') + ' with a size.',
+    cond: F('isMadeToOrder()') + ': a made-to-order line has its fit name, a "Details" link, and "Delivery: 1 - 2 weeks", with no size line. A stock line has the product name, the size, and "Delivery: 1 - 2 business days".',
+    state: F('state.screen') + ' = ' + V('bag') + '. ' + F('visitSegment()') + ' gives 3 when the fit picker was opened.',
+    events: [], eventsNote: E('added_to_bag') + ' fires on the line into the bag.',
+    notes: 'Controls: ' + A('open-bag-details') + ', ' + A('close-bag-details') + ', ' + A('restart') + '. "View Bag" and "Checkout" are not in the prototype.' },
+
+  d_flag: { kind: 'Decision', title: 'Flag ON?', rel: '1', code: 'featureOn()',
+    trigger: 'Read at every render, not once.',
+    cond: C("state.flag === 'on' &amp;&amp; OPTIONS.some((o) =&gt; state.enabled[o.key])") + '.',
+    state: 'ON: the R1 flow. OFF: today\'s flow. The same gate hides the card (' + F('suggestion()') + '), the size prefill (' + F('sizePrefill()') + '), "Edit", and the product page link.',
+    events: [], eventsNote: E('prompt_shown') + ' fires before this matters, in both groups.',
+    notes: 'Flag key: ' + C('trousers-design-options') + '. ' + A('set-flag') + ' resets the flow, keeps the log, and adds a note. ' + P('session_id') + ' stays.' },
+  d_sugg: { kind: 'Decision', title: 'Show a suggestion card?', rel: '1.1', code: 'suggestion()',
+    trigger: 'In ' + A('open-flow') + ', right after ' + E('prompt_shown') + '.',
+    cond: 'Null when ' + F('featureOn()') + ' is false, when ' + F('state.card') + ' is false, or when the customer has no suggestion (' + V('anonymous') + ', ' + V('signed_in_size') + '). Values of switched-off options and values the base fit cannot make are left out. A ' + V('last_details') + ' card that equals the standard of the base fit is null.',
+    state: 'Yes: the card shows. No: the prompt shows without it.',
+    events: [{ ev: 'suggestion_shown', ex: { suggestion_type: 'resume_selection', suggestion_source: 'device_storage' } }],
+    notes: 'Example: with the hem switched off, the last-details card equals the standard, so no card shows.' },
+  d_straight: { kind: 'Decision', title: 'Straight Fit? (no leg step)', code: "state.mainFit === 'straight'",
+    trigger: A('next') + ' on fit screen 1.',
+    cond: 'Straight Fit has no leg shape: ' + F('fitKey()') + ' returns ' + V('straight') + '.',
+    state: 'Yes: ' + F('showSize()') + ' with ' + V('fit_picker') + '. No (Slim or Wide): ' + F('state.screen') + ' = ' + V('fit2') + ', no event.',
+    events: [{ ev: 'size_step_shown', ex: { entry: 'fit_picker' } }], eventsNote: 'Only on the yes branch.',
+    notes: 'The Straight Fit path is 6 taps with the flag ON and OFF. From the address, ' + C('s=fit2') + ' with ' + C('fit=straight') + ' becomes fit screen 1.' },
+  d_avail: { kind: 'Decision', title: 'Can production make it?', rel: '1', code: 'isAvailable(fit, key, id)',
+    trigger: 'After ' + A('set-fit') + ' or ' + A('set-leg') + ': ' + F('dropUnavailable()') + ' checks each set value. In the sheet: each tile.',
+    cond: F('UNAVAILABLE') + ' = ' + C("{ 'slim-straight': { front: ['pleated'] } }") + '. A demo assumption. The real rules are gap P1.',
+    state: 'No: the set value goes back to ' + V('null') + ' (the standard of the fit) with the notice "Pleated front is not available for this fit. Front style is back to flat front." In the sheet, the tile is disabled and tagged "Not available for this fit".',
+    events: [{ ev: 'fit_changed', ex: { fit_part: 'leg_shape', value: 'straight', reverted_option_count: 1 } }],
+    eventsNote: E('fit_changed') + ' fires after the check and carries the count.',
+    notes: 'The notice shows for one action only: each tap clears ' + F('state.notice') + '.' },
+  d_changed: { kind: 'Decision', title: 'Changed pair?', rel: '1', code: 'isChanged()',
+    trigger: 'Read at every render. ' + A('set-option') + ' and ' + A('reset-options') + ' change it, and so does a fit change.',
+    cond: 'One enabled option has an effective value that differs from ' + F('standard()') + ' of the selected fit.',
+    state: 'Yes: ' + F('deliveryText()') + ' "Delivery 1-2 weeks", the notice, "Changed" tags, made to order, "Edit" on the size step, and ' + F('sizePrefill()') + ' ' + V('suggested') + ' for a signed-in customer. No: 1-2 days if the fit is in stock, and a size the flow chose comes back as ' + V('preselected') + '.',
+    events: [], eventsNote: 'No event of its own. It sets ' + P('changed_detail_count') + ', ' + P('delivery_estimate') + ', and ' + P('size_prefill') + ' on the next event.',
+    notes: 'Rule: preselect only what can go back into stock. A returned changed pair is a write-off, so its size needs a tap.' },
+  d_pdp: { kind: 'Decision', title: 'Product page entry?', rel: '1.2', code: 'featureOn() && state.pdpEntry',
+    trigger: 'Read in the product page render, when "Size &amp; Fit" is open.',
+    cond: 'Stand-in for the flag ' + C('trousers-details-pdp-entry') + ': the switch ' + A('set-pdp-entry') + ' sets ' + F('state.pdpEntry') + ' (address ' + C('pe=1') + '). Off by default.',
+    state: 'Yes: the rows show the effective details plus a Hem row, then the boxed "Change these details" control, "Made for you in 1-2 weeks. Same price." No: the rows of today (Fit, Rise, Waistband, Front style) and no link.',
+    events: [], eventsNote: E('size_and_fit_expanded') + ' fires on every open. ' + P('has_details_link') + ' equals this condition.',
+    notes: 'Exposure for Experiment 3. It runs only if Adoption is 2% to 5%.' },
+
+  e_open_flow: { kind: 'Action', title: 'Select size and fit', code: 'open-flow',
+    trigger: A('open-flow') + ' on the product page.', cond: 'Always. Both groups, every customer.',
+    state: F('state.screen') + ' = ' + V('prompt') + '.',
+    events: [{ ev: 'prompt_shown', ex: {} }], eventsNote: 'Then ' + E('suggestion_shown') + ' if ' + F('suggestion()') + ' is not null.',
+    notes: 'The self-test checks the start state on this event: ' + P('fit') + ' ' + V('wide_tapered') + ', ' + P('changed_detail_count') + ' 0, ' + P('delivery_estimate') + ' ' + V('1_2_days') + ', and no own properties.' },
+  e_flag_on: { kind: 'Branch', title: 'Flag ON: the R1 prompt', rel: '1', code: 'featureOn() === true',
+    trigger: 'The prompt render.', cond: F('featureOn()') + ' is true.',
+    state: '"Want a different fit or details?", "These trousers come in 5 fits. You can also change the waistband, hem and front style.", "Choose fit and details".',
+    events: [], eventsNote: 'None. ' + P('flag_variant') + ' is ' + V('test') + ' on every event.',
+    notes: 'The prompt lists only the enabled options (' + F('promptText()') + ').' },
+  e_flag_off: { kind: 'Branch', title: 'Flag OFF: today\'s flow', rel: 'ctl', code: 'featureOn() === false',
+    trigger: A('set-flag') + ' with ' + V('off') + ', or every ' + A('toggle-option') + ' off.',
+    cond: F('featureOn()') + ' is false.',
+    state: A('set-flag') + ' calls ' + F('resetFlow()') + ' and writes the note "Feature flag set to OFF. The flow started again."',
+    events: [], eventsNote: 'No event for the switch itself.',
+    notes: 'OFF is the stop rule: the Custom Made PM sets ' + C('trousers-design-options') + ' OFF within one working day.' },
+  e_sugg: { kind: 'Check', title: 'Card check when the prompt shows', rel: '1.1', code: 'suggestion()',
+    trigger: 'Inside ' + A('open-flow') + ', after ' + E('prompt_shown') + '.',
+    cond: C("const s = suggestion(); if (s) track('fit_flow:suggestion_shown', ...)") + '.',
+    state: 'None.', events: [], notes: 'See the decision for the rules.' },
+  e_sugg_yes: { kind: 'Branch', title: 'The card shows', rel: '1.1', code: 'suggestion() !== null',
+    trigger: A('open-flow') + '.', cond: F('suggestion()') + ' returns a card.',
+    state: 'The card renders above the two buttons.',
+    events: [{ ev: 'suggestion_shown', ex: { suggestion_type: 'last_details', suggestion_source: 'order_history' } }],
+    notes: 'Two cards exist: ' + V('last_details') + ' with ' + V('order_history') + ', and ' + V('resume_selection') + ' with ' + V('device_storage') + '.' },
+  e_accept: { kind: 'Action', title: 'Use these details / Continue', rel: '1.1', code: 'accept-suggestion',
+    trigger: A('accept-suggestion') + ' on the card.', cond: 'The card shows.',
+    state: 'Applies ' + C('s.mainFit') + ' (resume: Straight Fit) and ' + C('s.set') + '. For resume, ' + F('state.prefilled') + ' = 48, a hint only. ' + F('state.card') + ' = false. Then ' + F('showSize()') + ' with ' + V('suggestion') + '.',
+    events: [{ ev: 'suggestion_accepted', ex: { suggestion_type: 'last_details', suggestion_source: 'order_history' } }, { ev: 'size_step_shown', ex: { entry: 'suggestion' } }],
+    after: { changed_detail_count: 1, delivery_estimate: '1_2_weeks', size_prefill: 'suggested' },
+    notes: 'The pair is changed, so the size is suggested, never preselected: 4 taps to the bag. ' + E('fit_changed') + ' does not fire when "Continue" restores Straight Fit. ' + P('has_opened_fit_picker') + ' is false, so ' + F('visitSegment()') + ' stays 0.' },
+  e_keep: { kind: 'Action', title: 'Keep [fit]: the fast path', code: 'keep-fit',
+    trigger: A('keep-fit') + ', label from ' + F('keepLabel()') + '.', cond: 'Always shown on the prompt.',
+    state: F('state.keptFit') + ' = true. ' + F('showSize()') + ' with ' + V('keep_fit') + '.',
+    events: [{ ev: 'keep_fit_tapped', ex: {} }, { ev: 'size_step_shown', ex: { entry: 'keep_fit' } }],
+    notes: 'Segment 1. Fast path 4 taps. Signed in with a Size Passport size on a standard pair: size 50 is preselected, 3 taps.' },
+  e_choose: { kind: 'Action', title: 'Choose fit and details', code: 'choose-fit',
+    trigger: A('choose-fit') + '.', cond: 'Text "Choose fit and details" when ' + F('featureOn()') + ', else "Choose fit".',
+    state: F('state.screen') + ' = ' + V('fit1') + '. ' + F('state.pickerOpened') + ' = true.',
+    events: [{ ev: 'fit_picker_opened', ex: {} }],
+    notes: 'Segment 2 now, 3 at the bag. The picker wins over Keep: Keep, close, then the picker gives segment 2.' },
+  e_more: { kind: 'Action', title: 'More options', rel: 'exit', code: 'more-options',
+    trigger: A('more-options') + ' on a fit screen.', cond: 'Flag ON and OFF.',
+    state: F('state.moreOpen') + ' toggles. The click handler closes it after any other action.',
+    events: [], eventsNote: 'None. ' + F('addNote()') + ' writes a log note.',
+    notes: 'The live site opens full Custom Made here (€229, 2-3 weeks).' },
+  e_next1: { kind: 'Action', title: 'Next on fit screen 1', code: 'next',
+    trigger: A('next') + '.', cond: 'See "Straight Fit?".', state: 'Fit screen 2, or the size step for Straight Fit.',
+    events: [], eventsNote: 'None to fit screen 2.', notes: '' },
+  e_straight_no: { kind: 'Branch', title: 'Slim or Wide: leg step', code: "state.mainFit !== 'straight'",
+    trigger: A('next') + '.', cond: 'Main fit Slim or Wide.', state: F('state.screen') + ' = ' + V('fit2') + '.',
+    events: [], eventsNote: 'None.', notes: '' },
+  e_straight_yes: { kind: 'Branch', title: 'Straight Fit: straight to size', code: "showSize('fit_picker')",
+    trigger: A('next') + ' on fit screen 1.', cond: F('state.mainFit') + ' is ' + V('straight') + '.',
+    state: F('showSize()') + ' with ' + V('fit_picker') + '.',
+    events: [{ ev: 'size_step_shown', ex: { entry: 'fit_picker' } }],
+    notes: 'Path: ' + A('open-flow') + ', ' + A('choose-fit') + ', ' + A('set-fit') + ' straight, ' + A('next') + ', a size, ' + A('add-to-bag') + ': 6 taps.' },
+  e_next2: { kind: 'Action', title: 'Next on fit screen 2', code: 'next',
+    trigger: A('next') + ' on fit screen 2.', cond: 'None.', state: F('showSize()') + ' with ' + V('fit_picker') + '.',
+    events: [{ ev: 'size_step_shown', ex: { entry: 'fit_picker' } }], notes: '' },
+  e_sheet1: { kind: 'Action', title: 'Open the sheet from fit screen 1', rel: '1', code: 'open-sheet',
+    trigger: A('open-sheet') + ' on the Details row (no value) or a thumb (value ' + V('waistband') + ', ' + V('hem') + ', or ' + V('front') + ').',
+    cond: 'The row renders only when ' + F('featureOn()') + '.',
+    state: F('state.sheet') + ' = true. ' + F('state.sheetOpen') + ' = the thumb\'s option, else ' + V('null') + '.',
+    events: [{ ev: 'details_sheet_opened', ex: { step: 'main_fit', opened_from: 'photo_thumb' } }],
+    notes: 'The row gives ' + V('details_row') + '. A thumb opens that option expanded, so one changed detail costs 3 taps in the sheet and 9 in total.' },
+  e_sheet2: { kind: 'Action', title: 'Open the sheet from fit screen 2', rel: '1', code: 'open-sheet',
+    trigger: A('open-sheet') + ' on the Details row or a thumb.', cond: 'Only when ' + F('featureOn()') + '.',
+    state: F('state.sheet') + ' = true.',
+    events: [{ ev: 'details_sheet_opened', ex: { step: 'leg_shape', opened_from: 'details_row' } }], notes: '' },
+  e_avail_link: { kind: 'Check', title: 'Fit change checks availability', rel: '1', code: 'dropUnavailable()',
+    trigger: A('set-fit') + ' or ' + A('set-leg') + ' with a new value.', cond: 'For each set value: ' + F('isAvailable()') + '.',
+    state: 'Unavailable values go back to the standard.', events: [{ ev: 'fit_changed', ex: { fit_part: 'main_fit', value: 'slim', reverted_option_count: 0 } }],
+    notes: 'See "Can production make it?".' },
+  e_avail_no: { kind: 'Rule outcome', title: 'Back to standard', rel: '1', code: 'state.set[key] = null',
+    trigger: 'A set value is not available for the new fit.', cond: F('isAvailable()') + ' is false.',
+    state: 'The notice shows under the Details row for one action.', events: [], notes: '' },
+  e_tsf: { kind: 'Action', title: 'Size & Fit on the product page', rel: '1.2', code: 'toggle-size-fit',
+    trigger: A('toggle-size-fit') + '.', cond: 'Fires on open only. Every variant.',
+    state: F('state.sizeFitOpen') + ' toggles. ' + F('state.revealSizeFit') + ' scrolls the rows into view.',
+    events: [{ ev: 'size_and_fit_expanded', ex: { has_details_link: true } }],
+    notes: P('has_details_link') + ' = ' + C('featureOn() &amp;&amp; state.pdpEntry') + '. False in control and with the entry off, so both groups carry the exposure.' },
+  e_pdp_yes: { kind: 'Action', title: 'Change these details', rel: '1.2', code: "open-sheet, value 'pdp'",
+    trigger: A('open-sheet') + ' with ' + C('data-value="pdp"') + '.', cond: 'The product page entry is on.',
+    state: F('state.sheet') + ' = true. ' + F('state.sheetOpen') + ' = ' + V('null') + ': the rows open collapsed, so the option is one more tap.',
+    events: [{ ev: 'details_sheet_opened', ex: { step: 'product_page', opened_from: 'product_page_link' } }],
+    notes: 'R1.2 path: 7 taps.' },
+  e_pdp_no: { kind: 'Branch', title: 'No entry: rows of today', rel: '1.2', code: 'pdpEntry false',
+    trigger: 'The product page render.', cond: 'Flag OFF, or the entry switch off.',
+    state: 'Rows: Fit, Rise, Waistband, Front style, with standard values. No Hem row, no link.', events: [], notes: '' },
+  e_done_pdp: { kind: 'Action', title: 'Done, from the product page', rel: '1.2', code: "close-sheet, value 'done'",
+    trigger: A('close-sheet') + ' "Done".', cond: F('state.screen') + ' is ' + V('pdp') + '.',
+    state: F('state.sheet') + ' = false. ' + F('showSize()') + ' with ' + V('product_page') + '.',
+    events: [{ ev: 'size_step_shown', ex: { entry: 'product_page' } }],
+    notes: 'The backdrop (' + C('data-value="backdrop"') + ') closes the sheet and stays on the product page, with no event.' },
+  e_edit: { kind: 'Action', title: 'Edit on the size step', rel: '1', code: 'open-sheet',
+    trigger: A('open-sheet') + ' "Edit", after "Your details".', cond: F('featureOn()') + ' and ' + F('isChanged()') + '.',
+    state: F('state.sheet') + ' = true.',
+    events: [{ ev: 'details_sheet_opened', ex: { step: 'size_step', opened_from: 'edit_link' } }],
+    notes: '"Done" returns to the size step with the updated line and no new event.' },
+  e_changed: { kind: 'Check', title: 'Each change re-reads the rule', rel: '1', code: 'isChanged()',
+    trigger: A('set-option') + ', ' + A('reset-options') + ', a fit change.', cond: 'See "Changed pair?".', state: '', events: [], notes: '' },
+  e_bag: { kind: 'Action', title: 'Add to bag', code: 'add-to-bag',
+    trigger: A('add-to-bag') + '.', cond: 'Enabled only when ' + F('state.size') + ' is set.',
+    state: F('state.screen') + ' = ' + V('bag') + '.',
+    events: [{ ev: 'added_to_bag', ex: { size: 48, size_length: 'regular', has_changed_detail: true, is_made_to_order: true, price: 179, currency: 'EUR', size_prefill_outcome: 'none', has_opened_fit_picker: true, tap_count: 9 } }],
+    notes: 'Example: one changed detail, 9 taps. ' + P('size_prefill_outcome') + ': ' + V('none') + ' without a prefill, ' + V('kept') + ' when the size equals ' + F('state.prefilled') + ', else ' + V('changed') + '. ' + P('tap_count') + ' = ' + C('state.taps + 1') + ', because the counter rises after the action.' },
+
+  r_prompt_close: { kind: 'Action on the prompt', title: 'Close the prompt', code: 'close',
+    trigger: A('close') + ' (the icon).', cond: 'None.', state: 'Back to the product page. No reset: choices, the card state, and the segment fields stay.',
+    events: [], eventsNote: 'None.', notes: 'Fit screens and the size step have the same control.' },
+  r_card_dismiss: { kind: 'Action on the card', title: 'Start fresh', rel: '1.1', code: 'dismiss-suggestion',
+    trigger: A('dismiss-suggestion') + '.', cond: 'Only on the resume card.', state: F('state.card') + ' = false. The card goes.',
+    events: [], eventsNote: 'None.', notes: '' },
+  r_set_fit: { kind: 'Action on fit screen 1', title: 'Pick the main fit', code: 'set-fit',
+    trigger: A('set-fit') + ' with ' + V('slim') + ', ' + V('straight') + ', or ' + V('wide') + '.',
+    cond: 'The value differs from ' + F('state.mainFit') + '. A tap on the selected fit does nothing.',
+    state: F('state.mainFit') + ' = value. ' + F('dropUnavailable()') + '. Unset details now follow the new fit\'s standard.',
+    events: [{ ev: 'fit_changed', ex: { fit_part: 'main_fit', value: 'straight', reverted_option_count: 0 } }],
+    after: { fit: 'straight', waistband: 'belt_loops', front: 'flat' },
+    notes: 'A set detail stays when the fit changes (' + F('effective()') + ').' },
+  r_fit1_close: { kind: 'Action on a fit screen', title: 'Close', code: 'close', trigger: A('close') + '.', cond: 'None.',
+    state: 'Back to the product page, no reset.', events: [], eventsNote: 'None.', notes: '' },
+  r_set_leg: { kind: 'Action on fit screen 2', title: 'Pick the leg shape', code: 'set-leg',
+    trigger: A('set-leg') + ' with ' + V('tapered') + ' or ' + V('straight') + '.',
+    cond: 'The value differs from ' + F('state.leg') + '.',
+    state: F('state.leg') + ' = value. ' + F('dropUnavailable()') + '.',
+    events: [{ ev: 'fit_changed', ex: { fit_part: 'leg_shape', value: 'straight', reverted_option_count: 0 } }],
+    after: { fit: 'slim_straight', is_fit_in_stock: false, delivery_estimate: '1_2_weeks' },
+    notes: 'With a pleated front set on Slim Fit, the count is 1 and the notice shows.' },
+  r_back: { kind: 'Action on fit screen 2', title: 'Back', code: 'back', trigger: A('back') + ' (the icon).', cond: 'Only on fit screen 2.',
+    state: F('state.screen') + ' = ' + V('fit1') + '.', events: [], eventsNote: 'None. ' + E('fit_picker_opened') + ' does not fire again.', notes: '' },
+  r_expand: { kind: 'Action in the sheet', title: 'Expand an option', code: 'expand-option',
+    trigger: A('expand-option') + ' on a collapsed row.', cond: 'None.', state: F('state.sheetOpen') + ' = the option.',
+    events: [], eventsNote: 'None. It counts as a tap.', notes: 'Only one option is expanded at a time.' },
+  r_set_option: { kind: 'Action in the sheet', title: 'Tap a value tile', rel: '1', code: 'set-option',
+    trigger: A('set-option') + ' with ' + C("data-value='hem:turnup'") + ' (a radio input).',
+    cond: 'The tile is enabled. Unavailable values are disabled.',
+    state: F('state.set') + '[option] = value, also when it is the standard. The strip highlights a new value.',
+    events: [{ ev: 'detail_value_tapped', ex: { option: 'hem', value: 'turn_up', previous_value: 'plain', is_standard_value: false } }],
+    after: { changed_detail_count: 1, delivery_estimate: '1_2_weeks', hem: 'turn_up' },
+    notes: 'Every tap fires, also on the selected tile, where ' + P('previous_value') + ' equals ' + P('value') + '. That feeds the flip rate. Values map through ' + F('propValue()') + ': ' + V('loops') + ' to ' + V('belt_loops') + ', ' + V('adjusters') + ' to ' + V('side_adjusters') + ', ' + V('turnup') + ' to ' + V('turn_up') + '.' },
+  r_reset: { kind: 'Action in the sheet', title: 'Reset to standard', rel: '1', code: 'reset-options',
+    trigger: A('reset-options') + '.', cond: 'Enabled only when ' + F('anySet()') + '.',
+    state: 'Every ' + F('state.set') + ' value = ' + V('null') + '. All close-ups highlight.',
+    events: [{ ev: 'details_reset_tapped', ex: { reset_detail_count: 2 } }],
+    after: { changed_detail_count: 0 },
+    notes: 'The count is the number of set options, also one set to its standard value. A signed-in size the flow chose comes back as preselected.' },
+  r_close_sheet: { kind: 'Action in the sheet', title: 'Done or the backdrop', code: 'close-sheet',
+    trigger: A('close-sheet') + ' with ' + V('done') + ' or ' + V('backdrop') + '. Escape too.', cond: 'None.',
+    state: F('state.sheet') + ' = false. Back to the screen that opened it.',
+    events: [], eventsNote: 'None, except "Done" on the product page (see that line).', notes: '' },
+  r_set_size: { kind: 'Action on the size step', title: 'Tap a size', code: 'set-size',
+    trigger: A('set-size') + ' with a size, for example ' + V('48') + '.', cond: 'None.',
+    state: F('state.size') + ' = the number. ' + F('state.sizeAuto') + ' = false.',
+    events: [], eventsNote: 'None.', notes: 'A size the customer tapped never changes, also after a detail change or a reset.' },
+  r_size_close: { kind: 'Action on the size step', title: 'Close', code: 'close', trigger: A('close') + '.', cond: 'None.',
+    state: 'Back to the product page, no reset.', events: [], eventsNote: 'None.', notes: '' },
+  r_bag_details: { kind: 'Action in the bag', title: 'Custom made details panel', code: 'open-bag-details',
+    trigger: A('open-bag-details') + ', then ' + A('close-bag-details') + '.', cond: 'Made-to-order line only.',
+    state: F('state.bagPanel') + ' toggles. Rows: Delivery, Size, Fit, then each enabled detail with a "Changed" tag.',
+    events: [], eventsNote: 'None.', notes: '' },
+  r_restart: { kind: 'Action in the bag', title: 'Start again', code: 'restart',
+    trigger: A('restart') + ' (bag or panel).', cond: 'None.',
+    state: F('resetFlow()') + ': the flow fields reset and ' + F('state.taps') + ' = 0. The log, the flag, the customer, and ' + P('session_id') + ' stay.',
+    events: [], eventsNote: 'None. It is not counted as a tap.', notes: '' },
+};
+DETAIL.o_revert = Object.assign({}, DETAIL.d_avail, { kind: 'Rule outcome', title: 'Unavailable value goes back to standard' });
+DETAIL.o_yes = Object.assign({}, DETAIL.d_changed, { kind: 'Rule outcome', title: 'Changed pair: what changes' });
+DETAIL.o_no = Object.assign({}, DETAIL.d_changed, { kind: 'Rule outcome', title: 'Standard pair: what comes back' });
+DETAIL.e_changed_yes = DETAIL.o_yes;
+DETAIL.e_changed_no = DETAIL.o_no;
+
+// ---------- Reference paths (verified by clicking the real controls) ----------
+const PATHS = [
+  { name: 'Fast path', setup: 'Flag ON or OFF, new visitor', taps: 4,
+    seq: [['open-flow'], ['keep-fit'], ['set-size', '48'], ['add-to-bag']],
+    events: [['prompt_shown'], ['keep_fit_tapped'], ['size_step_shown', 'keep_fit'], ['added_to_bag', 'tap_count 4']], seg: 1,
+    ids: ['pdp', 'e_open_flow', 'd_flag', 'e_flag_on', 'prompt', 'e_keep', 'size', 'r_set_size', 'e_bag', 'bag'] },
+  { name: 'Straight Fit', setup: 'Flag ON or OFF', taps: 6,
+    seq: [['open-flow'], ['choose-fit'], ['set-fit', 'straight'], ['next'], ['set-size', '48'], ['add-to-bag']],
+    events: [['prompt_shown'], ['fit_picker_opened'], ['fit_changed', 'main_fit'], ['size_step_shown', 'fit_picker'], ['added_to_bag', 'tap_count 6']], seg: 3,
+    ids: ['pdp', 'e_open_flow', 'd_flag', 'e_flag_on', 'prompt', 'e_choose', 'fit1', 'r_set_fit', 'e_next1', 'd_straight', 'e_straight_yes', 'size', 'r_set_size', 'e_bag', 'bag'] },
+  { name: 'One changed detail', setup: 'Flag ON', taps: 9,
+    seq: [['open-flow'], ['choose-fit'], ['open-sheet', 'hem'], ['set-option', 'hem:turnup'], ['close-sheet', 'done'], ['next'], ['next'], ['set-size', '48'], ['add-to-bag']],
+    events: [['prompt_shown'], ['fit_picker_opened'], ['details_sheet_opened', 'photo_thumb'], ['detail_value_tapped', 'turn_up'], ['size_step_shown', 'fit_picker'], ['added_to_bag', 'tap_count 9']], seg: 3,
+    ids: ['pdp', 'e_open_flow', 'd_flag', 'e_flag_on', 'prompt', 'e_choose', 'fit1', 'e_sheet1', 'sheet', 'r_set_option', 'r_close_sheet', 'e_changed', 'd_changed', 'e_changed_yes', 'o_yes', 'e_next1', 'd_straight', 'e_straight_no', 'fit2', 'e_next2', 'size', 'r_set_size', 'e_bag', 'bag'] },
+  { name: 'Known customer, standard pair', setup: 'Signed in, size on file (' + 'c=s' + ')', rel: '1.1', taps: 3,
+    seq: [['open-flow'], ['keep-fit'], ['add-to-bag']],
+    events: [['prompt_shown'], ['keep_fit_tapped'], ['size_step_shown', 'keep_fit'], ['added_to_bag', 'kept, tap_count 3']], seg: 1,
+    ids: ['pdp', 'e_open_flow', 'd_flag', 'e_flag_on', 'prompt', 'e_keep', 'size', 'e_bag', 'bag'] },
+  { name: 'Last details', setup: 'Signed in, detail history (c=h)', rel: '1.1', taps: 4,
+    seq: [['open-flow'], ['accept-suggestion'], ['set-size', '50'], ['add-to-bag']],
+    events: [['prompt_shown'], ['suggestion_shown', 'last_details'], ['suggestion_accepted'], ['size_step_shown', 'suggestion'], ['added_to_bag', 'kept, tap_count 4']], seg: 0,
+    ids: ['pdp', 'e_open_flow', 'd_flag', 'e_flag_on', 'prompt', 'e_sugg', 'd_sugg', 'e_sugg_yes', 'card', 'e_accept', 'size', 'r_set_size', 'e_bag', 'bag'] },
+  { name: 'Resume', setup: 'Identified device (c=d)', rel: '1.1', taps: 4,
+    seq: [['open-flow'], ['accept-suggestion'], ['set-size', '48'], ['add-to-bag']],
+    events: [['prompt_shown'], ['suggestion_shown', 'resume_selection'], ['suggestion_accepted'], ['size_step_shown', 'suggestion'], ['added_to_bag', 'kept, tap_count 4']], seg: 0,
+    ids: ['pdp', 'e_open_flow', 'd_flag', 'e_flag_on', 'prompt', 'e_sugg', 'd_sugg', 'e_sugg_yes', 'card', 'e_accept', 'size', 'r_set_size', 'e_bag', 'bag'] },
+  { name: 'Product page entry', setup: 'Flag ON, entry on (pe=1)', rel: '1.2', taps: 7,
+    seq: [['toggle-size-fit'], ['open-sheet', 'pdp'], ['expand-option', 'hem'], ['set-option', 'hem:turnup'], ['close-sheet', 'done'], ['set-size', '48'], ['add-to-bag']],
+    events: [['size_and_fit_expanded', 'true'], ['details_sheet_opened', 'product_page'], ['detail_value_tapped', 'turn_up'], ['size_step_shown', 'product_page'], ['added_to_bag', 'tap_count 7']], seg: 0,
+    ids: ['pdp', 'e_tsf', 'd_pdp', 'e_pdp_yes', 'sheet', 'r_expand', 'r_set_option', 'e_done_pdp', 'size', 'r_set_size', 'e_bag', 'bag'] },
+];
+
+// ---------- Super properties ----------
+const SUPER = [
+  ['product_id', 'ctx', [V('B2248')], F('PRODUCT.id')],
+  ['flag_variant', 'ctx', [V('test'), V('control')], C("state.flag === 'on' ? 'test' : 'control'")],
+  ['customer_state', 'ctx', [V('anonymous'), V('identified'), V('signed_in_size'), V('signed_in_details')], F('state.customer') + ', a key of ' + F('CUSTOMERS') + '. The customer switch sets it.'],
+  ['fit', 'flow', [V('slim_tapered'), V('slim_straight'), V('straight'), V('wide_tapered'), V('wide_straight')], C("fitKey().replace('-', '_')")],
+  ['is_fit_in_stock', 'flow', [V('true'), V('false')], C('FITS[fitKey()].inStock') + '. Both Straight Leg versions of Slim and Wide are false.'],
+  ['waistband', 'flow', [V('belt_loops'), V('side_adjusters')], F('propValue()') + ' of ' + F('effective()') + '. The effective value: the choice, or the fit standard.'],
+  ['hem', 'flow', [V('plain'), V('turn_up')], F('propValue()') + ' of ' + F('effective()') + '.'],
+  ['front', 'flow', [V('flat'), V('pleated')], F('propValue()') + ' of ' + F('effective()') + '.'],
+  ['changed_detail_count', 'flow', ['0 to 3'], 'Enabled options whose effective value differs from ' + F('standard()') + '.'],
+  ['delivery_estimate', 'flow', [V('1_2_days'), V('1_2_weeks')], 'From ' + F('deliveryText()') + '.'],
+  ['size_prefill', 'flow', [V('none'), V('preselected'), V('suggested')], F('sizePrefill()') + '. The rule state, not the screen: a signed-in customer has ' + V('preselected') + ' already on ' + E('prompt_shown') + '. ' + V('none') + ' when ' + F('featureOn()') + ' is false.'],
+  ['identity_tier', 'ctx', [V('anonymous'), V('identified'), V('signed_in')], F('IDENTITY_TIER') + '[' + F('state.customer') + ']'],
+  ['consent_state', 'ctx', [V('analytics_only'), V('analytics_and_personalisation')], V('analytics_only') + ' for ' + V('anonymous') + ', else ' + V('analytics_and_personalisation') + '.'],
+  ['market', 'ctx', [V('nl')], 'A constant in the prototype.'],
+  ['locale', 'ctx', [V('en-nl')], 'A constant in the prototype.'],
+  ['device_type', 'ctx', [V('mobile')], 'A constant ' + V('mobile') + ' in the prototype. The plan also lists tablet and desktop.'],
+  ['session_id', 'ctx', [C('demo-') + ' + 6 characters'], F('SESSION_ID') + ', made once per page load. No personal data. Start again, a flag change, and a customer change keep it.'],
+];
+
+// ---------- Rules ----------
+const RULES = [
+  [F('featureOn()'), 'Everything new needs the flag ON and at least one option switch on.'],
+  [F('sizePrefill()'), 'Preselect only what can go back into stock: ' + V('preselected') + ' for a signed-in Size Passport size on a standard pair, ' + V('suggested') + ' on a changed pair or from this device, ' + V('none') + ' with no size or the feature off.'],
+  [F('syncSizePrefill()'), 'A size the flow chose (' + F('sizeAuto') + ') clears when a detail changes and comes back after a reset to standard. A size the customer tapped never changes.'],
+  [F('applySizePrefill()'), 'On the size step the flow owns a signed-in size until the customer taps one. ' + F('prefilled') + ' keeps the hint for ' + P('size_prefill_outcome') + '.'],
+  [F('effective()'), 'A set detail stays when the fit changes. An unset detail follows the standard of the selected fit. A switched-off option always follows the standard.'],
+  [F('isChanged()'), 'Changed: at least one enabled detail differs from the standard of the selected fit.'],
+  [F('isMadeToOrder()'), 'Made to order when the fit is not in stock or the pair is changed. Else from stock.'],
+  [F('isAvailable()') + ', ' + F('UNAVAILABLE'), 'A value production cannot make for a fit is disabled. Demo rule: Slim Fit, Straight Leg has no pleated front (gap P1).'],
+  [F('dropUnavailable()'), 'After a fit change, a set value the new fit cannot make goes back to standard, with a notice. The count goes into ' + P('reverted_option_count') + '.'],
+  [F('deliveryText()'), '"Delivery 1-2 days" only for a fit in stock with standard details. Everything else: "Delivery 1-2 weeks".'],
+  [F('noticeLine()'), 'Changed and in stock: "Delivery changes to 1-2 weeks. We make these trousers for you." Changed and not in stock: "Delivery stays 1-2 weeks."'],
+  [F('suggestion()'), 'No card with the feature off, after the card is used or dismissed, or with no history. Switched-off and unavailable values are left out. A last-details card that equals the standard is no card.'],
+  [F('visitSegment()'), '3: fit picker opened and in the bag. 2: fit picker opened. 1: Keep tapped. 0: neither. The picker wins over Keep.'],
+  [F('fitKey()'), 'Straight Fit has no leg shape, so its key is ' + V('straight') + '. Other fits join fit and leg, for example ' + V('wide-tapered') + '.'],
+];
+const STATE_RULES = [
+  ['An action changes the state first, then fires its event. So the super properties show the state after the action.', F('ACTIONS') + ', ' + F('track()') + ', ' + F('commonProps()')],
+  ['Each tap on a phone control counts, except "Start again". A disabled control does nothing.', 'click handler, ' + F('state.taps')],
+  ['Each tap clears the strip highlight and the notice, and closes "More options" unless it was that tap.', F('state.flash') + ', ' + F('state.notice') + ', ' + F('state.moreOpen')],
+  ['Start again, a flag change, a customer change, an option switch, the product page switch, and a scenario reset the flow. The log, flag, customer, and switches stay.', F('resetFlow()')],
+  [A('close') + ' goes back to the product page with no reset. Choices, the card state, and the segment fields stay.', A('close')],
+  ['The visit id is made once per page load and survives every reset.', F('SESSION_ID')],
+  ['The address holds the state. A page load from it sends no event and does not change the log.', F('buildHash()') + ', ' + F('applyHash()')],
+  ['Address keys: ' + C('f') + ' flag, ' + C('c') + ' customer (' + C('a d s h') + '), ' + C('pe') + ' product page entry, ' + C('s') + ' screen, ' + C('fit') + ', ' + C('leg') + ', ' + C('wb') + ', ' + C('hem') + ', ' + C('fr') + ', ' + C('sheet') + ', ' + C('size') + '. Example: ' + C('#f=on&amp;c=h&amp;s=fit1&amp;fit=slim&amp;hem=turnup&amp;sheet=1') + '.', F('HASH_KEYS') + ', ' + F('HASH_CUSTOMERS')],
+  ['From the address: fit screen 2 with Straight Fit becomes fit screen 1. The bag with no size becomes the size step. ' + C('f=off') + ' ignores the option keys. The entry and segment fields follow the screen.', F('applyHash()')],
+  ['Screens: ' + V('pdp') + ', ' + V('prompt') + ', ' + V('fit1') + ', ' + V('fit2') + ', ' + V('size') + ', ' + V('bag') + '. The sheet and the bag panel are overlays.', F('SCREENS')],
+];
+
+// ---------- Flags ----------
+const FLAGS = [
+  { cls: 'f1', rel: '1', key: 'trousers-design-options', rows: [
+    ['Exposure', E('prompt_shown')],
+    ['In the code', F('state.flag') + ' (' + V('on') + ', ' + V('off') + '), control ' + A('set-flag') + ', address ' + C('f=') + '. Gate: ' + F('featureOn()') + '.'],
+    ['ON', 'The R1 flow. ' + P('flag_variant') + ' ' + V('test') + '.'],
+    ['OFF', 'Today\'s flow: "Want a different fit?", "Choose fit". No Details row, sheet, "Edit", card, size prefill, or product page link. ' + P('flag_variant') + ' ' + V('control') + '. Events 5, 6, 7, 10, and 11 never fire.'],
+    ['Options', A('toggle-option') + ' per option. Off: that option follows the standard. All three off: today\'s flow, but ' + P('flag_variant') + ' stays ' + V('test') + '.'],
+    ['Decides on', 'Adoption, Speed, Keep. Stop rule below.'],
+  ] },
+  { cls: 'f11', rel: '1.1', key: 'trousers-details-shortcuts', rows: [
+    ['Exposure', E('prompt_shown') + ', known customers. Cut by ' + P('identity_tier') + '.'],
+    ['In the code', 'No flag key. The customer switch ' + A('set-customer') + ' (' + F('state.customer') + ', address ' + C('c=') + ') stands in.'],
+    ['Needs', 'R1 ON: ' + F('suggestion()') + ' and ' + F('sizePrefill()') + ' return nothing when ' + F('featureOn()') + ' is false.'],
+    ['ON', 'Suggestion card, size prefill, "Use these details" in 4 taps, size on file in 3.'],
+    ['OFF', 'The baseline, as for ' + V('anonymous') + ': no card, no prefill, ' + P('size_prefill') + ' ' + V('none') + '.'],
+    ['Decides on', 'A higher add-to-bag rate and time to bag. After Experiment 1 holds.'],
+  ] },
+  { cls: 'f12', rel: '1.2', key: 'trousers-details-pdp-entry', rows: [
+    ['Exposure', E('size_and_fit_expanded')],
+    ['In the code', 'No flag key. The switch ' + A('set-pdp-entry') + ' (' + F('state.pdpEntry') + ', address ' + C('pe=1') + ') stands in. Off by default.'],
+    ['Needs', 'R1 ON: ' + C('featureOn() &amp;&amp; state.pdpEntry') + '.'],
+    ['ON', '"Change these details" under the "Size &amp; Fit" rows. 7 taps for one changed detail.'],
+    ['OFF', 'Today\'s rows, no link. The event still fires, with ' + P('has_details_link') + ' false, so both groups carry the exposure.'],
+    ['Decides on', 'Adoption. Only if Adoption is 2% to 5%. Under 2%: remove the options.'],
+  ] },
+];
+
+// ---------- Order line ----------
+const ORDER = [
+  [P('fit'), 'Super property', 'Production makes the right fit. Cut every outcome by fit.'],
+  [P('waistband') + ', ' + P('hem') + ', ' + P('front'), 'Super properties, effective values', 'Production makes the right details. The per-option rule reads returns per option.'],
+  [P('changed_detail_count'), 'Super property', 'Adoption counts orders with 1 or more.'],
+  [P('is_made_to_order'), E('added_to_bag') + ' property', 'The route: stock or made to order. Keep compares changed pairs with made-to-order fits.'],
+  [P('flag_variant'), 'Super property', 'Returns, cancellations, and expectation answers join back to the test group.'],
+  [P('identity_tier'), 'Super property', 'Cut by known customers for R1.1.'],
+  [P('market'), 'Super property', 'The test runs in one market. Rollout goes market by market.'],
+  [P('size_prefill'), 'Super property', 'Split size returns by how the size was set.'],
+  [P('has_opened_fit_picker'), E('added_to_bag') + ' property', 'Splits segment 1 from segment 3 after the bag.'],
+  [P('opened_from'), 'Only on ' + E('details_sheet_opened') + '. Not on ' + E('added_to_bag') + ': which value goes to the order is still open.', 'Which entry led to the details: row, thumb, "Edit", or the product page.'],
+];
+const RECORDS = [
+  ['Return', 'Date, reason', 'Keep'],
+  ['Cancellation or query', 'Date, reason', '24-hour cancellations'],
+  ['Expectation answer', 'Yes or no', 'Expectation match'],
+  ['Delivery', 'Promised and real date', 'Late'],
+  ['Production error', 'Type', 'Made wrong'],
+  ['Cost', 'Stock, made to order, return handling', 'Money'],
+];
+
+// ---------- Build the SVG ----------
+const NS = 'http://www.w3.org/2000/svg';
+const svg = document.getElementById('dia');
+const L_EDGES = document.getElementById('l-edges');
+const L_NODES = document.getElementById('l-nodes');
+const L_ROWS = document.getElementById('l-rows');
+const ELS = {};     // id -> svg group
+const LINKS = {};   // id -> related ids for hover
+
+function mk(tag, attrs, parent) {
+  const n = document.createElementNS(NS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(n);
+  return n;
+}
+function tx(parent, x, y, s, cls, anchor) {
+  const t = mk('text', { x: x, y: y, 'dominant-baseline': 'central', 'text-anchor': anchor || 'start' }, parent);
+  if (cls) t.setAttribute('class', cls);
+  t.textContent = s;
+  return t;
+}
+function chip(parent, x, y, ev, segs) {
+  const g = mk('g', { class: 'chip', 'data-ev': ev }, parent);
+  const r = mk('rect', { x: x, y: y - 7.5, height: 15, rx: 2 }, g);
+  const t = tx(g, x + 5, y + 0.5, ev, 'e');
+  const w = t.getComputedTextLength() + 10;
+  r.setAttribute('width', w);
+  let total = w;
+  (segs || []).forEach((s, i) => {
+    const cx = x + w + 8 + i * 13;
+    mk('circle', { cx: cx, cy: y, r: 5.5, class: 'sd s' + s }, g);
+    tx(g, cx, y + 0.5, String(s), 'sdn', 'middle');
+    total = cx + 6 - x;
+  });
+  return total;
+}
+function item(parent, x, y, it) {
+  if (it[0] === 'c') return chip(parent, x, y, it[1], it[2]);
+  if (it[0] === 't') {
+    const g = mk('g', {}, parent);
+    const r = mk('rect', { x: x, y: y - 7, height: 14, rx: 2, fill: '#fdf1f0', stroke: '#b3261e' }, g);
+    const t = tx(g, x + 5, y + 0.5, it[1], 'stopt');
+    const w = t.getComputedTextLength() + 10;
+    r.setAttribute('width', w);
+    return w;
+  }
+  const t = tx(parent, x, y + 0.5, it[1], it[0] === 'a' ? 'a' : 'n');
+  return t.getComputedTextLength();
+}
+function drawLabel(parent, spec) {
+  spec.rows.forEach((row, ri) => {
+    const rg = mk('g', {}, parent);
+    let cx = 0;
+    row.forEach((it) => { cx += item(rg, cx, 0, it) + 5; });
+    const w = cx - 5;
+    const ox = spec.align === 'end' ? spec.x - w : spec.align === 'middle' ? spec.x - w / 2 : spec.x;
+    rg.setAttribute('transform', 'translate(' + ox + ',' + (spec.y + ri * 17) + ')');
+    const halo = mk('rect', { x: -2, y: -8.5, width: w + 4, height: 17, class: 'halo' });
+    rg.insertBefore(halo, rg.firstChild);
+  });
+}
+function relClass(k) { return k ? ' k-' + k : ''; }
+function link(a, b) { (LINKS[a] = LINKS[a] || new Set()).add(b); (LINKS[b] = LINKS[b] || new Set()).add(a); }
+function ariaLabel(id) {
+  const d = DETAIL[id] || {};
+  return (d.kind || '') + ': ' + (d.title || id);
+}
+function group(id, cls, parent, evs) {
+  const g = mk('g', { class: 'el ' + cls, 'data-id': id, tabindex: '0', role: 'button', 'aria-label': ariaLabel(id) }, parent);
+  if (evs && evs.length) g.setAttribute('data-events', evs.join(' '));
+  const title = mk('title', {}, g);
+  title.textContent = ariaLabel(id) + (evs && evs.length ? '. Fires ' + evs.join(', ') : '');
+  ELS[id] = g;
+  return g;
+}
+
+// Edges first, so nodes sit on top.
+EDGES.forEach((e) => {
+  const cls = 'edge' + (e.k ? ' r-' + e.k : '') + (e.rule ? ' rule' : '');
+  const g = group(e.id, cls, L_EDGES, e.ev);
+  const d = 'M' + e.pts.map((p) => p.join(',')).join(' L');
+  mk('path', { d: d, class: 'hit' }, g);
+  const marker = e.stub ? null : 'url(#m-' + (e.rule ? 'rule' : e.k === 'r11' ? 'r11' : e.k === 'r12' ? 'r12' : e.k === 'ctl' ? 'ctl' : 'ink') + ')';
+  const line = mk('path', { d: d, class: 'line' }, g);
+  if (marker) line.setAttribute('marker-end', marker);
+  (e.labels || []).forEach((lb) => drawLabel(g, lb));
+  if (e.from) link(e.id, e.from);
+  if (e.to) link(e.id, e.to);
+});
+
+NODES.forEach((n) => {
+  const g = group(n.id, 'node' + relClass(n.k), L_NODES);
+  mk('rect', { x: n.x, y: n.y, width: n.w, height: n.h, rx: 4, class: 'nbox' }, g);
+  tx(g, n.x + 8, n.y + 13, n.title, 'nt');
+  tx(g, n.x + 8, n.y + 27, n.sub, 'ns');
+  if (n.tag) {
+    const tg = mk('g', {}, g);
+    const isR1 = n.tag === 'R1';
+    const col = n.k === 'r11' ? '#1a56db' : n.k === 'exit' ? '#6b6b6b' : '#2d2e2c';
+    const r = mk('rect', { y: n.y + 6, height: 14, rx: 2, fill: isR1 ? '#2d2e2c' : '#fff', stroke: col }, tg);
+    const t = tx(tg, 0, n.y + 13.5, n.tag, 'tagt');
+    t.setAttribute('fill', isR1 ? '#fff' : col);
+    t.style.fill = isR1 ? '#fff' : col;
+    const w = t.getComputedTextLength() + 10;
+    r.setAttribute('x', n.x + n.w - 6 - w);
+    r.setAttribute('width', w);
+    t.setAttribute('x', n.x + n.w - 6 - w + 5);
+  }
+  (n.lines || []).forEach((s, i) => tx(g, n.x + 8, n.y + 46 + i * 15, s, 'nl'));
+  let y = n.y + 36;
+  (n.rows || []).forEach((rid) => {
+    const r = ROWS[rid];
+    const h = r.two ? 34 : 19;
+    mk('line', { x1: n.x + 6, x2: n.x + n.w - 6, y1: y, y2: y, class: 'rsep' }, g);
+    const rg = group(rid, 'row', L_ROWS, r.ev);
+    mk('rect', { x: n.x + 3, y: y + 1, width: n.w - 6, height: h - 2, rx: 2, class: 'rbg' }, rg);
+    const at = tx(rg, n.x + 8, y + 10, r.a, 'a');
+    if (r.ev) {
+      if (r.two) chip(rg, n.x + 8, y + 26, r.ev[0]);
+      else chip(rg, n.x + 8 + at.getComputedTextLength() + 6, y + 10, r.ev[0]);
+    } else {
+      const room = n.w - 16 - at.getComputedTextLength();
+      if (room > 52) tx(rg, n.x + n.w - 8, y + 10, 'no event', 'noev', 'end');
+    }
+    link(rid, n.id);
+    y += h;
+  });
+  if (n.foot) tx(g, n.x + 8, y + 10, n.foot, 'noev');
+});
+
+DIAMONDS.forEach((d) => {
+  const g = group(d.id, 'diamond' + (d.k ? ' d-' + d.k : ''), L_NODES);
+  const pts = [[d.cx, d.cy - d.hh], [d.cx + d.hw, d.cy], [d.cx, d.cy + d.hh], [d.cx - d.hw, d.cy]].map((p) => p.join(',')).join(' ');
+  mk('polygon', { points: pts, class: 'dshape' }, g);
+  tx(g, d.cx, d.cy + 0.5, d.label, 'dl' + (d.sans ? ' sans' : '') + (d.small ? ' sm' : ''), 'middle');
+  if (d.cap) tx(g, d.cap.x, d.cap.y, d.cap.t, 'cap');
+});
+
+PILLS.forEach((p) => {
+  const g = group(p.id, 'pill', L_NODES);
+  mk('rect', { x: p.x, y: p.y, width: p.w, height: p.h, rx: 4, class: 'pbox' }, g);
+  p.lines.forEach((ln, i) => tx(g, p.x + 8, p.y + 11 + i * 13, ln[0], 'pl' + (ln[1] ? ' ' + ln[1] : '')));
+  link(p.id, p.of);
+});
+
+// Hover set: the item, its links, and for a node or diamond the other end of each of its lines.
+function related(id) {
+  const out = new Set([id]);
+  const isEdge = EDGES.some((e) => e.id === id);
+  (LINKS[id] || []).forEach((x) => {
+    out.add(x);
+    if (!isEdge && EDGES.some((e) => e.id === x)) {
+      const e = EDGES.find((q) => q.id === x);
+      if (e.from) out.add(e.from);
+      if (e.to) out.add(e.to);
+    }
+  });
+  // A row lights its screen and the screen's lines too.
+  if (ROWS[id]) related(ROWS[id].parent).forEach((x) => out.add(x));
+  return out;
+}
+
+// ---------- Interaction ----------
+const panel = document.getElementById('panel');
+let selected = null;
+let mode = null; // 'el', 'ev', 'path'
+
+function clearHover() {
+  Object.values(ELS).forEach((g) => g.classList.remove('hv'));
+  if (!selected) svg.classList.remove('dim');
+}
+function clearClasses() {
+  Object.values(ELS).forEach((g) => g.classList.remove('hl', 'sel', 'evhl', 'hv'));
+  svg.querySelectorAll('.chip.on').forEach((c) => c.classList.remove('on'));
+  svg.classList.remove('dim');
+  document.querySelectorAll('tr.click.on').forEach((r) => r.classList.remove('on'));
+}
+function applySelection() {
+  if (!selected) return;
+  if (mode === 'el') {
+    svg.classList.add('dim');
+    related(selected).forEach((x) => ELS[x] && ELS[x].classList.add('hl'));
+    ELS[selected].classList.add('sel');
+  } else if (mode === 'ev') {
+    svg.classList.add('dim');
+    firesAt(selected).forEach((x) => {
+      ELS[x].classList.add('evhl');
+      if (ROWS[x]) ELS[ROWS[x].parent].classList.add('hl');
+      const e = EDGES.find((q) => q.id === x);
+      if (e) { if (e.from && ELS[e.from]) ELS[e.from].classList.add('hl'); if (e.to && ELS[e.to]) ELS[e.to].classList.add('hl'); }
+    });
+    svg.querySelectorAll('.chip[data-ev="' + selected + '"]').forEach((c) => c.classList.add('on'));
+    const row = document.querySelector('#ev-table tr[data-ev="' + selected + '"]');
+    if (row) row.classList.add('on');
+  } else if (mode === 'path') {
+    svg.classList.add('dim');
+    PATHS[selected].ids.forEach((x) => ELS[x] && ELS[x].classList.add('hl'));
+    const row = document.querySelector('#path-table tr[data-path="' + selected + '"]');
+    if (row) row.classList.add('on');
+  }
+  if (mode !== 'path') liftRows('hl');
+}
+// The rows of a lit screen are lit with it.
+function liftRows(cls) {
+  Object.keys(ROWS).forEach((rid) => {
+    const p = ELS[ROWS[rid].parent];
+    if (p && (p.classList.contains(cls) || p.classList.contains('sel'))) ELS[rid].classList.add(cls);
+  });
+}
+function firesAt(ev) {
+  return Object.keys(ELS).filter((id) => (ELS[id].getAttribute('data-events') || '').split(' ').includes(ev));
+}
+function selectEl(id) {
+  clearClasses();
+  selected = id; mode = 'el';
+  applySelection();
+  renderDetail(id);
+}
+function selectEvent(ev, scroll) {
+  clearClasses();
+  selected = ev; mode = 'ev';
+  applySelection();
+  renderEvent(ev);
+  if (scroll) document.getElementById('flow').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function selectPath(i, scroll) {
+  clearClasses();
+  selected = i; mode = 'path';
+  applySelection();
+  renderPath(i);
+  if (scroll) document.getElementById('flow').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function clearAll() {
+  clearClasses();
+  selected = null; mode = null;
+  renderDefault();
+}
+
+svg.addEventListener('click', (ev) => {
+  const g = ev.target.closest('.el');
+  if (g) selectEl(g.getAttribute('data-id'));
+  else clearAll();
+});
+svg.addEventListener('keydown', (ev) => {
+  const g = ev.target.closest && ev.target.closest('.el');
+  if (g && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); selectEl(g.getAttribute('data-id')); }
+});
+// Hover uses its own class, so a selection stays visible under it.
+svg.addEventListener('mouseover', (ev) => {
+  const g = ev.target.closest('.el');
+  Object.values(ELS).forEach((x) => x.classList.remove('hv'));
+  if (!g) { if (!selected) svg.classList.remove('dim'); return; }
+  svg.classList.add('dim');
+  related(g.getAttribute('data-id')).forEach((x) => ELS[x] && ELS[x].classList.add('hv'));
+  liftRows('hv');
+});
+svg.addEventListener('mouseleave', clearHover);
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') clearAll(); });
+
+// ---------- Panel rendering ----------
+function valStr(v) { return typeof v === 'string' ? "'" + v + "'" : String(v); }
+function evCard(ev, example) {
+  const e = EVX[ev];
+  let rows = '';
+  if (!e.props.length) rows = '<p class="small muted" style="margin-top:4px">No own properties. Only the 17 super properties.</p>';
+  else {
+    rows = '<table class="mini"><tbody>' + e.props.map((p) => {
+      const has = example && Object.prototype.hasOwnProperty.call(example, p[0]);
+      return '<tr><td>' + P(p[0]) + '</td><td>' + (has ? C(esc(valStr(example[p[0]]))) : '<span class="muted">' + p[1].join(', ') + '</span>') + '</td></tr>';
+    }).join('') + '</tbody></table>';
+  }
+  return '<div class="ev-card"><div class="eh">' + E(ev) + '<span class="ptag' + (e.tag === 'Exposure' ? ' exp' : '') + '">' + e.tag + '</span>' +
+    (e.seg ? e.seg.map(SEG).join('') : '') + '</div>' + rows + '</div>';
+}
+function blk(label, html) { return html ? '<div class="blk"><div class="bl">' + label + '</div><p>' + html + '</p></div>' : ''; }
+function relBadge(r) {
+  if (r === 'ctl') return '<span class="pill-ctl">Control</span>';
+  if (r === 'exit') return '<span class="pill-ctl">Exit</span>';
+  return R(r);
+}
+function renderDetail(id) {
+  const d = DETAIL[id];
+  if (!d) { renderDefault(); return; }
+  let h = '<p class="pk">' + d.kind + ' ' + relBadge(d.rel) + '</p><h3>' + d.title + '</h3>';
+  if (d.code) h += '<p class="ptitle-code">' + C(esc(d.code)) + '</p>';
+  h += blk('Trigger', d.trigger);
+  h += blk('Condition', d.cond);
+  h += blk('State change', d.state);
+  h += '<div class="blk"><div class="bl">Events fired</div>' +
+    (d.events && d.events.length ? d.events.map((x) => evCard(x.ev, x.ex)).join('') : '<p>' + (d.eventsNote || 'None.') + '</p>') +
+    (d.events && d.events.length && d.eventsNote ? '<p class="small muted" style="margin-top:5px">' + d.eventsNote + '</p>' : '') + '</div>';
+  if (d.after) h += '<div class="blk"><div class="bl">Flow state on the event</div><table class="mini"><tbody>' +
+    Object.keys(d.after).map((k) => '<tr><td>' + P(k) + '</td><td>' + C(esc(valStr(d.after[k]))) + '</td></tr>').join('') + '</tbody></table></div>';
+  h += blk('Notes', d.notes);
+  h += '<div class="blk"><button class="btn" data-clear>Clear</button></div>';
+  panel.innerHTML = h;
+}
+function renderEvent(ev) {
+  const e = EVX[ev];
+  const at = firesAt(ev);
+  let h = '<p class="pk">Event ' + e.n + ' · ' + e.entity + ' ' + (e.rel ? R(e.rel) : '') + '</p><h3>' + E(ev) + '</h3>';
+  h += '<p class="ptitle-code">' + C('fit_flow:' + ev) + '</p>';
+  h += blk('Fires when', e.when);
+  h += '<div class="blk"><div class="bl">Own properties</div>' + evCard(ev, null) + '</div>';
+  h += blk('Feeds', e.feeds);
+  h += '<div class="blk"><div class="bl">Fires at (highlighted)</div><div class="fires">' +
+    at.map((id) => '<button class="linkbtn" data-goto="' + id + '">' + esc((DETAIL[id] || {}).title || id) + '</button>').join('') + '</div></div>';
+  h += '<div class="blk"><button class="btn" data-clear>Clear</button></div>';
+  panel.innerHTML = h;
+}
+function renderPath(i) {
+  const p = PATHS[i];
+  let h = '<p class="pk">Reference path ' + (p.rel ? R(p.rel) : '') + '</p><h3>' + p.name + ': ' + p.taps + ' taps</h3>';
+  h += blk('Setup', esc(p.setup));
+  h += '<div class="blk"><div class="bl">Taps</div><ol style="margin:2px 0 0;padding-left:18px">' + p.seq.map((s) => '<li>' + A(s[0]) + (s[1] ? ' <span class="muted">' + esc(s[1]) + '</span>' : '') + '</li>').join('') + '</ol></div>';
+  h += '<div class="blk"><div class="bl">Events</div><ol style="margin:2px 0 0;padding-left:18px">' + p.events.map((s) => '<li>' + E(s[0]) + (s[1] ? ' <span class="muted">' + esc(s[1]) + '</span>' : '') + '</li>').join('') + '</ol></div>';
+  h += blk('Segment at the bag', p.seg ? SEG(p.seg) + ' ' + ['', 'Skipped the fit picker', '', 'Opened the fit picker, in the bag'][p.seg] : '0, no segment');
+  h += '<div class="blk"><button class="btn" data-clear>Clear</button></div>';
+  panel.innerHTML = h;
+}
+function renderDefault() {
+  panel.innerHTML = '<p class="pk">Detail panel</p><h3>Pick something in the flow</h3>' +
+    '<p style="margin-top:6px">Each item shows its trigger, condition, state change, events with example values, and notes.</p>' +
+    '<div class="howto">' +
+    '<svg width="34" height="20" aria-hidden="true"><rect x="1" y="2" width="32" height="16" rx="3" fill="#fff" stroke="#2d2e2c"/></svg><span>Screen. Rows inside are actions on that screen.</span>' +
+    '<svg width="34" height="20" aria-hidden="true"><path d="M2,10 L30,10" stroke="#2d2e2c" stroke-width="1.4"/><path d="M26,6 L32,10 L26,14z" fill="#2d2e2c"/></svg><span>Action that moves the customer, with its <code>data-action</code>.</span>' +
+    '<svg width="34" height="20" aria-hidden="true"><polygon points="17,1 33,10 17,19 1,10" fill="#fff" stroke="#2d2e2c" stroke-width="1.3"/></svg><span>Condition in the code.</span>' +
+    '<svg width="34" height="20" aria-hidden="true"><rect x="1" y="3" width="32" height="14" rx="3" fill="#fff" stroke="#898989" stroke-dasharray="3 2"/></svg><span>Rule outcome. Dotted lines are rule checks.</span>' +
+    '<svg width="34" height="20" aria-hidden="true"><rect x="1" y="3" width="32" height="14" rx="2" fill="#f6f6f6" stroke="#c6c6c6"/></svg><span>Event chip. A dot marks the segment it sets.</span>' +
+    '</div>' +
+    '<p class="small muted" style="margin-top:12px">Blue lines are R1.1, dashed violet lines are R1.2, grey is the control branch. Click an event or a path in the tables below to light it up here.</p>';
+}
+panel.addEventListener('click', (ev) => {
+  const b = ev.target.closest('button');
+  if (!b) return;
+  if (b.hasAttribute('data-clear')) clearAll();
+  else if (b.dataset.goto) selectEl(b.dataset.goto);
+});
+
+// ---------- Tables ----------
+function makeClickRow(tr, fn) {
+  tr.classList.add('click');
+  tr.tabIndex = 0;
+  tr.addEventListener('click', fn);
+  tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn(); } });
+}
+const evBody = document.querySelector('#ev-table tbody');
+EVENTS.forEach((e) => {
+  const tr = document.createElement('tr');
+  tr.dataset.ev = e.name;
+  const props = e.props.length ? e.props.map((p) => P(p[0]) + ' <span class="muted small">' + p[1].map((v) => /^[a-z_]+$/.test(v) && v !== 'same' ? V(v) : esc(v)).join(', ') + '</span>').join('<br>') : '<span class="muted">None</span>';
+  tr.innerHTML = '<td><span class="ent">' + e.entity + '</span>' + (e.rel ? '<br>' + R(e.rel) : '') + '</td>' +
+    '<td><span class="num">' + e.n + '</span>' + E(e.name) + (e.seg ? e.seg.map(SEG).join('') : '') + '</td>' +
+    '<td>' + e.when + '</td><td class="small">' + props + '</td>' +
+    '<td><span class="ptag' + (e.tag === 'Exposure' ? ' exp' : '') + '">' + e.tag + '</span></td><td class="small">' + e.feeds + '</td>';
+  makeClickRow(tr, () => selectEvent(e.name, true));
+  evBody.appendChild(tr);
+});
+
+document.querySelector('#sp-table tbody').innerHTML = SUPER.map((s) =>
+  '<tr><td>' + P(s[0]) + '</td><td class="' + (s[1] === 'ctx' ? 'grp-ctx' : 'grp-flow') + '">' + (s[1] === 'ctx' ? 'Context' : 'Flow state') + '</td><td>' + s[2].join(', ') + '</td><td class="small">' + s[3] + '</td></tr>').join('');
+
+document.querySelector('#rules-table tbody').innerHTML = RULES.map((r) => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>').join('');
+document.querySelector('#state-table tbody').innerHTML = STATE_RULES.map((r) => '<tr><td>' + r[0] + '</td><td class="small">' + r[1] + '</td></tr>').join('');
+
+document.getElementById('flag-cards').innerHTML = FLAGS.map((f) =>
+  '<div class="card ' + f.cls + '"><h3>' + R(f.rel) + C(f.key) + '</h3><dl>' + f.rows.map((r) => '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>').join('') + '</dl></div>').join('');
+
+const pathBody = document.querySelector('#path-table tbody');
+PATHS.forEach((p, i) => {
+  const tr = document.createElement('tr');
+  tr.dataset.path = i;
+  const taps = '<div class="seq">' + p.seq.map((s) => A(s[0]) + (s[1] ? '<span class="muted small">' + esc(s[1]) + '</span>' : '')).join('<span class="arr">›</span>') + '</div>';
+  const evs = '<div class="seq">' + p.events.map((s) => E(s[0]) + (s[1] ? '<span class="muted small">' + esc(s[1]) + '</span>' : '')).join('<span class="arr">›</span>') + '</div>';
+  tr.innerHTML = '<td>' + p.name + (p.rel ? ' ' + R(p.rel) : '') + '</td><td class="small">' + esc(p.setup) + '</td><td><b style="font-weight:600">' + p.taps + '</b></td><td>' + taps + '</td><td>' + evs + '</td><td>' + (p.seg ? SEG(p.seg) : '<span class="muted">0</span>') + '</td>';
+  makeClickRow(tr, () => selectPath(i, true));
+  pathBody.appendChild(tr);
+});
+
+document.querySelector('#order-table tbody').innerHTML = ORDER.map((o) => '<tr><td>' + o[0] + '</td><td class="small">' + o[1] + '</td><td class="small">' + o[2] + '</td></tr>').join('');
+document.querySelector('#record-table tbody').innerHTML = RECORDS.map((r) => '<tr><td>' + r[0] + '</td><td class="small">' + r[1] + '</td><td class="small">' + r[2] + '</td></tr>').join('');
+
+renderDefault();
+</script>
+</body>
+</html>

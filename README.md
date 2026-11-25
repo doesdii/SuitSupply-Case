@@ -8,6 +8,7 @@ A take-home product case. Customers can already order trousers in another fit fr
 |---|---|---|
 | `presentation.html` | The 13-slide presentation, with the live prototype on slide 5 | Double-click. `→` or space: next. `←`: back. `N`: speaker notes. `T`: timer. |
 | `prototype/index.html` | The clickable prototype: phone flow, feature flag, event log, demo scenarios | Double-click. It needs no network. Add `#selftest` to the address to run its self-test. |
+| `engineering_flow.html` | The technical flow for engineers: every screen, action, condition, event, property, and state rule, read from the prototype's code | Double-click. Click any screen, line, or decision for its trigger, condition, and events. |
 | `deliverables/2_reasoning.md` | One page: why this placement, what I left out, what to validate, what I am least sure about | Read first. |
 | `deliverables/3_tracking_plan.md` | Success metrics, stop rule, test design, events and properties, money | For product managers and developers. |
 | `deliverables/4_user_stories.md` | 21 user stories with acceptance criteria | For developers. |
