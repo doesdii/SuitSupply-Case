@@ -145,7 +145,10 @@
   .fork { display: grid; grid-template-columns: auto clamp(36px, 4.5vw, 90px) minmax(0, 1fr) clamp(200px, 19vw, 340px); height: clamp(200px, 36vh, 400px); }
   .fork-root { align-self: center; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
   .fork-root code { background: var(--ink); color: #fff; font-size: var(--fs-mono); padding: 8px 12px; border-radius: 3px; }
-  .fork-root span { font-size: var(--fs-small); color: var(--text2); max-width: 10em; line-height: 1.35; }
+  .fork-root .fr-cap { font-size: var(--fs-small); color: var(--text2); max-width: 10em; line-height: 1.35; }
+  /* Slide 2: the prompt everyone in the fork has seen, as in the prototype. */
+  .fork-root .pmock { width: clamp(150px, 13vw, 220px); margin-top: 4px; padding: 3px 8px 9px; gap: 4px; }
+  .fork-root .pmock .pbtn { width: 92%; padding: 4px 5px; }
   .fork-lines { width: 100%; height: 100%; display: block; overflow: visible; }
   .fork-lines path { fill: none; stroke: var(--line-strong); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
   .fork-bars { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
@@ -208,6 +211,13 @@
   .pdp-n, .pdp-p { padding: 0 8px; font-size: calc(var(--fs-small) * 0.88); line-height: 1.25; color: var(--ink); }
   .pdp-n { font-weight: 500; }
   .pdpmock .pbtn { margin: 2px 8px 0; }
+  /* Slide 4, node 3: the fit picker as in the prototype: photo, fit control, Details row. */
+  .fitmock { display: flex; flex-direction: column; gap: 6px; border: 1px solid var(--line-strong); background: #fff; border-radius: 3px; overflow: hidden; padding-bottom: 8px; }
+  .fitmock .pdp-img img { object-position: 50% 28%; }
+  .fseg { display: flex; gap: 2px; margin: 0 8px; padding: 2px; border-radius: 2px; background: var(--soft); }
+  .fseg span { flex: 1; text-align: center; white-space: nowrap; font-size: calc(var(--fs-small) * 0.82); line-height: 1.2; padding: 3px 2px; color: var(--text2); border: 1px solid transparent; border-radius: 2px; }
+  .fseg span.on { background: #fff; color: var(--ink); font-weight: 500; border-color: var(--line-strong); }
+  .fitmock .drow { margin: 0 8px; font-size: calc(var(--fs-small) * 0.9); white-space: nowrap; }
   .fbox .was { font-size: calc(var(--fs-small) * 0.88); color: var(--text2); }
   .pin { grid-row: 1; align-self: end; position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; padding: 0 0 12px; background: none; border: 0; cursor: pointer; text-align: left; font-size: var(--fs-small); line-height: 1.3; color: var(--text2); }
   .pin::after { content: ''; position: absolute; left: 14px; bottom: 0; height: 12px; border-left: 1px solid var(--line-strong); }
@@ -549,7 +559,7 @@
   <p class="sub">Three groups, from what they do in the flow. I split further when the data says so.</p>
   <div class="body">
     <div class="fork">
-      <div class="fork-root"><code>prompt_shown</code><span>Everyone who sees the prompt</span></div>
+      <div class="fork-root"><code>prompt_shown</code><span class="fr-cap">Everyone who sees the prompt</span><span class="pmock" aria-label="The prompt"><span class="pm-top"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4,4 L16,16 M16,4 L4,16" stroke="currentColor" stroke-width="1.6" fill="none"/></svg></span><span class="pq">Want a different fit or details?</span><span class="pt">These trousers come in 5 fits.</span><span class="pbtn first">Choose fit and details</span><span class="pbtn">Keep Tapered Leg</span></span></div>
       <svg class="fork-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
         <path d="M0,50 C55,50 45,37.5 100,37.5"/>
         <path d="M0,50 C55,50 45,81.5 100,81.5"/>
@@ -613,7 +623,7 @@
       <div class="farrow" style="grid-column: 2"></div>
       <div class="fbox" data-touch="1 1.1" style="grid-column: 3"><b>Prompt</b><span class="pmock" aria-label="The prompt in Release 1"><span class="pm-top"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4,4 L16,16 M16,4 L4,16" stroke="currentColor" stroke-width="1.6" fill="none"/></svg></span><span class="pq">Want a different fit <u>or details</u>?</span><span class="pt">These trousers come in 5 fits.</span><span class="pbtn first">Choose fit <u>and details</u></span><span class="pbtn">Keep Tapered Leg</span></span><span class="was">Today: "Want a different fit?" and "Choose fit".</span></div>
       <div class="farrow" style="grid-column: 4"></div>
-      <div class="fbox" data-touch="1" style="grid-column: 5"><b>Fit picker</b><span class="fs">Fit and leg</span><span class="drow"><span>Details: waistband · hem · front</span><span class="rel" data-rel="1">R1</span></span></div>
+      <div class="fbox" data-touch="1" style="grid-column: 5"><b>Fit picker</b><span class="fitmock" aria-label="The fit picker"><span class="pdp-img"><img src="prototype/assets/fit-wide-tapered.jpg" alt="" onerror="imgErr(this)"><span class="ph-fallback">Wide Tapered</span></span><span class="fseg"><span>Slim Fit</span><span>Straight Fit</span><span class="on">Wide Fit</span></span><span class="drow"><span>Details: waistband · hem · front</span><span class="rel" data-rel="1">R1</span></span></span></div>
       <div class="farrow" style="grid-column: 6"></div>
       <div class="fbox" data-touch="1.1" style="grid-column: 7"><b>Size</b></div>
       <div class="farrow" style="grid-column: 8"></div>
@@ -669,7 +679,7 @@
 </section>
 
 <!-- Slide 6: Why these decisions -->
-<section class="slide" id="s6" data-notes="<b>1. Details live in the fit picker.</b> The 3 in 4 who skip keep four taps. And the fit picker already trades delivery time for a more personal pair, so this is the same trade in the same place. The cost: nine taps to change one detail, and fewer customers find it. I rejected a new step, a row on the size step, and a block after the bag. <b>2. Front style is the third option.</b> Four reasons, all from what I could see. It already differs between the fits: you saw it on slide one. Suitsupply already makes both fronts in this cloth. It uses the same control as the other two: two values, nothing to measure. And all six configurators I checked offer it. A fifth, supporting signal, the one with the star: Lyst data, quoted by FashionUnited in June 2026, says demand for pleated trousers more than doubled. It is directional, not a precise number. The cost: a pleat changes the fit at the hip, so the pleat can be turned off on its own. With Suitsupply data I would first check which option full Custom Made customers choose most, and the returns and cost per option. <b>3. A notice, not a warning.</b> The timing is the point. The customer taps a value. In that moment, in that place, they see the gain, the detail they chose, and the cost, one to two weeks. Together, before the order. A warning at the bag comes after the decision. The cost I accept: no extra check, so a casual order can come back as a write-off. I add no return text, because the return promise does not change. <b>4. Fit photo plus configurator renders.</b> The photo shows the real fit. Each detail reuses a render the configurator already has. The cost: two image styles, and no image of the whole changed pair. <b>5. Preselect only what can go back into stock.</b> A wrong standard pair goes back into stock. A wrong changed pair is a write-off, so it needs an active tap. <b>If asked about the star:</b> a secondary source, and I do not know the measure or the period. It supports the choice; the four first-hand reasons carry it. <b>Hand-off:</b> Each cost is a bet. Next: how I see if a bet fails.">
+<section class="slide" id="s6" data-notes="<b>1. Details live in the fit picker.</b> The 3 in 4 who skip keep four taps. And the fit picker already trades delivery time for a more personal pair, so this is the same trade in the same place. The cost: nine taps to change one detail, and fewer customers find it. I rejected a new step, a row on the size step, and a block after the bag. <b>2. Front style is the third option.</b> Four reasons, all from what I could see. It already differs between the fits: you saw it on slide one. Suitsupply already makes both fronts in this cloth. It is the same two-tile choice as the waistband and the hem, so nothing new to build or learn. And no measuring is needed, so the customer cannot get a number wrong. And all six configurators I checked offer it. A fifth, supporting signal, the one with the star: Lyst data, quoted by FashionUnited in June 2026, says demand for pleated trousers more than doubled. It is directional, not a precise number. The cost: a pleat changes the fit at the hip, so the pleat can be turned off on its own. With Suitsupply data I would first check which option full Custom Made customers choose most, and the returns and cost per option. <b>3. A notice, not a warning.</b> The timing is the point. The customer taps a value. In that moment, in that place, they see the gain, the detail they chose, and the cost, one to two weeks. Together, before the order. A warning at the bag comes after the decision. The cost I accept: no extra check, so a casual order can come back as a write-off. I add no return text, because the return promise does not change. <b>4. Fit photo plus configurator renders.</b> The photo shows the real fit. Each detail reuses a render the configurator already has. The cost: two image styles, and no image of the whole changed pair. <b>5. Preselect only what can go back into stock.</b> A wrong standard pair goes back into stock. A wrong changed pair is a write-off, so it needs an active tap. <b>If asked about the star:</b> a secondary source, and I do not know the measure or the period. It supports the choice; the four first-hand reasons carry it. <b>Hand-off:</b> Each cost is a bet. Next: how I see if a bet fails.">
   <h1>Every decision buys something and costs something</h1>
   <div class="body">
     <div class="dec">
@@ -686,7 +696,7 @@
           <dt class="costs">Costs</dt><dd><span>9 taps to change one detail</span><span>Fewer customers find it</span></dd>
           <dt class="instead">Instead of</dt><dd><span>A new step</span><span>A row on the size step</span><span>A block after the bag</span></dd></dl></div>
         <div class="dec-card" data-key="2"><h3><span class="num">2</span>Front style is the third option</h3><dl>
-          <dt class="buys">Buys</dt><dd><span>It already differs between the fits</span><span>Suitsupply already makes both fronts in this cloth</span><span>Same control: two values, nothing to measure</span><span>6 of 6 configurators I checked offer it</span><span>Demand for pleated trousers more than doubled*</span></dd>
+          <dt class="buys">Buys</dt><dd><span>It already differs between the fits</span><span>Suitsupply already makes both fronts in this cloth</span><span>Same two-tile choice as waistband and hem</span><span>No measuring needed</span><span>6 of 6 configurators I checked offer it</span><span>Demand for pleated trousers more than doubled*</span></dd>
           <dt class="costs">Costs</dt><dd><span>A pleat changes the fit at the hip</span><span>So the pleat can be turned off on its own</span></dd>
           <dt class="instead">With data</dt><dd><span>I would check first: the option full Custom Made customers choose most</span><span>returns and cost per option</span></dd></dl></div>
         <div class="dec-card" data-key="3"><h3><span class="num">3</span>A notice, not a warning</h3><dl>
@@ -862,7 +872,7 @@
       <div class="calc" id="calc">
         <div class="sl"><label for="sl-r">Changed pairs that come back</label><output id="o-r" for="sl-r">20 in 100</output>
           <div class="trk has-tick"><input type="range" id="sl-r" min="5" max="40" step="1" value="20"><span class="tick" aria-hidden="true"><em>Keep limit</em></span></div></div>
-        <div class="sl"><label for="sl-n">Changed orders that are extra, not moved from a stock pair</label><output id="o-n" for="sl-n">30 in 100</output>
+        <div class="sl"><label for="sl-n">Of every 100 changed orders, how many are new sales (not swapped from a stock pair)?</label><output id="o-n" for="sl-n">30 in 100</output>
           <div class="trk"><input type="range" id="sl-n" min="0" max="100" step="5" value="30"></div></div>
         <div class="sl"><label for="sl-s">Surcharge on a changed pair</label><output id="o-s" for="sl-s">&euro;0</output>
           <div class="trk"><input type="range" id="sl-s" min="0" max="50" step="5" value="0"></div></div>
