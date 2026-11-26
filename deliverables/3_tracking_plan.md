@@ -17,6 +17,8 @@ A **changed** pair has at least one detail (waistband, hem, or front) that diffe
 - Adoption = 25% open the fit picker × 40% open the details sheet × 50% change a detail. Replace each factor with real data (D3).
 - Keep: returns are allowed under today's 30-day policy [6] (L1). A changed pair cannot go back into stock, so every returned changed pair is a write-off. Split returns by reason, so a size return does not count against the detail.
 
+**Later metric, not a launch gate: Come back.** Share of customers with an order in the test who order again within 90 days of delivery. Compare changed-pair buyers with standard buyers, and the test group with control. Direction: not lower than standard buyers. Read about 90 days after the last delivery. Source: order data, joined by a customer key, with no new event. It shows whether a personal pair builds loyalty (D5).
+
 **Safety metrics.** Order rate from the prompt: not significantly lower than control. Made wrong: 2% or less of changed orders. Late: 10% or less.
 
 ### Stop rule
@@ -57,6 +59,7 @@ The analytics tool computes segments per visit (`session_id`) from events.
 | Volume | 31,000 users × 50% bag × 60% order × 5% Adoption ≈ 465 changed orders |
 | Keep read | 300 changed orders with a closed 30-day window, about 45 days after the last order. Fewer: a signal, not proof, and the rollout stays in one market. |
 | Sample ratio check | Chi-squared test on group sizes. If p < 0.0005, find the cause first [3]. |
+| Come back read | About 90 days after the last delivery. It informs the decision on more markets. It does not stop or start Release 1. |
 | Start date | After the holiday period. Purchases from 1 November to 25 December have 60 days to return, which stretches the Keep read. |
 
 Sample size for Speed (a), one-sided, 5% error rate, 80% power: n = 6.183 × 2p(1 − p) ÷ (0.02p)².
@@ -141,7 +144,7 @@ Early signals arrive in days. Only the two early-warning conditions can stop the
 
 ## 5. Order data
 
-Adoption, Keep, safety, and money read the order system, so customers who decline analytics still count. Each order line carries `fit`, `waistband`, `hem`, `front`, `changed_detail_count`, `is_made_to_order`, `flag_variant`, `identity_tier`, `market`, `size_prefill`, `has_opened_fit_picker`, and `opened_from`, so the team can cut every outcome by group, segment, and detail.
+Adoption, Keep, safety, and money read the order system, so customers who decline analytics still count. Each order line carries `fit`, `waistband`, `hem`, `front`, `changed_detail_count`, `is_made_to_order`, `flag_variant`, `identity_tier`, `market`, `size_prefill`, `has_opened_fit_picker`, and `opened_from`, so the team can cut every outcome by group, segment, and detail. The order system keeps its own customer key, so a next order can be linked for Come back. The key never goes into an event.
 
 | Record | Fields | Feeds |
 |---|---|---|
@@ -151,6 +154,7 @@ Adoption, Keep, safety, and money read the order system, so customers who declin
 | Delivery | Promised and real date | Late |
 | Production error | Type | Made wrong |
 | Cost | Stock, made to order, return handling | Money |
+| Next order | Date, customer key | Come back |
 
 Returns, cancellations, and expectation answers join to the test through `flag_variant` on the order line.
 
@@ -171,13 +175,14 @@ Limits:
 
 - Every cost is a placeholder.
 - Per order, the test cannot tell a new order from a moved one. Compare margin per exposed user.
-- The model ignores repeat buying.
+- The model ignores repeat buying. Come back measures it later.
 
 ## 7. Numbers Suitsupply must supply
 
 - **D1, D2:** weekly users per step, and today's rates from the prompt to the picker, bag, and order.
 - **D3:** today's share of orders with a non-base fit.
 - **D4, E5:** the analytics, test, and flag tools, the share of users who accept analytics, and how fast OFF works.
+- **D5:** today's 90-day repeat-order rate for trouser buyers.
 - **C1, C5, C6:** return rates, reasons, and timing. Today's cancellation and late rates.
 - **F1, P6:** margins, return cost, and the cost of a detail.
 - **L1, L3:** the return rule for changed pairs, and what happens to a returned pair.

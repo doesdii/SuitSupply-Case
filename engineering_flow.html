@@ -298,7 +298,7 @@
         <thead><tr><th>Record</th><th>Fields</th><th>Feeds</th></tr></thead>
         <tbody></tbody>
       </table></div>
-      <p class="note-line">Adoption, Keep, safety, and money read the order system, so customers who decline analytics still count. Returns, cancellations, and expectation answers join back to the test through <code class="p">flag_variant</code> on the order line.</p>
+      <p class="note-line">Adoption, Keep, safety, and money read the order system, so customers who decline analytics still count. Returns, cancellations, and expectation answers join back to the test through <code class="p">flag_variant</code> on the order line. A next order links through the order system&#39;s own customer key for Come back, the later repeat-order metric. The key never goes into an event.</p>
       <p class="note-line">Returns are allowed under today's 30-day policy. A changed pair cannot go back into stock, so every returned changed pair is a write-off. Split returns by reason, so a size return does not count against the detail.</p>
     </div>
   </div>
@@ -394,7 +394,6 @@ const NODES = [
     lines: ['Prompt of today, "Choose fit"', 'No Details row, sheet, Edit', 'No card, prefill, page link'] },
   { id: 'prompt', x: 250, y: 184, w: 160, h: 66, title: 'Prompt', sub: "screen 'prompt'", rows: ['r_prompt_close'] },
   { id: 'card', x: 15, y: 290, w: 160, h: 66, title: 'Suggestion card', sub: 'on the prompt', k: 'r11', tag: 'R1.1', rows: ['r_card_dismiss'] },
-  { id: 'fullcm', x: 515, y: 134, w: 150, h: 52, title: 'Full Custom Made', sub: 'exit, €229, 2-3 weeks', k: 'exit' },
   { id: 'fit1', x: 515, y: 250, w: 150, h: 88, title: 'Fit screen 1', sub: "screen 'fit1'", rows: ['r_set_fit', 'r_fit1_close'] },
   { id: 'fit2', x: 515, y: 438, w: 150, h: 88, title: 'Fit screen 2', sub: "'fit2', Slim and Wide", rows: ['r_set_leg', 'r_back'] },
   { id: 'sheet', x: 800, y: 400, w: 180, h: 160, title: 'Details sheet', sub: 'state.sheet, overlay', k: 'r1', tag: 'R1', rows: ['r_expand', 'r_set_option', 'r_reset', 'r_close_sheet'] },
@@ -435,8 +434,6 @@ const EDGES = [
     labels: [{ x: 322, y: 302, align: 'end', rows: [[['a', 'keep-fit']], [['c', 'keep_fit_tapped', [1]]], [['c', 'size_step_shown']]] }] },
   { id: 'e_choose', from: 'prompt', to: 'fit1', pts: [[410, 214], [590, 214], [590, 250]], ev: ['fit_picker_opened'],
     labels: [{ x: 420, y: 203, rows: [[['a', 'choose-fit']]] }, { x: 420, y: 226, rows: [[['c', 'fit_picker_opened', [2, 3]]]] }] },
-  { id: 'e_more', from: 'fit1', to: 'fullcm', pts: [[650, 250], [650, 186]],
-    labels: [{ x: 658, y: 210, rows: [[['a', 'more-options']], [['n', 'no event, a log note']]] }] },
   { id: 'e_next1', from: 'fit1', to: 'd_straight', pts: [[590, 338], [590, 362]],
     labels: [{ x: 598, y: 350, rows: [[['a', 'next']]] }] },
   { id: 'e_straight_no', from: 'd_straight', to: 'fit2', pts: [[590, 414], [590, 438]],
@@ -498,24 +495,18 @@ const DETAIL = {
     state: F('state.card') + ' is true until "Start fresh", the accept, or the size step.',
     events: [{ ev: 'suggestion_shown', ex: { suggestion_type: 'last_details', suggestion_source: 'order_history' } }],
     notes: 'Details are always suggested, never preselected. The customer switch ' + A('set-customer') + ' (' + F('CUSTOMERS') + ') stands in for the flag ' + C('trousers-details-shortcuts') + '.' },
-  fullcm: { kind: 'Exit', title: 'More options: full Custom Made', rel: 'exit',
-    trigger: A('more-options') + ' on fit screen 1 or 2. It exists with the flag ON and OFF, as on the live site.',
-    cond: 'Always shown on the fit screens.',
-    state: F('state.moreOpen') + ' toggles. A card shows "Full Custom Made: every detail, €229 in this cloth, 2-3 weeks." Any other tap closes it.',
-    events: [], eventsNote: 'None. It writes a log note, not an event. It counts as a tap.',
-    notes: 'On the live site it leaves the flow. Full Custom Made starts from generic details, not from this product (gap). Values: ' + F('FULL_CM') + '.' },
   fit1: { kind: 'Screen', title: 'Fit screen 1', code: "screen: 'fit1'",
     trigger: A('choose-fit') + ' on the prompt, or ' + A('back') + ' from fit screen 2 (no event).',
     cond: 'The Details row (' + A('open-sheet') + ') renders only when ' + F('featureOn()') + '. With changed options, the caption says "The photo shows the standard details of this fit." and close-ups show the change.',
     state: A('set-fit') + ' sets ' + F('state.mainFit') + ' (' + V('slim') + ', ' + V('straight') + ', ' + V('wide') + ' from ' + F('MAIN_FITS') + ').',
     events: [], eventsNote: 'None on show. ' + E('fit_picker_opened') + ' belongs to ' + A('choose-fit') + '.',
-    notes: 'Controls: ' + A('set-fit') + ', ' + A('next') + ', ' + A('open-sheet') + ', ' + A('more-options') + ', ' + A('close') + '.' },
+    notes: 'Controls: ' + A('set-fit') + ', ' + A('next') + ', ' + A('open-sheet') + ', ' + A('close') + '.' },
   fit2: { kind: 'Screen', title: 'Fit screen 2 (Slim and Wide only)', code: "screen: 'fit2'",
     trigger: A('next') + ' on fit screen 1 when ' + F('state.mainFit') + ' is not ' + V('straight') + '.',
     cond: 'Slim Fit, Straight Leg shows "Shown in another colour." Slim Fit, Straight Leg and Wide Fit, Straight Leg are not in stock (' + F('inStock') + ' false): made to order, delivery 1-2 weeks, also with standard details.',
     state: A('set-leg') + ' sets ' + F('state.leg') + ' (' + V('tapered') + ', ' + V('straight') + ' from ' + F('LEGS') + ').',
     events: [], eventsNote: 'None on show.',
-    notes: 'Controls: ' + A('set-leg') + ', ' + A('back') + ', ' + A('next') + ', ' + A('open-sheet') + ', ' + A('more-options') + ', ' + A('close') + '.' },
+    notes: 'Controls: ' + A('set-leg') + ', ' + A('back') + ', ' + A('next') + ', ' + A('open-sheet') + ', ' + A('close') + '.' },
   sheet: { kind: 'Overlay', title: 'Details sheet', rel: '1', code: 'state.sheet = true',
     trigger: A('open-sheet') + ' from fit screen 1, fit screen 2, "Edit" on the size step, or "Change these details" on the product page.',
     cond: 'Only when ' + F('featureOn()') + '. Switched-off options have no row. The screen behind is inert.',
@@ -615,11 +606,6 @@ const DETAIL = {
     state: F('state.screen') + ' = ' + V('fit1') + '. ' + F('state.pickerOpened') + ' = true.',
     events: [{ ev: 'fit_picker_opened', ex: {} }],
     notes: 'Segment 2 now, 3 at the bag. The picker wins over Keep: Keep, close, then the picker gives segment 2.' },
-  e_more: { kind: 'Action', title: 'More options', rel: 'exit', code: 'more-options',
-    trigger: A('more-options') + ' on a fit screen.', cond: 'Flag ON and OFF.',
-    state: F('state.moreOpen') + ' toggles. The click handler closes it after any other action.',
-    events: [], eventsNote: 'None. ' + F('addNote()') + ' writes a log note.',
-    notes: 'The live site opens full Custom Made here (€229, 2-3 weeks).' },
   e_next1: { kind: 'Action', title: 'Next on fit screen 1', code: 'next',
     trigger: A('next') + '.', cond: 'See "Straight Fit?".', state: 'Fit screen 2, or the size step for Straight Fit.',
     events: [], eventsNote: 'None to fit screen 2.', notes: '' },
@@ -820,7 +806,7 @@ const RULES = [
 const STATE_RULES = [
   ['An action changes the state first, then fires its event. So the super properties show the state after the action.', F('ACTIONS') + ', ' + F('track()') + ', ' + F('commonProps()')],
   ['Each tap on a phone control counts, except "Start again". A disabled control does nothing.', 'click handler, ' + F('state.taps')],
-  ['Each tap clears the strip highlight and the notice, and closes "More options" unless it was that tap.', F('state.flash') + ', ' + F('state.notice') + ', ' + F('state.moreOpen')],
+  ['Each tap clears the strip highlight and the notice.', F('state.flash') + ', ' + F('state.notice')],
   ['Start again, a flag change, a customer change, an option switch, the product page switch, and a scenario reset the flow. The log, flag, customer, and switches stay.', F('resetFlow()')],
   [A('close') + ' goes back to the product page with no reset. Choices, the card state, and the segment fields stay.', A('close')],
   ['The visit id is made once per page load and survives every reset.', F('SESSION_ID')],

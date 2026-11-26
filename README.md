@@ -18,7 +18,7 @@ A take-home product case. Customers can already order trousers in another fit fr
 
 - Each fit already comes with its own waistband, hem, and front style. Only the photo shows it.
 - One "Details" row in the fit picker opens a sheet with the three options. A customer who keeps the fit has the same 4 taps as today.
-- Success is three numbers: Adoption 5% or more, Speed not more than 2% lower, Keep not more than 5 points above made-to-order fits. One feature flag turns it off.
+- Success is three numbers: Adoption (5 in 100 orders have a changed detail), Speed (time and add-to-bag rate hold for the customers who skip), and Keep (at most 5 more returns per 100 than made-to-order fits). Come back (repeat orders within 90 days) is read later. One feature flag turns it off.
 
 ## Notes
 

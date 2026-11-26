@@ -10,7 +10,7 @@ Each row pairs a question for one team with the assumption all deliverables use 
 | L1 | Does today's return policy cover a changed pair? | Keep and the money case | Yes. Every returned changed pair is a write-off. |
 | D2 | What are today's rates at each step from the prompt? | Test size, length, and every threshold | 50% from the prompt to the bag |
 | E2 | Where does a detail live on the order line? | The build and the order route | Attributes on the order line |
-| B1 | Does a photo exist of each value on each fit? | The images in the sheet | A close-up next to the fit photo |
+| B1 | Can the detail renders of the full Custom Made configurator be reused in the sheet? | The images in the sheet | The real photo shows the fit, and the configurator renders show each detail |
 
 ## By team
 
@@ -44,6 +44,7 @@ Ask the data, analytics, and finance teams.
 | D1, D2 | How many users reach each step each week, and at what rates? | At a 30% add-to-bag rate, the test needs about 72,000 users per group, not 31,000. | 50% from the prompt to the bag |
 | D3 | What share of orders has a non-base fit? | It calibrates the 5% Adoption threshold. | Unknown. The 5% stands on three guesses. |
 | C1, C5 | What is the return rate of made-to-order fits, and how soon do returns arrive? | Keep compares against made-to-order fits and reads late. | 20%, most within 30 days of delivery |
+| D5 | How many trouser buyers order again within 90 days today? | It is the baseline for Come back, the later loyalty metric. | Unknown. Come back reads changed-pair buyers against standard buyers. |
 | D4 | Which analytics, experiment, and flag tools exist? Can a return join back to `flag_variant`? | The 12 events must fit the system. Keep needs returns per test group. | The plan's own naming rule |
 | F1, P6 | What are the margins, the cost of a return, and the cost of a changed detail? | Every cost in the money case is invented. | Example values in the tracking plan |
 | I4, I5 | How many known users open the prompt each month? | The shortcut test (Release 1.1) needs about 9,800 known users per group. | One market reaches it within two months. |
@@ -66,10 +67,10 @@ Ask the brand and content teams, and the Custom Made product lead.
 
 | ID | Question | Why it matters | Working assumption |
 |---|---|---|---|
-| B1 | Does a photo exist of each value on each fit? | No photo shows a changed combination. The customer buys from a close-up and a caption. | A close-up next to the fit photo |
+| B1 | Can the detail renders of the full Custom Made configurator be reused in the sheet? | No image shows a changed combination. The customer buys from the fit photo and a detail render. | The real photo shows the fit, and the configurator renders show each detail. The prototype uses photo crops as stand-ins. |
 | B2 | Which plain name and translation fits each value? Who words the expectation-match question? | Most customers do not know what a side adjuster is. | The product page words, plus a one-line benefit |
 | M3 | What is the business goal: more orders, higher order value, fewer returns, or a step to full Custom Made? | The success metrics follow the goal. | More orders from customers who want a small change |
-| M5 | Should "More options" carry the chosen details into full Custom Made? Should the details cost extra? Do they take orders from full Custom Made? | Full Custom Made (€229, 2-3 weeks) starts from generic defaults. A surcharge of about €30 closes the money gap. | No change to "More options". No surcharge in Release 1. |
+| M5 | Should the details cost extra? Do they take orders from full Custom Made? | Full Custom Made costs €229 in this cloth, with 2-3 weeks delivery. A surcharge of about €30 closes the money gap. | No surcharge in Release 1. |
 
 ## Sources
 

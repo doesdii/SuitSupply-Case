@@ -425,17 +425,6 @@
   .changed-strip .cs-fig { flex: 0 0 112px; margin: 0; }
   .changed-strip .cs-fig .cs { width: 112px; height: 56px; flex: none; }
   .changed-strip .cs-fig figcaption { font-size: 11px; color: var(--mid); margin-top: 2px; text-align: center; }
-  /* "More options": the round Custom Made mark of the live site, at the lower left of the fit photo. */
-  .mo-wrap { position: sticky; bottom: 0; height: 0; z-index: 2; }
-  .more-opts { position: absolute; left: 10px; bottom: 10px; display: inline-flex; align-items: center; gap: 6px; min-height: 44px;
-    padding: 0 14px 0 10px; border: 0; border-radius: 22px; background: #fff; color: var(--ink); font: inherit; font-size: 12.5px; cursor: pointer;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
-  .more-opts .ring { width: 22px; height: 22px; border-radius: 50%; background: conic-gradient(#e94b3c, #f2b632, #5bb85d, #3a87d9, #9b59b6, #e94b3c);
-    -webkit-mask: radial-gradient(circle, transparent 6px, #000 6.5px); mask: radial-gradient(circle, transparent 6px, #000 6.5px); }
-  .more-card { position: absolute; left: 10px; right: 10px; bottom: 62px; padding: 12px 14px; border-radius: 4px; background: #fff;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.16); font-size: 12.5px; line-height: 1.45; color: var(--ink); }
-  .more-card b { font-weight: 500; }
-  .more-card .small { color: var(--mid); margin-top: 4px; display: block; }
 
   /* The Details row with words and three thumbs (gallery G4, choice B). A thumb opens the sheet with that option expanded. */
   .details-row { flex-direction: column; align-items: stretch; gap: 0; }
@@ -756,9 +745,6 @@ const FITS = {
   'wide-straight': { label: 'Wide Fit, Straight Leg', name: 'Wide Leg Straight', inStock: false, standard: { waistband: 'loops',     hem: 'plain',  front: 'pleated' } },
 };
 
-// Full Custom Made for this cloth on the live site, 24 November 2026: the step above this flow.
-const FULL_CM = { price: '\u20ac229', delivery: '2-3 weeks' };
-
 const OPTIONS = [
   { key: 'waistband', title: 'Waistband', values: [
     { id: 'loops',     name: 'Belt loops',     short: 'belt loops',     benefit: 'Wear them with or without a belt.' },
@@ -939,7 +925,6 @@ function resetFlow() {
     prefilled: null,  // The size the flow preselected or restored, or null (part B)
     size: null,
     sizeAuto: false,  // true while the size on screen is one the flow chose, not the customer
-    moreOpen: false,  // The "More options" card is open (full Custom Made is outside this prototype)
     taps: 0,
     flash: null,     // The option of the strip that changed in the last action
     entry: null,     // The way to the size step: 'keep_fit', 'fit_picker' or 'suggestion'
@@ -1465,12 +1450,7 @@ function fitScreen(step) {
     ? '<div class="changed-strip">' + changedOpts.map((o) => '<figure class="cs-fig">' + cropHtml(o.key, eff[o.key], 'cs') +
       '<figcaption>' + valueOf(o.key, eff[o.key]).name + '</figcaption></figure>').join('') + '</div>'
     : '';
-  // "More options" is on the live site today, with the flag on and off. It leaves for full Custom Made.
-  const more = '<div class="mo-wrap">' +
-    (state.moreOpen ? '<div class="more-card" data-role="more-card"><b>Full Custom Made</b>: every detail, ' +
-      FULL_CM.price + ' in this cloth, ' + FULL_CM.delivery + '.<span class="small">Not part of this prototype.</span></div>' : '') +
-    '<button class="more-opts" data-action="more-options" aria-expanded="' + !!state.moreOpen + '"><span class="ring" aria-hidden="true"></span>More options</button></div>';
-  return '<div class="fit-photo">' + fitPhotoImg(fit) + more +
+  return '<div class="fit-photo">' + fitPhotoImg(fit) +
     (step === 2 ? '<span class="top-left">' + backButton() + '</span>' : '') +
     '<span class="top-right">' + closeButton() + '</span></div>' +
     (captions ? '<p class="photo-caption">' + captions + '</p>' : '') + strip +
@@ -1934,11 +1914,6 @@ const ACTIONS = {
     announce();
   },
   'set-size': (value) => { state.size = Number(value); state.sizeAuto = false; },
-  // "More options" leaves the flow for full Custom Made on the live site. The prototype shows a card and a log note.
-  'more-options': () => {
-    state.moreOpen = !state.moreOpen;
-    if (state.moreOpen) addNote('More options: the live site opens full Custom Made here (' + FULL_CM.price + ', ' + FULL_CM.delivery + '). It starts from generic details, not from this product (gap).');
-  },
   // The suggestion button of the card (part B). Event 11 is followed directly by event 8
   // with entry 'suggestion'.
   'accept-suggestion': () => {
@@ -2191,7 +2166,6 @@ document.addEventListener('click', (event) => {
   // The highlight of the strip and the fit-screen notice show after one action only.
   state.flash = null;
   state.notice = null;
-  if (action !== 'more-options') state.moreOpen = false;
   ACTIONS[action](el.dataset.value);
   // Each tap on a control in the phone counts. "Start again" sets the counter to zero.
   if (inPhone && action !== 'restart') state.taps += 1;

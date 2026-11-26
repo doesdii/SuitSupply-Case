@@ -72,6 +72,7 @@ As a customer, I want to see my choice, so that I am sure about it.
 
 - Given a changed detail, when the fit screen shows, then a close-up of each changed value shows under the photo, with "The photo shows the standard details of this fit."
 - Given the open sheet, when the customer selects a value, then its close-up changes in 100 milliseconds or less.
+- Given the real build, when a close-up shows, then it is the detail render of the full Custom Made configurator, and the fit stays a real photo. The prototype uses photo crops as stand-ins (gap B1).
 
 ## US-07 Delivery time at the choice
 
@@ -100,6 +101,7 @@ As a customer, I want to check and change my details before the bag, so that I o
 
 - Given an order, when the order line is saved, then it holds the fit, the three details, `is_made_to_order`, `flag_variant`, and the order fields of the tracking plan.
 - Given a changed pair, when the order goes out, then it takes the made-to-order route, also for a fit in stock. A standard pair in stock takes the stock route.
+- Given a customer who orders again within 90 days, when the analyst reads Come back, then the new order links to the test order through the order system's customer key. The key never goes into an event.
 
 ## US-11 Feature flag and stop control
 
@@ -199,7 +201,7 @@ As a customer, I want to change the details where I read them, so that I find th
 - A price for a detail.
 - New return text. Returns stay allowed under today's policy, and every returned changed pair is a write-off (gap L1).
 - A fourth option, free text, measurements, and leg length.
-- Full Custom Made. The "More options" pill on the fit photo stays as on the live site.
+- A link to full Custom Made.
 - Changes after the purchase or from the bag, store alterations, and reorders.
 - The app, if its flow differs (gap E1).
 - Other garments.
