@@ -782,7 +782,7 @@ const SUPER = [
   ['consent_state', 'ctx', [V('analytics_only'), V('analytics_and_personalisation')], V('analytics_only') + ' for ' + V('anonymous') + ', else ' + V('analytics_and_personalisation') + '.'],
   ['market', 'ctx', [V('nl')], 'A constant in the prototype.'],
   ['locale', 'ctx', [V('en-nl')], 'A constant in the prototype.'],
-  ['device_type', 'ctx', [V('mobile')], 'A constant ' + V('mobile') + ' in the prototype. The plan also lists tablet and desktop.'],
+  ['device_type', 'ctx', [V('mobile'), V('desktop')], V('desktop') + ' when ' + F('deskView()') + ' is true (the view ' + C('#v=d') + '), else ' + V('mobile') + '. The plan also lists tablet.'],
   ['session_id', 'ctx', [C('demo-') + ' + 6 characters'], F('SESSION_ID') + ', made once per page load. No personal data. Start again, a flag change, and a customer change keep it.'],
 ];
 

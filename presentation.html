@@ -98,6 +98,9 @@
   /* On the demo slide the phone sits bottom left, so the legend moves under the control column. */
   body[data-slide="s5"] #legend { left: var(--legend-left-s5, var(--pad-x)); flex-direction: column; align-items: flex-start; gap: 6px; }
   body[data-slide="s5"] #legend .lg-group + .lg-group { padding-left: 0; border-left: 0; }
+  /* The legend keeps to the width of the side column, and wraps in the slimmer desktop column. */
+  body[data-slide="s5"] #legend { max-width: var(--legend-w-s5, none); }
+  body[data-slide="s5"] #legend .lg-group { flex-wrap: wrap; row-gap: 6px; }
   body.notes-open #legend { display: none; }
 
   /* Hover pop-up */
@@ -246,6 +249,7 @@
 
   /* ---------- Slide 5: demo ---------- */
   .slide.demo-slide h1 { font-size: clamp(22px, calc(var(--u) * 2.3), 40px); margin-bottom: calc(var(--u) * 1); }
+  .demo-head { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; flex: none; }
   .demo { display: flex; gap: clamp(28px, 3vw, 60px); align-items: flex-start; flex: 1; min-height: 0; }
   .demo .phone { flex: 0 0 auto; position: relative; width: 390px; height: 912px; }
   .demo .phone iframe { position: absolute; top: 0; left: 0; width: 390px; height: 912px; transform-origin: 0 0; border: 1px solid var(--line); border-radius: 4px; background: #fff; display: block; }
@@ -257,6 +261,13 @@
   .switch[aria-checked="true"] .on { background: var(--r1); color: #fff; }
   .switch[aria-checked="false"] .off { border-color: var(--quiet); color: var(--quiet); background: var(--quiet-t); }
   .flagline { flex-basis: 100%; font-size: var(--fs-small); color: var(--text2); }
+  /* Mobile or desktop: the same flow, in the phone or in the drawer of the desktop site. */
+  .viewsw { flex: none; display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--line-strong); border-radius: 3px; background: #fff; }
+  .viewsw button { padding: 4px 12px; border: 1px solid transparent; border-radius: 2px; background: transparent; font: inherit; font-size: var(--fs-small); font-weight: 500; color: var(--icon2); cursor: pointer; transition: background .15s, color .15s; }
+  .viewsw button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  /* Desktop view: a slimmer side column. The segments and the paths stay with the mobile view. */
+  .demo.desk .side { flex: 0 0 clamp(300px, calc(var(--u) * 26), 460px); }
+  .demo.desk .visit, .demo.desk .scen .d { display: none; }
   .visit { border: 1px solid var(--line); border-radius: 4px; padding: 10px 14px; }
   .visit-top { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
   .vstatus { font-size: var(--fs-small); color: var(--text2); }
@@ -644,8 +655,8 @@
 </section>
 
 <!-- Slide 5: See it work (demo) -->
-<section class="slide demo-slide" id="s5" data-legend="seg rel" data-notes="About five and a half minutes. Say what I will do before each click. Watch the event ticker under the phone and the row This visit is. <b>How I built it.</b> One HTML file, built with Claude Code. It runs offline, fires the 12 real events, and has its own self-test. <b>1 · Skipped the fit picker, 4 taps.</b> Select size and fit, Keep, a size, Add to bag. Segment one lights up at Keep. For this customer only the prompt wording is new. <b>Flag switch.</b> Turn it off: this is today's flow, and it is also the stop rule. One switch, and everyone gets today's flow. The same three segments exist with the flag off, so I can compare them. Turn it back on. <b>2 · Opened the fit picker, not in the bag.</b> Select size and fit, Choose fit and details. Segment two lights up. Tap the Details row, then Turn-up. Point at the line under the name: a plain name and one line of benefit, for the customer who does not know the word. The delivery notice changes at once: made for you, one to two weeks. Now leave. In the data: details_sheet_opened and no added_to_bag. That is my early warning for confusion. <b>3 · Opened the fit picker, in the bag, 9 taps.</b> Same start. Tap a photo thumb, so the sheet opens on that option. Turn-up, Done, Next, a size, Add to bag. Nine taps for one changed detail. The size step shows the details and the delivery time before the bag. Segment three lights up at the bag. <b>R1.1 · Known customers.</b> Size on file: signed in, a standard pair, the size is preselected. Three taps. Last details: the card shows, tap Use these details. The size is outlined, not selected, because a changed pair cannot go back into stock. Four taps instead of nine. The rule: preselect only what can go back into stock, suggest what cannot. <b>R1.2 · Only if asked.</b> The product page entry, seven taps, the next test. <b>Hand-off:</b> You saw it work. Next: why it is built this way.">
-  <h1>Demo: three segments, one switch</h1>
+<section class="slide demo-slide" id="s5" data-legend="seg rel" data-notes="About five and a half minutes. Say what I will do before each click. Watch the event ticker under the phone and the row This visit is. <b>How I built it.</b> One HTML file, built with Claude Code. It runs offline, fires the 12 real events, and has its own self-test. <b>1 · Skipped the fit picker, 4 taps.</b> Select size and fit, Keep, a size, Add to bag. Segment one lights up at Keep. For this customer only the prompt wording is new. <b>Flag switch.</b> Turn it off: this is today's flow, and it is also the stop rule. One switch, and everyone gets today's flow. The same three segments exist with the flag off, so I can compare them. Turn it back on. <b>2 · Opened the fit picker, not in the bag.</b> Select size and fit, Choose fit and details. Segment two lights up. Tap the Details row, then Turn-up. Point at the line under the name: a plain name and one line of benefit, for the customer who does not know the word. The delivery notice changes at once: made for you, one to two weeks. Now leave. In the data: details_sheet_opened and no added_to_bag. That is my early warning for confusion. <b>3 · Opened the fit picker, in the bag, 9 taps.</b> Same start. Tap a photo thumb, so the sheet opens on that option. Turn-up, Done, Next, a size, Add to bag. Nine taps for one changed detail. The size step shows the details and the delivery time before the bag. Segment three lights up at the bag. <b>R1.1 · Known customers.</b> Size on file: signed in, a standard pair, the size is preselected. Three taps. Last details: the card shows, tap Use these details. The size is outlined, not selected, because a changed pair cannot go back into stock. Four taps instead of nine. The rule: preselect only what can go back into stock, suggest what cannot. <b>R1.2 · Only if asked.</b> The product page entry, seven taps, the next test. <b>Desktop.</b> Switch the view to Desktop. Same screens, in a drawer at the right of the product page: the pattern the live site already uses. Same taps, same events. Only device_type changes. Switch back. <b>Hand-off:</b> You saw it work. Next: why it is built this way.">
+  <div class="demo-head"><h1>Demo: three segments, one switch</h1><span class="viewsw" role="group" aria-label="View"><button type="button" data-view="mobile" aria-pressed="true">Mobile</button><button type="button" data-view="desktop" aria-pressed="false">Desktop</button></span></div>
   <div class="demo">
     <div class="phone" id="demo-phone">
       <iframe id="demo-frame" title="Live prototype"></iframe>
@@ -1092,7 +1103,7 @@ const s6Select = makeSelect($$('#dec-list .dec-item'), {
 const SUPER_CONTEXT = [
   ['market', "'nl'", 'The market of the storefront. The rollout goes one market at a time.', true],
   ['locale', "'en-nl'", 'Language and market of the page.', true],
-  ['device_type', "'mobile'", 'Device class.', true],
+  ['device_type', "'mobile'", 'Device class: mobile or desktop. Follows the view of the demo.', true],
   ['session_id', "'demo-k3f9x2'", 'The visit. Segments are computed per visit. Holds no personal data.', true],
   ['consent_state', "'analytics_only'", 'The consent in force. Personalisation consent is needed for any tier above anonymous. With no analytics consent, no event is sent at all.', true],
   ['identity_tier', "'anonymous'", 'The identity tier. Derived from customer_state. The cut for known customers.', true],
@@ -1443,6 +1454,7 @@ document.addEventListener('keydown', (e) => handleKey(e.key, e));
 const demoFrame = $('#demo-frame');
 const flagSwitch = $('#flag-switch');
 let flag = 'on';
+let demoView = 'mobile';  // 'desktop' loads the prototype with #v=d: the drawer of the desktop site
 const visit = { exposed: false, seg: 0, stateSeg: false, picker: false, kept: false, bagAfterPicker: false };
 const activeScen = () => $('.scen.active') || $('.scen');
 $$('.scen').forEach((b) => {
@@ -1451,7 +1463,7 @@ $$('.scen').forEach((b) => {
 });
 
 function loadScenario(btn) {
-  demoFrame.src = 'prototype/index.html?run=' + Date.now() + '#f=' + flag + '&' + btn.dataset.hash;
+  demoFrame.src = 'prototype/index.html?run=' + Date.now() + '#f=' + flag + '&' + btn.dataset.hash + (demoView === 'desktop' ? '&v=d' : '');
   Object.assign(visit, { exposed: false, seg: 0, stateSeg: false, picker: false, kept: false, bagAfterPicker: false });
   renderVisit();
   setLive(0, 0);
@@ -1483,6 +1495,16 @@ flagSwitch.addEventListener('click', () => {
   setFlagUI(flag === 'on' ? 'off' : 'on');
   loadScenario(activeScen());
 });
+
+// Mobile or desktop. The frame reloads on the active scenario, like a flag change.
+$$('.viewsw button').forEach((b) => b.addEventListener('click', () => {
+  if (b.dataset.view === demoView) return;
+  demoView = b.dataset.view;
+  $$('.viewsw button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  $('#s5 .demo').classList.toggle('desk', demoView === 'desktop');
+  fitDemo();
+  loadScenario(activeScen());
+}));
 
 function setLive(taps, events) {
   $('#demo-live').textContent = 'Taps: ' + taps + ' · events: ' + events;
@@ -1534,11 +1556,28 @@ window.addEventListener('message', (e) => {
 
 // The phone keeps its proportions: 390 wide, at most 912 high (top bar, phone, event ticker).
 // It scales down to fit the screen, but not below 72%, so the text stays readable on a room screen.
+// The desktop browser is 1100 by 810 (browser bar 34, page 700, event ticker 76). It scales to the room
+// next to the slimmer side column, above the legend.
+const DESK = { w: 1100, h: 810 };
 function fitDemo() {
   const box = document.getElementById('demo-phone');
   if (!box || !box.offsetParent) return;
   const frame = document.getElementById('demo-frame');
   const avail = window.innerHeight - box.getBoundingClientRect().top - 24;
+  if (demoView === 'desktop') {
+    const demo = box.parentElement;
+    const room = demo.clientWidth - $('#s5 .side').getBoundingClientRect().width - (parseFloat(getComputedStyle(demo).columnGap) || 0);
+    // Leave room under the browser for the two legend rows (about 46 px, 14 px above the bottom).
+    const s = Math.min(1, (avail - 48) / DESK.h, room / DESK.w);
+    frame.style.width = DESK.w + 'px';
+    frame.style.height = DESK.h + 'px';
+    frame.style.transform = 'scale(' + s + ')';
+    box.style.width = Math.floor(DESK.w * s) + 'px';
+    box.style.height = Math.floor(DESK.h * s) + 'px';
+    placeDemoLegend();
+    return;
+  }
+  frame.style.width = '';
   const scale = Math.max(0.72, Math.min(1, avail / 912));
   const h = Math.min(912, Math.floor(avail / scale));
   frame.style.height = h + 'px';
@@ -1547,9 +1586,14 @@ function fitDemo() {
   box.style.height = Math.round(h * scale) + 'px';
   placeDemoLegend();
 }
+// Mobile: the legend sits under the side column. Desktop: under the browser, because the side column is slim.
 function placeDemoLegend() {
   const side = $('#s5 .side');
-  if (side && side.offsetParent) document.documentElement.style.setProperty('--legend-left-s5', Math.round(side.getBoundingClientRect().left) + 'px');
+  if (!side || !side.offsetParent) return;
+  const desk = demoView === 'desktop';
+  const r = (desk ? $('#demo-phone') : side).getBoundingClientRect();
+  document.documentElement.style.setProperty('--legend-left-s5', Math.round(r.left) + 'px');
+  document.documentElement.style.setProperty('--legend-w-s5', desk ? 'none' : Math.round(r.width) + 'px');
 }
 window.addEventListener('resize', () => { fitDemo(); fitMini(); sizeInspector(); });
 

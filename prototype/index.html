@@ -581,6 +581,44 @@
   .vseg-dot[data-seg="2"] { background: #9a5b00; }
   .vseg-dot[data-seg="3"] { background: #0f766e; }
 
+  /* Desktop view (#v=d), after the live site at desktop width: the product page stays in view, and the flow
+     opens in a drawer at the right, over the dimmed page. The drawer holds the same screens as the phone.
+     A window below 900 pixels always shows the phone, except inside the deck. Outside any media query. */
+  .d-bar { display: none; }
+  html.desk .page { grid-template-columns: minmax(0, 1fr) 360px; max-width: 1800px; }
+  html.desk .phone-frame { display: flex; flex-direction: column; width: 1202px; height: auto; border: 1px solid var(--line-strong); border-radius: 8px; box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08); }
+  html.desk .phone { width: 1200px; height: 700px; flex: none; }
+  html.desk .event-ticker { display: none; }
+  html.desk .d-bar { display: flex; align-items: center; gap: 14px; flex: none; height: 34px; padding: 0 14px; background: #ededed; border-bottom: 1px solid var(--line); }
+  .d-bar .dots { display: flex; gap: 6px; width: 46px; }
+  .d-bar .dots i { width: 10px; height: 10px; border-radius: 50%; background: #c9c9c9; }
+  .d-bar .addr { flex: 1; max-width: 520px; margin: 0 auto; padding: 0 14px; border-radius: 12px; background: #fff; font-size: 11.5px; line-height: 22px; color: var(--mid); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .d-bar .bar-end { width: 46px; }
+  .d-site, .d-page { position: absolute; inset: 0; }
+  .d-page { display: flex; flex-direction: column; background: #fff; }
+  .d-head { flex: none; display: flex; align-items: center; justify-content: space-between; height: 52px; padding: 0 18px; border-bottom: 1px solid var(--line); }
+  .d-head .grp { display: flex; gap: 18px; }
+  .d-head svg { width: 20px; height: 20px; display: block; }
+  .d-main { flex: 1; min-height: 0; display: flex; }
+  .d-main .pdp-photo { flex: 0 0 58%; height: auto; overflow: hidden; }
+  .d-main .pdp-photo img { height: 100%; object-fit: cover; object-position: 50% 16%; }
+  .d-main .scroll { flex: 1; }
+  .d-main .pdp-body { max-width: 440px; padding: 56px 44px 40px; }
+  .d-drawer { position: absolute; top: 0; right: 0; bottom: 0; width: 40%; min-width: 420px; background: #fff; box-shadow: -10px 0 28px rgba(0, 0, 0, 0.14); }
+  html.desk .sheet, html.desk .bag-panel { left: auto; width: 40%; min-width: 420px; }
+  html.desk .sheet { top: 0; max-height: none; border-radius: 0; }
+  /* A dialog over the open drawer: the page behind is already dimmed, so its own backdrop stays clear. */
+  .d-site.in-flow ~ .backdrop { background: transparent; }
+  /* Inside the deck: the browser fills the frame, with the live event ticker under it. No top bar and no panel. */
+  html.desk.framed, html.desk.framed body { overflow: hidden; }
+  html.desk.framed body { background: #fff; }
+  html.desk.framed #topbar, html.desk.framed #panel { display: none !important; }
+  html.desk.framed .page { display: block; max-width: none; margin: 0; padding: 0; }
+  html.desk.framed .phone-col { position: static; }
+  html.desk.framed .phone-frame { width: 100vw; height: 100vh; border: 0; border-radius: 0; box-shadow: none; zoom: 1 !important; }
+  html.desk.framed .phone { width: 100%; height: auto; flex: 1; min-height: 0; }
+  html.desk.framed .event-ticker { display: block; flex: none; height: 76px; max-height: 76px; }
+
   /* Mini embed mode (#mini=1, for the small frames of the deck): only the phone, and it fills the frame.
      Outside any media query, so it does not depend on the window width. */
   html.mini, html.mini body { overflow: hidden; }
@@ -615,6 +653,7 @@
 <div class="page">
   <main class="phone-col" id="flow" aria-label="Flow in the phone">
     <div class="phone-frame" id="phone-frame">
+      <div class="d-bar" aria-hidden="true"><span class="dots"><i></i><i></i><i></i></span><span class="addr">Desktop view · product page B2248</span><span class="bar-end"></span></div>
       <div class="phone" id="phone" data-zone="phone"></div>
       <div class="event-ticker" id="event-ticker" aria-label="Live event log">
         <div class="ticker-empty">Events will appear here as you click through the flow.</div>
@@ -634,6 +673,14 @@
         <div><button class="flag-btn" data-action="set-flag" data-value="off" aria-pressed="false">OFF</button><span class="flag-note">Flow of today. Control group.</span></div>
       </div>
       <p class="small">Flag key: trousers-design-options. OFF is the stop rule: each user gets the flow of today.</p>
+    </section>
+    <section class="block" aria-labelledby="view-title">
+      <h2 id="view-title">View</h2>
+      <div class="flag-grid" role="group" aria-labelledby="view-title">
+        <div><button class="flag-btn" data-action="set-view" data-value="mobile" aria-pressed="true">Mobile</button></div>
+        <div><button class="flag-btn" data-action="set-view" data-value="desktop" aria-pressed="false">Desktop</button></div>
+      </div>
+      <p class="small">Desktop follows the live site: the flow opens in a drawer at the right of the product page. Same screens, same taps, same events. Only device_type changes. Desktop needs a window 900 px wide or more.</p>
     </section>
     <section class="block" aria-labelledby="options-title">
       <h2 id="options-title">Options</h2>
@@ -847,6 +894,11 @@ const SEGMENT_TEXT = ['Not yet', '1 · Skipped the fit picker', '2 · Opened the
 // Mini embed mode for the small frames of the deck: only the phone, no top bar, no panel, no ticker,
 // and no prototype-event or prototype-state message. Read once at the start.
 const MINI = new URLSearchParams(location.hash.slice(1)).get('mini') === '1' && !location.hash.includes('selftest');
+
+// The view: 'mobile' (the phone) or 'desktop' (#v=d). It is not part of the flow, so "Start again", the flag
+// and the customer keep it. FRAMED: inside the deck, where the desktop view fills the frame.
+let VIEW = 'mobile';
+const FRAMED = window.parent !== window && !MINI;
 
 // The visit (super property session_id): a random id made once per page load. It holds no personal data.
 // "Start again", a flag change, and a customer change keep it.
@@ -1397,9 +1449,8 @@ function pdpScreen() {
     ? '<div class="sectrows" data-role="size-fit-rows">' + sfRows + link + '</div>'
     : '';
   const chev = state.sizeFitOpen ? '˄' : '˅';
-  return '<div class="scroll" data-scroll="pdp">' +
-    '<div class="pdp-photo">' + fitPhotoImg(base, FITS[base].standard) + '</div>' +
-    '<div class="pdp-body"><h2 class="pdp-name">' + PRODUCT.name + '</h2>' +
+  const photo = '<div class="pdp-photo">' + fitPhotoImg(base, FITS[base].standard) + '</div>';
+  const body = '<div class="pdp-body"><h2 class="pdp-name">' + PRODUCT.name + '</h2>' +
     '<p class="pdp-sub">' + PRODUCT.sub + '</p><p class="price">' + PRODUCT.price + '</p>' +
     '<button class="btn btn-dark" data-action="open-flow">Select size and fit</button>' +
     '<p class="pdp-free">Free delivery in 1 - 2 business days</p>' +
@@ -1408,7 +1459,11 @@ function pdpScreen() {
     '<div id="sf-rows">' + sfHtml + '</div>' +
     '<div class="sect"><span>Details &amp; Care</span><span class="chev">˅</span></div>' +
     '<div class="sect"><span>Delivery &amp; Returns</span><span class="chev">˅</span></div>' +
-    '</div></div></div>';
+    '</div></div>';
+  // Desktop: the photo at the left, the text at the right in its own scroll. Mobile: one scroll.
+  return deskView()
+    ? '<div class="d-main">' + photo + '<div class="scroll" data-scroll="pdp">' + body + '</div></div>'
+    : '<div class="scroll" data-scroll="pdp">' + photo + body + '</div>';
 }
 
 // The flag selects the text. OFF shows the text of today.
@@ -1500,8 +1555,7 @@ function bagScreen() {
     '<div class="bag-buttons"><button class="btn" aria-disabled="true">View Bag</button>' +
     '<button class="btn" aria-disabled="true">Checkout</button></div>' +
     '<p class="bag-note">Not in this prototype</p>' +
-    '<div class="bag-restart"><button class="text-btn" data-action="restart">Start again</button></div></div></div>' +
-    (state.bagPanel ? bagPanelHtml() : '');
+    '<div class="bag-restart"><button class="text-btn" data-action="restart">Start again</button></div></div></div>';
 }
 
 // The panel a made-to-order line already has on the live site, with the three details as new rows.
@@ -1535,9 +1589,39 @@ const SCREENS = {
 };
 
 // The screen behind an open sheet or bag panel is inert, so the focus stays in the dialog.
+// The dialogs sit next to the screen, not in it, so they stay clickable.
 function phoneHtml() {
+  if (deskView()) return deskHtml();
   return '<div class="screen" data-screen="' + state.screen + '"' + (state.sheet || state.bagPanel ? ' inert' : '') + '>' + SCREENS[state.screen]() + '</div>' +
-    (state.sheet ? sheetHtml() : '');
+    (state.sheet ? sheetHtml() : '') + (state.bagPanel && state.screen === 'bag' ? bagPanelHtml() : '');
+}
+
+// ---------- Desktop view ----------
+
+// The desktop view shows only where it fits: a window of 900 pixels or more, the deck, or the self-test.
+function deskView() {
+  return VIEW === 'desktop' && !MINI && (FRAMED || testing || !COMPACT.matches);
+}
+
+const D_ICON = (d) => '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="' + d + '" stroke="currentColor" stroke-width="1.4" fill="none"/></svg>';
+function deskHead() {
+  return '<div class="d-head" aria-hidden="true"><span class="grp">' +
+    D_ICON('M3,6 H17 M3,10 H17 M3,14 H17') + D_ICON('M13,13 L17,17 M14,9 A5,5 0 1 1 4,9 A5,5 0 1 1 14,9') + '</span><span class="grp">' +
+    D_ICON('M13.5,7 A3.5,3.5 0 1 1 6.5,7 A3.5,3.5 0 1 1 13.5,7 M3.5,17.5 C4.5,13.5 15.5,13.5 16.5,17.5') +
+    D_ICON('M4,7 H16 V17 H4 Z M7.5,7 V5.5 A2.5,2.5 0 0 1 12.5,5.5 V7') + '</span></div>';
+}
+
+// The live pattern at desktop width: the product page stays in view. The flow opens in a drawer at the
+// right, over the dimmed page, with the same screens as the phone. A tap on the dimmed page closes it.
+function deskHtml() {
+  const inFlow = state.screen !== 'pdp';
+  return '<div class="d-site' + (inFlow ? ' in-flow' : '') + '" data-screen="' + state.screen + '"' + (state.sheet || state.bagPanel ? ' inert' : '') + '>' +
+    '<div class="d-page"' + (inFlow ? ' inert' : '') + '>' + deskHead() + pdpScreen() + '</div>' +
+    (inFlow
+      ? '<div class="backdrop" data-action="close" data-value="backdrop"></div>' +
+        '<div class="d-drawer" role="region" aria-label="Select size and fit"><div class="screen" data-screen="' + state.screen + '">' + SCREENS[state.screen]() + '</div></div>'
+      : '') +
+    '</div>' + (state.sheet ? sheetHtml() : '') + (state.bagPanel && state.screen === 'bag' ? bagPanelHtml() : '');
 }
 
 // ---------- Tracking events ----------
@@ -1587,7 +1671,7 @@ function commonProps() {
     consent_state: state.customer === 'anonymous' ? 'analytics_only' : 'analytics_and_personalisation',
     market: 'nl',
     locale: 'en-nl',
-    device_type: 'mobile',
+    device_type: deskView() ? 'desktop' : 'mobile',
     session_id: SESSION_ID,
   };
 }
@@ -1686,6 +1770,7 @@ function entryHtml(entry) {
 // The panel has fixed controls. render() changes only their state and the texts, so the focus stays.
 function renderPanel() {
   document.querySelectorAll('[data-action="set-flag"]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.value === state.flag)));
+  document.querySelectorAll('[data-action="set-view"]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.value === VIEW)));
   document.querySelectorAll('[data-action="toggle-option"]').forEach((b) => b.setAttribute('aria-pressed', String(!!state.enabled[b.dataset.value])));
   const pdpBtn = document.querySelector('[data-action="set-pdp-entry"]');
   if (pdpBtn) pdpBtn.setAttribute('aria-pressed', String(state.pdpEntry));
@@ -1990,6 +2075,12 @@ const ACTIONS = {
     state.log = [];
     state.count = 0;
   },
+  // Mobile or desktop. The flow keeps its state, so the same step shows on both.
+  'set-view': (value) => {
+    if (value === VIEW || !['mobile', 'desktop'].includes(value)) return;
+    VIEW = value;
+    addNote('View set to ' + value + '. Same flow, same taps, same events. Only device_type changes.');
+  },
   // The panel overlay of the compact layout.
   'open-panel': () => { state.panelOpen = true; },
   'close-panel': () => { state.panelOpen = false; },
@@ -2028,6 +2119,11 @@ function render() {
   phone.querySelectorAll('[data-scroll]').forEach((el) => { scroll[el.dataset.scroll] = el.scrollTop; });
 
   syncSizePrefill();
+  const root = document.documentElement;
+  const deskBefore = root.classList.contains('desk');
+  root.classList.toggle('desk', deskView());
+  root.classList.toggle('framed', FRAMED);
+  if (deskBefore !== deskView()) fitPhone();
   phone.innerHTML = phoneHtml();
   renderPanel();
   // Inside the deck, the slide shows the live tap count, the flag, and the segment of the visit. A mini frame sends nothing.
@@ -2101,6 +2197,7 @@ function buildHash() {
   const parts = ['f=' + state.flag];
   if (state.customer !== 'anonymous') parts.push('c=' + HASH_CUSTOMERS[state.customer]);
   if (state.pdpEntry) parts.push('pe=1');
+  if (VIEW === 'desktop') parts.push('v=d');
   if (window.location.hash.includes('embed=1')) parts.push('embed=1');
   if (MINI) parts.push('mini=1');
   parts.push('s=' + state.screen, 'fit=' + state.mainFit, 'leg=' + state.leg);
@@ -2129,6 +2226,7 @@ function applyHash(text) {
   state.flag = pick('f', ['on', 'off'], 'on');
   state.customer = HASH_CUSTOMER_KEYS[pick('c', Object.keys(HASH_CUSTOMER_KEYS), 'a')];
   state.pdpEntry = q.get('pe') === '1';
+  VIEW = q.get('v') === 'd' ? 'desktop' : 'mobile';
   resetFlow();
   state.mainFit = pick('fit', MAIN_FITS.map((f) => f[0]), PRODUCT.baseFit);
   state.leg = pick('leg', LEGS.map((l) => l[0]), PRODUCT.baseLeg);
@@ -2231,6 +2329,12 @@ document.addEventListener('keydown', (event) => {
 function fitPhone() {
   if (MINI) return;
   const frame = document.getElementById('phone-frame');
+  if (deskView()) {
+    // Inside the deck the frame fills the window. On a wide page the browser scales to its column.
+    const col = document.getElementById('flow').clientWidth;
+    frame.style.zoom = FRAMED || testing ? 1 : Math.max(0.5, Math.min(1, (window.innerHeight - 24) / 738, col / 1204));
+    return;
+  }
   if (COMPACT.matches) {
     frame.style.zoom = 1;
     return;
@@ -3249,6 +3353,57 @@ function runSelfTest() {
     check('Scenarios: path 7 has one part per tap (' + parts(7) + ')', lastEvent('added_to_bag').props.tap_count === parts(7) && state.pdpEntry && state.flag === 'on',
       String(lastEvent('added_to_bag').props.tap_count));
     scen(1);
+  });
+
+  // The desktop view: the same flow in a drawer at the right of the product page (the live pattern).
+  scenario('Desktop', () => {
+    fresh('on');
+    VIEW = 'desktop';
+    render();
+    const pageEl = () => phone.querySelector('.d-page');
+    const drawer = () => phone.querySelector('.d-drawer');
+    check('Desktop: the product page shows the photo and the text side by side, with no drawer',
+      document.documentElement.classList.contains('desk') && !!pageEl() && !!pageEl().querySelector('.d-main .pdp-photo') &&
+      !!find('open-flow') && !drawer(), String(!!pageEl()));
+    tap('open-flow');
+    const ph = phone.getBoundingClientRect();
+    const dr = drawer() ? drawer().getBoundingClientRect() : { left: 0, width: 0, right: 0 };
+    check('Desktop: the prompt opens in a drawer at the right, and the page behind is inert',
+      !!drawer() && drawer().textContent.includes('Want a different fit or details?') && pageEl().inert &&
+      Math.abs(dr.right - ph.right) <= 1 && dr.width >= 420 && dr.width < ph.width * 0.5, Math.round(dr.left - ph.left) + ' / ' + Math.round(dr.width));
+    tap('keep-fit'); tap(SIZE[0], SIZE[1]); tap('add-to-bag');
+    check('Desktop: the fast path is 4 taps and ends in the bag, in the drawer',
+      state.taps === 4 && state.screen === 'bag' && drawer().textContent.includes('Your bag'), String(state.taps));
+    check('Desktop: the events say device_type desktop', lastEvent('added_to_bag').common.device_type === 'desktop', lastEvent('added_to_bag').common.device_type);
+    fresh('on');
+    [['open-flow'], ['choose-fit'], ['open-sheet', 'hem']].forEach((st) => tap(st[0], st[1]));
+    const sh = document.getElementById('sheet').getBoundingClientRect();
+    check('Desktop: the Details sheet covers the drawer, top to bottom', Math.abs(sh.right - ph.right) <= 1 && Math.abs(sh.top - ph.top) <= 1 && sh.width < ph.width * 0.5,
+      Math.round(sh.top - ph.top) + ' / ' + Math.round(sh.width));
+    [HEM, DONE, ['next'], ['next'], SIZE, ['add-to-bag']].forEach((st) => tap(st[0], st[1]));
+    check('Desktop: one changed detail is 9 taps, as on the phone', state.taps === 9 && state.screen === 'bag' && isChanged(), String(state.taps));
+    tap('open-bag-details');
+    tap('close-bag-details');
+    check('Desktop: the bag details panel opens and a click closes it', !state.bagPanel && !document.getElementById('bag-panel'), String(state.bagPanel));
+    tap('close', 'backdrop');
+    check('Desktop: a tap on the dimmed page closes the drawer', state.screen === 'pdp' && !drawer(), state.screen);
+    VIEW = 'mobile';
+    fresh('on');
+    tap('open-flow');
+    check('Desktop: back to mobile, no drawer and device_type mobile', !document.documentElement.classList.contains('desk') && !phone.querySelector('.d-drawer') &&
+      lastEvent('prompt_shown').common.device_type === 'mobile', lastEvent('prompt_shown').common.device_type);
+    fresh('on');
+  });
+
+  // The bag details panel is not inside the inert screen, so a click closes it (mobile).
+  scenario('Bag panel', () => {
+    fresh('on');
+    [['open-flow'], ['choose-fit'], ['open-sheet', 'hem'], HEM, DONE, ['next'], ['next'], SIZE, ['add-to-bag'], ['open-bag-details']].forEach((st) => tap(st[0], st[1]));
+    const panelEl = document.getElementById('bag-panel');
+    check('Bag panel: it is open and not inside an inert element', !!panelEl && !panelEl.closest('[inert]'), String(!!panelEl));
+    tap('close-bag-details');
+    check('Bag panel: "Close" closes it', !state.bagPanel && !document.getElementById('bag-panel'), String(state.bagPanel));
+    fresh('on');
   });
 
   // Section 6.1: mini mode hides everything but the phone, and the phone fills the window.
