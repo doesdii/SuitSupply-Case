@@ -22,5 +22,5 @@ A take-home product case. Customers can already order trousers in another fit fr
 
 ## Notes
 
-- Product photos are not in this repository. Without them, the prototype and the presentation show drawings.
+- The product photos in `prototype/assets/` are Suitsupply's, from the public product pages (23 November 2026), used only for this case. Without the folder, the prototype shows drawings and the slides show grey placeholders.
 - All numbers are first assumptions. Real data must replace them.
